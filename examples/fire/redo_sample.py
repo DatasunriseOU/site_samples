@@ -1,0 +1,2 @@
+class ReDoDiagnosticsSample:
+    pass
