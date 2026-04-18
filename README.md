@@ -1,37 +1,50 @@
-# site_samples
+# MegaCpp Public Sample Pack
 
-Sanitized public excerpts for public article references.
+Sanitized public excerpts, article sources, and reference snippets for MegaCpp. The repository id stays `site_samples`, but the contents are the public pack linked from `megacpp.com` articles.
 
-This repository holds small public-safe markdown notes and code fragments that
-back public article references.
+This repository holds:
 
-Scope:
-- training and systems notes
-- data preparation notes
-- TPU/XLA and distributed debugging notes
-- minimal code samples with private details removed
+- `articles/`: public-safe blog markdown consumed by `megacpp.com`
+- `docs/`: supporting public notes and article-safe background material
+- `examples/`: compact public-safe runnable samples
+- `excerpts/`: article-linked code and note snippets extracted from the MegaCpp research and production codebases
 
-Safety rules:
+`megacpp.com` consumes `articles/*.md` via `npm run sync:blog`, which generates committed JSON artifacts under `megacpp.com/src/generated/blog`.
+
+## Directory guide
+
+- `articles/`
+  Public article sources.
+- `docs/`
+  Public notes that can be linked directly from articles.
+- `examples/`
+  Minimal standalone samples for concepts such as STP, FIRE, data masking, XLA flags, and OOM triage.
+- `excerpts/code/`
+  Sanitized code excerpts grouped by source repo and topic.
+- `excerpts/docs/`
+  Sanitized doc excerpts grouped by source repo and topic.
+- `excerpts/images/`
+  Public diagrams, charts, and screenshots referenced by articles.
+
+## Safety rules
+
 - no local machine paths
 - no internal hostnames or IP addresses
 - no secrets or private infra identifiers
-- no internal-only project or product naming
+- no unpublished private environment labels
+- keep public wording generic and citation-friendly
 
-Review note:
-- new docs/examples should stay generic and citation-friendly
-- avoid company, cluster, region, and environment-specific labels
+## Excerpt naming
 
-Current packs:
-- `docs/plasticity-toolkit-notes.md`
-- `docs/stp-notes.md`
-- `docs/hybrid-layout-notes.md`
-- `docs/tpu-bringup-notes.md`
-- `docs/data-prep-notes.md`
-- `docs/distributed-debugging-notes.md`
-- `examples/fire/fire_sample.py`
-- `examples/fire/redo_sample.py`
-- `examples/stp/stp_sample.py`
-- `examples/hybrid/hybrid_pattern_sample.py`
-- `examples/xla/xla_flag_profile.py`
-- `examples/data/masking_pipeline_sample.py`
-- `examples/distributed/oom_triage_sample.py`
+- Article-linked excerpt paths live under `excerpts/<kind>/<source-repo>/<topic>/`.
+- File names use `article-slug__topic__v1.ext`.
+- Doc excerpts should say they were edited for public clarity.
+- Code excerpts should keep only the minimum context needed for the article claim.
+
+## Current packs
+
+- `articles/*.md`
+- `docs/*.md`
+- `examples/**/*.py`
+- `excerpts/code/**`
+- `excerpts/docs/**`
