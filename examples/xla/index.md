@@ -29,6 +29,7 @@ Relevant examples:
 - `xla_call_jax_bridge.py`
 - `call_jax_bridge_runtime.py`
 - `splash_local_mask_builder_sample.py`
+- `splash_mask_cache_sample.py`
 - `xla_backend_dispatch.py`
 
 ### Segment-ID and document masking support
@@ -41,6 +42,20 @@ Relevant examples:
 - `xla_segment_ids_layout_sample.py`
 - `pallas_softcap_attention_sample.py`
 - `xla_call_jax_bridge.py`
+
+### Runtime probing, fallback, and graph splitting
+
+These files explain how the MegaCpp POC decides whether TPU/XLA is actually
+usable, when to insert `mark_step()` barriers, and how to fall back when a
+native backend symbol is missing.
+
+Relevant examples:
+
+- `xla_runtime_probe_sample.py`
+- `xla_barrier_schedule_sample.py`
+- `xla_backend_fallback_sample.py`
+- `xla_startup_retry_classifier.py`
+- `xla_startup_calibration_records.py`
 
 ### Clustered sparse and validity helpers
 
@@ -61,3 +76,5 @@ Relevant examples:
   not require a dense quadratic mask.
 - The clustered sparse path is the experimental lane for stricter sparse
   routing geometry on TPU.
+- Runtime probes and fallback receipts keep the launcher honest about which TPU
+  path is truly available.
