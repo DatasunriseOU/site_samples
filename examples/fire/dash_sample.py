@@ -1,10 +1,23 @@
-"""Public-safe DASH example: periodic, AdamW-safe, post-backward/pre-step."""
+"""DASH tensor-mode excerpt."""
+
+from __future__ import annotations
+
+import torch
+import torch.nn.functional as F
 
 
-def dash_plan(*, step: int, interval: int = 2000, optimizer_family: str = "adamw") -> dict[str, object]:
-    return {
-        "apply_now": optimizer_family == "adamw" and step % interval == 0,
-        "placement": "post-backward-pre-step",
-        "optimizer_family": optimizer_family,
-        "interval": interval,
-    }
+@torch.no_grad()
+def dash_step(
+    W: torch.Tensor,
+    grad: torch.Tensor,
+    *,
+    alpha: float = 0.05,
+    shrink_rate: float = 0.01,
+) -> torch.Tensor:
+    if W.dim() != 2:
+        raise ValueError(f"dash_step requires 2D tensors, got {W.dim()}D")
+
+    cos_sim = F.cosine_similarity(W, grad, dim=1)
+    penalty = torch.clamp(cos_sim - alpha, min=0.0).unsqueeze(1)
+    shrink_factor = torch.clamp(1.0 - shrink_rate * penalty, min=0.5, max=1.0)
+    return W * shrink_factor

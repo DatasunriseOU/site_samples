@@ -1,10 +1,10 @@
-"""Pipeline Parallelism (PP) for megacpp models.
+"""Pipeline Parallelism (PP) donor excerpt.
 
 Minimal prototype that partitions the GPT model's transformer layers into
 pipeline stages using ``torch.distributed.pipelining``.
 
 Usage:
-    from megacpp.pipeline_parallel import (
+    from examples.distributed.pipeline_parallel_sample import (
         partition_model, PipelineSchedule, create_pipeline_stage,
         apply_pipeline_parallel,
         partition_model_weighted,
@@ -702,12 +702,12 @@ class _PipelineStageModule(nn.Module):
         #   at the start of the next forward call.
         # NOTE: Disabled by default — causes shape mismatch errors when the
         # pipeline schedule needs the cached output for backward AFTER the
-        # next microbatch forward has started. Set MEGACPP_PP_DEALLOC=1
+        # next microbatch forward has started. Set PP_DEALLOC=1
         # to re-enable for memory savings (Megatron pattern).
         import os as _os
         self._deallocate_output: bool = (
             stage_id < num_stages - 1
-            and _os.environ.get("MEGACPP_PP_DEALLOC", "0") == "1"
+            and _os.environ.get("PP_DEALLOC", "0") == "1"
         )
         self._saved_output: Optional[torch.Tensor] = None
 
@@ -917,7 +917,7 @@ class _PipelineStageModule(nn.Module):
             # Detect MoD wrapper by type: MoD wrapping a dense (non-MoE) block
             # returns (x, router_aux, zeros) as a 3-tuple.  The router_aux must
             # go to _mod_aux_losses, not _moe_aux_losses.
-            from megacpp.mod import GammaMoDBlockWrapper, MoDBlockWrapper
+            from runtime_model.mod import GammaMoDBlockWrapper, MoDBlockWrapper
             _is_mod = layer is not None and isinstance(
                 layer, (MoDBlockWrapper, GammaMoDBlockWrapper)
             )
@@ -1022,7 +1022,7 @@ class _PipelineStageModule(nn.Module):
                 # Match GPT.forward() CUDA detach guard for embedding backward.
                 if (
                     x.device.type == "cuda"
-                    and _os.environ.get("MEGACPP_STRUCTURE_EMB_DETACH", "1") != "0"
+                    and _os.environ.get("PP_STRUCTURE_EMB_DETACH", "1") != "0"
                 ):
                     struct_out = struct_out.detach()
                 _pre_dtype = x.dtype
@@ -1088,7 +1088,7 @@ class _PipelineStageModule(nn.Module):
                     "base_block_tokens": _base_block_tokens,
                     "row_block_size_tokens": _row_block_size_tokens,
                 }
-                from megacpp.gpt import _build_attention_validity
+                from runtime_model.gpt import _build_attention_validity
 
                 attention_validity = _build_attention_validity(
                     attention_meta,
@@ -1099,7 +1099,7 @@ class _PipelineStageModule(nn.Module):
                 _block_kwargs["attention_meta"] = attention_meta
         elif doc_ids is not None:
             attention_meta = {"doc_ids": doc_ids}
-            from megacpp.gpt import _build_attention_validity
+            from runtime_model.gpt import _build_attention_validity
 
             attention_validity = _build_attention_validity(
                 attention_meta,
@@ -1733,7 +1733,7 @@ def apply_pipeline_parallel(
 #
 # Use it from base_train.py around the schedule's ``.step()`` call:
 #
-#     from megacpp.pipeline_parallel import pp_comm_stream_context
+#     from examples.distributed.pipeline_parallel_sample import pp_comm_stream_context
 #     with pp_comm_stream_context():
 #         pp_schedule_obj.step(input, target=target, losses=losses)
 #
@@ -1747,7 +1747,7 @@ _pp_p2p_trace_lock = threading.Lock()
 
 
 def _pp_trace_batch_p2p_enabled() -> bool:
-    return os.environ.get("MEGACPP_TRACE_PP_BATCH_P2P", "0") == "1"
+    return os.environ.get("PP_TRACE_BATCH_P2P", "0") == "1"
 
 
 def _describe_pp_p2p_op(op: object) -> str:
@@ -1829,7 +1829,7 @@ def pp_comm_stream_context(enabled: bool = True):
     a real solution (separate ``ProcessGroup`` for PP P2P, custom NCCL
     C++ extension, or upstream pytorch#138074 / pytorch#147729 landing).
     They are guarded behind ``enabled=True`` and only run if the user
-    explicitly opts in via ``MEGACPP_PP_COMM_STREAM=1``.
+    explicitly opts in via ``PP_COMM_STREAM=1``.
     """
     # The patch is broken (see is_pp_comm_stream_enabled docstring).
     # Default behavior: strict no-op.  The wrapper code below is kept
@@ -1980,7 +1980,7 @@ def pp_comm_stream_context(enabled: bool = True):
 def is_pp_comm_stream_enabled() -> bool:
     """Return True if pp comm-stream separation is currently active.
 
-    Reads the ``MEGACPP_PP_COMM_STREAM`` env var.  **Default OFF — the
+    Reads the ``PP_COMM_STREAM`` env var.  **Default OFF — the
     patch is architecturally broken and cannot deliver on its promise.**
 
     Architectural reality (verified by reading PyTorch source +
@@ -2023,8 +2023,8 @@ def is_pp_comm_stream_enabled() -> bool:
        Megatron's ``_COMM_STREAM`` is internal bookkeeping, NOT an
        NCCL stream override.
 
-    6. megacpp **already** creates a separate ``ProcessGroup`` for PP
-       (``scripts/base_train.py:9532`` — ``dist.new_group(_pp_group_ranks)``).
+    6. A pipeline runtime can already create a separate ``ProcessGroup`` for PP
+       via a dedicated PP communicator.
        That group has its own NCCL communicator, hence its own internal
        NCCL stream pool, hence already runs P2P concurrently with FSDP
        all-reduce / TP all-gather on a separate stream.  The "Megatron
@@ -2043,10 +2043,10 @@ def is_pp_comm_stream_enabled() -> bool:
 
     The wrapper code is left as scaffolding for future work, but is
     DEFAULT OFF and unreachable unless the user explicitly opts in via
-    ``MEGACPP_PP_COMM_STREAM=1`` — and even then it's broken.
+    ``PP_COMM_STREAM=1`` — and even then it's broken.
     """
     import os
-    return os.environ.get("MEGACPP_PP_COMM_STREAM", "0") == "1"
+    return os.environ.get("PP_COMM_STREAM", "0") == "1"
 
 
 # ---------------------------------------------------------------------------

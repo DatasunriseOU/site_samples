@@ -1,20 +1,36 @@
-"""Public-safe pipeline residency sketch."""
+"""Donor-based VPP warmup-count helper excerpt.
 
-from __future__ import annotations
+This is a public-safe excerpt of the donor's ``get_vpp_warmup_count`` helper.
+It keeps the validated warmup/steady-state formula used for analysis and tests.
+"""
 
 
-def activation_residency(
-    *, stages: int, microbatches: int, checkpoint_every_stage: bool = False, overlap: bool = True
-) -> dict[str, int | bool]:
-    warmup_resident = min(stages - 1, microbatches) if stages > 1 else min(1, microbatches)
-    steady_resident = min(stages, microbatches) if overlap else max(1, min(stages, microbatches) - 1)
-    if checkpoint_every_stage:
-        steady_resident = max(1, steady_resident // 2)
+def get_vpp_warmup_count(
+    *,
+    pp_rank: int,
+    pp_degree: int,
+    num_microbatches: int,
+    num_model_chunks: int,
+) -> dict[str, int]:
+    """Return the VPP warmup/remaining-step counts for one pipeline rank."""
+
+    if pp_degree < 1 or num_model_chunks < 1 or num_microbatches < 1:
+        raise ValueError("pp_degree, num_model_chunks, and num_microbatches must be positive")
+    if not 0 <= pp_rank < pp_degree:
+        raise ValueError(f"pp_rank={pp_rank} out of range for pp_degree={pp_degree}")
+
+    microbatch_group_size = pp_degree
+    total = num_microbatches * num_model_chunks
+    warmup = (pp_degree - pp_rank - 1) * 2
+    warmup += (num_model_chunks - 1) * microbatch_group_size
+    warmup = min(warmup, total)
+    remaining = total - warmup
+
     return {
-        "stages": stages,
-        "microbatches": microbatches,
-        "overlap": overlap,
-        "checkpoint_every_stage": checkpoint_every_stage,
-        "warmup_resident_microbatches": warmup_resident,
-        "steady_resident_microbatches": steady_resident,
+        "warmup_microsteps": warmup,
+        "remaining_microsteps": remaining,
+        "pp_rank": pp_rank,
+        "pp_degree": pp_degree,
+        "num_microbatches": num_microbatches,
+        "num_model_chunks": num_model_chunks,
     }

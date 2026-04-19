@@ -1,14 +1,14 @@
 {
   "commands": [
     {
-      "directory": "/workspace/project",
-      "file": "src/parser.cpp",
-      "command": "clang++ -std=c++20 -Iinclude -c src/parser.cpp -o build/parser.o"
+      "directory": "/workspace/repo",
+      "file": "absl/base/config.h",
+      "command": "clang++ -std=c++20 -I. -Ithird_party/absl -Wno-unused-parameter -c absl/base/config.h -o build/config.o"
     },
     {
-      "directory": "/workspace/project",
-      "file": "src/indexer.cpp",
-      "command": "clang++ -std=c++20 -Iinclude -DENABLE_MEGACPP=1 -c src/indexer.cpp -o build/indexer.o"
+      "directory": "/workspace/repo",
+      "file": "absl/strings/string_view.cc",
+      "command": "clang++ -std=c++20 -I. -Ithird_party/absl -DNDEBUG -c absl/strings/string_view.cc -o build/string_view.o"
     }
   ]
 }

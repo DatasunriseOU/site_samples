@@ -5,8 +5,8 @@ from __future__ import annotations
 
 def normalize_record(record: dict[str, object]) -> dict[str, object]:
     return {
-        "repo": record.get("repo", "datasunriseou/megacpp-public"),
-        "filepath": record.get("filepath", "src/example.cpp"),
+        "repo": record.get("repo", "public-cpp-corpus"),
+        "filepath": record.get("filepath", "absl/sample/foo.cc"),
         "language": record.get("language", "c++"),
         "text": str(record.get("text", "")),
         "chunk_boundaries": list(record.get("chunk_boundaries", [])),
@@ -17,7 +17,8 @@ def normalize_record(record: dict[str, object]) -> dict[str, object]:
 
 
 def apply_doc_masking(text: str, *, doc_open: str = "<doc>", doc_close: str = "</doc>") -> str:
-    return f"{doc_open}{text.strip()}{doc_close}"
+    stripped = text.strip()
+    return f"{doc_open}\n{stripped}\n{doc_close}" if stripped else f"{doc_open}{doc_close}"
 
 
 def build_enriched_row(record: dict[str, object]) -> dict[str, object]:

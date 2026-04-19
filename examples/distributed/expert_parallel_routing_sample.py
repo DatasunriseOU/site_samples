@@ -1,29 +1,49 @@
-"""Public-safe expert-parallel capacity sketch grounded in routed-token planning."""
+"""Public-safe expert-parallel routing excerpt based on donor MoE accounting."""
 
 from __future__ import annotations
 
 from math import ceil
 
 
-def capacity_per_expert(tokens: int, experts: int, top_k: int, capacity_factor: float = 1.0) -> int:
-    routed_tokens = tokens * top_k
+def routed_tokens_per_step(tokens: int, top_k: int) -> int:
+    """Mirror routed-token accounting used by donor MoE planning helpers."""
+    return tokens * top_k
+
+
+def capacity_per_expert(
+    tokens: int,
+    experts: int,
+    top_k: int,
+    capacity_factor: float = 1.0,
+) -> int:
+    """Public-safe capacity sketch for fixed-size expert routing buffers."""
+    routed_tokens = routed_tokens_per_step(tokens, top_k)
     return ceil((routed_tokens / experts) * capacity_factor)
 
 
 def routing_summary(
     *,
     tokens: int,
-    experts: int,
+    routed_experts: int,
     top_k: int,
-    shared_expert: bool = True,
-    router_dtype: str = "fp32",
-) -> dict[str, int | bool | str]:
+    shared_experts: int = 1,
+    routing_mode: str = "token_choice",
+    capacity_factor: float = 1.0,
+) -> dict[str, int | str]:
+    """Summarize the routed/shared expert split with donor-style router outputs."""
+    router_outputs = routed_experts + 1 if routing_mode == "token_choice" else routed_experts
     return {
         "tokens": tokens,
-        "experts": experts,
         "top_k": top_k,
-        "shared_expert": shared_expert,
-        "router_dtype": router_dtype,
-        "capacity_per_expert": capacity_per_expert(tokens, experts, top_k),
-        "fixed_buffer_dispatch": True,
+        "routed_experts": routed_experts,
+        "shared_experts": shared_experts,
+        "router_outputs": router_outputs,
+        "routed_tokens": routed_tokens_per_step(tokens, top_k),
+        "capacity_per_expert": capacity_per_expert(
+            tokens,
+            routed_experts,
+            top_k,
+            capacity_factor,
+        ),
+        "routing_mode": routing_mode,
     }

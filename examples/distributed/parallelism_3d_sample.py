@@ -1,8 +1,9 @@
-"""Grounded donor excerpt for PP + FSDP2 + EP topology planning.
+"""Donor-based 3D parallelism planning excerpt.
 
-The full runtime module also builds device meshes and applies wrappers. This
-public sample keeps the configuration and validation surface, which is the part
-most useful for explaining how 3D parallelism is composed.
+This public-safe sample is a reduced excerpt from the donor's
+``ParallelismConfig`` and ``validate_3d_config`` surface. It keeps the
+configuration contract and the main divisibility checks without copying the
+runtime mesh/wrapper code.
 """
 
 from __future__ import annotations
@@ -13,6 +14,17 @@ from typing import Any
 
 @dataclass
 class ParallelismConfig:
+    """Configuration for 3D (PP x DP x TP x EP) parallelism.
+
+    Args:
+        pp: Pipeline parallelism degree.
+        dp: Data parallelism degree.
+        tp: Tensor parallelism degree.
+        ep: Expert parallelism degree.
+        pp_schedule: Pipeline schedule label.
+        pp_microbatches: Number of microbatches used by pipeline parallelism.
+    """
+
     pp: int = 1
     dp: int = 1
     tp: int = 1
@@ -55,7 +67,12 @@ def validate_3d_config(
     *,
     num_devices: int | None = None,
 ) -> list[str]:
-    """Validate the key divisibility rules for PP/TP/EP planning."""
+    """Validate a 3D parallelism plan against a model config.
+
+    This mirrors the donor's public planning checks: world-size agreement,
+    layer divisibility for PP, head divisibility for TP, and expert
+    divisibility for EP.
+    """
 
     warnings: list[str] = []
     n_layer = getattr(model_config, "n_layer", None) or getattr(model_config, "depth", None)
@@ -88,6 +105,8 @@ def validate_3d_config(
 
 
 def describe_application_order() -> tuple[str, ...]:
+    """Canonical order for applying the parallelism axes."""
+
     return (
         "TP splits weight matrices first",
         "PP partitions the layer stack into stages",
