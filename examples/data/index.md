@@ -6,6 +6,7 @@ What these examples do:
 - recover build context for C and C++ files
 - normalize enriched source records
 - map character-level structure into token-aligned metadata
+- expose the structure, relation, and platform fields that later become model features
 - keep metadata valid through masking and infill transforms
 - pack multiple documents into a single fixed-length training row
 
@@ -18,3 +19,8 @@ If you only read three files, start with:
 - `enriched_jsonl_record_to_parquet.py`
 - `masking_pipeline_excerpt.py`
 - `packed_rows_schema_sample.py`
+
+Then continue with:
+- `structure_embedding_components_sample.py`
+- `structure_graph_relations_sample.py`
+- `platform_embedding_sample.py`

@@ -6,6 +6,8 @@ These examples show how raw C and C++ sources become enriched training rows:
 - compile command recovery
 - enriched JSONL normalization
 - token-level structure and chunk metadata
+- structure embedding inputs and chunk-relation metadata
+- document-level platform labels for broadcast embeddings
 - masking and infill transforms
 - packed-row contracts for training
 
@@ -17,6 +19,9 @@ Key files in this directory:
 - `compile_commands_context_example.py`: extracts compiler context from `compile_commands.json`
 - `enriched_jsonl_record_to_parquet.py`: normalizes enriched records for parquet output
 - `token_chunk_layout_sample.py`: turns chunk boundaries and graph edges into token-aligned layout
+- `structure_embedding_components_sample.py`: shows which enriched columns feed the structure embedding path
+- `structure_graph_relations_sample.py`: normalizes chunk relations for TreeFFN and relation-bias style features
+- `platform_embedding_sample.py`: summarizes per-document platform label inputs
 - `loader_enriched_columns_sample.py`: shows the loader fallback path for optional enriched JSON columns
 - `masking_pipeline_excerpt.py`: preserves metadata through FIM-style masking
 - `packed_rows_schema_sample.py`: captures the packed-row column contract
