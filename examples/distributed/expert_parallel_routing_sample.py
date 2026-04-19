@@ -1,4 +1,4 @@
-"""Public-safe expert-parallel routing excerpt based on donor MoE accounting."""
+"""Public-safe expert-parallel routing planning excerpt."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from math import ceil
 
 
 def routed_tokens_per_step(tokens: int, top_k: int) -> int:
-    """Mirror routed-token accounting used by donor MoE planning helpers."""
+    """Count how many token-to-expert assignments the router emits per step."""
     return tokens * top_k
 
 
@@ -16,7 +16,7 @@ def capacity_per_expert(
     top_k: int,
     capacity_factor: float = 1.0,
 ) -> int:
-    """Public-safe capacity sketch for fixed-size expert routing buffers."""
+    """Estimate per-expert routing capacity for a fixed-size dispatch buffer."""
     routed_tokens = routed_tokens_per_step(tokens, top_k)
     return ceil((routed_tokens / experts) * capacity_factor)
 
@@ -30,7 +30,7 @@ def routing_summary(
     routing_mode: str = "token_choice",
     capacity_factor: float = 1.0,
 ) -> dict[str, int | str]:
-    """Summarize the routed/shared expert split with donor-style router outputs."""
+    """Summarize routed/shared expert planning numbers for one training step."""
     router_outputs = routed_experts + 1 if routing_mode == "token_choice" else routed_experts
     return {
         "tokens": tokens,

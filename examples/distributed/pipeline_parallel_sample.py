@@ -1,7 +1,7 @@
 """Pipeline Parallelism (PP) donor excerpt.
 
-Minimal prototype that partitions the GPT model's transformer layers into
-pipeline stages using ``torch.distributed.pipelining``.
+Public-facing example of how the donor stack partitions transformer layers into
+pipeline stages with ``torch.distributed.pipelining``.
 
 Usage:
     from examples.distributed.pipeline_parallel_sample import (
@@ -24,7 +24,7 @@ Usage:
     # Or use the top-level entry point
     pipe = apply_pipeline_parallel(model, num_stages=4, schedule=PipelineSchedule.GPIPE)
 
-Compatibility:
+Notes:
     - Works with both Nemotron-style (ABlock/MBlock/EBlock) and legacy Block layers.
     - Designed to be compatible with FSDP2 (apply PP first, then FSDP per-stage).
     - Weight-aware partitioning handles MoE E-blocks (64 experts = ~10x heavier).
@@ -101,19 +101,17 @@ def _as_tensor(value: object) -> torch.Tensor:
 
 
 # ---------------------------------------------------------------------------
-# Aux loss injector (Megatron MoEAuxLossAutoScaler pattern)
+# Aux loss injector
 # ---------------------------------------------------------------------------
 
 
 class _AuxLossInjector(torch.autograd.Function):
     """Inject auxiliary loss gradients into a hidden-state tensor.
 
-    Following Megatron-Core's ``MoEAuxLossAutoScaler``, this custom
-    autograd function attaches an auxiliary loss to the hidden states'
-    backward graph *without* changing the forward values.  During
-    backward, it passes ``grad_output`` through unchanged and triggers
-    ``aux_loss.backward()`` with a *scaled* gradient so the router
-    weights receive correctly-sized gradient signals.
+    This follows the same basic pattern as Megatron-Core's auxiliary-loss
+    scaler: attach an auxiliary loss to the hidden states' backward graph
+    without changing forward values, then inject a scaled gradient during
+    backward so router weights receive the intended signal.
 
     **Loss scaling** depends on the PP schedule:
 
@@ -132,10 +130,8 @@ class _AuxLossInjector(torch.autograd.Function):
     composite scale, otherwise router gradients are ``num_chunks`` times
     too large.
 
-    Call :meth:`set_loss_scale` with the appropriate scale before the
-    forward pass that produces the aux losses.  This mirrors
-    Megatron-Core's ``MoEAuxLossAutoScaler.set_loss_scale`` pattern
-    (see ``megatron/core/pipeline_parallel/schedules.py``).
+    Call :meth:`set_loss_scale` with the appropriate scale before the forward
+    pass that produces the auxiliary losses.
 
     This is used for all non-last pipeline stages (both VPP chunks and
     standard 1f1b/gpipe PP) whose aux losses would otherwise be lost:
