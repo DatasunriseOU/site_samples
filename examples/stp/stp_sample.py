@@ -1,8 +1,9 @@
-"""Semantic Tube Prediction (STP) sample aligned to the internal donor.
+"""Semantic Tube Prediction (STP) geodesic-loss sample.
 
-This public-safe excerpt keeps only the core loss surface used by the donor:
-sample ordered `(s, r, t)` triples from hidden-state trajectories and penalize
-local curvature with `1 - cos(h[t] - h[r], h[r] - h[s])`.
+This example shows the auxiliary loss that nudges hidden-state trajectories to
+stay locally straight. The point is to discourage unnecessary curvature in the
+representation path by sampling ordered `(s, r, t)` triples and penalizing the
+angle between consecutive direction vectors.
 """
 
 from __future__ import annotations

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Grounded donor excerpt for tokenized-enriched parquet rewriting.
+"""Token-level enriched parquet materialization example.
 
-The original pipeline calls into project-local tokenizer and token-alignment
-modules. This public sample keeps the same shard-walk/merge shape while making
-the token materializer an explicit local callback.
+This example shows how char-level enrichment is turned into token-aligned
+training rows. The point is to preserve structure, AST, and dependency signals
+after tokenization so the model can learn from code semantics instead of raw
+text alone.
 """
 
 from __future__ import annotations
@@ -75,11 +76,7 @@ def _copy_metadata_files(input_dir: str, output_dir: str) -> None:
 
 
 def materialize_tokenized_fields(docs: list[dict]) -> list[dict]:
-    """Minimal public-safe stand-in for the donor materializer contract.
-
-    Replace this callback with the project-local tokenizer pipeline when wiring
-    the sample back into a full training environment.
-    """
+    """Build token-aligned enriched columns from char-level document metadata."""
 
     rows: list[dict] = []
     for doc in docs:

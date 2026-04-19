@@ -1,14 +1,37 @@
-"""ReDo dormancy and recycle excerpt."""
+"""ReDo dormancy and recycle excerpt.
+
+This example shows how ReDo finds dormant neurons and selectively reinitializes
+them. The problem it solves is dead or nearly-dead MLP units that stop learning
+and waste capacity during long training runs.
+"""
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import Dict, Optional
 
-import torch.nn as nn
 import torch
+import torch.nn as nn
+
+
+@dataclass
+class ReDoDiagnostics:
+    """Track per-neuron activity so dormant units can be identified later."""
+
+    stats: Dict[str, torch.Tensor] = field(default_factory=dict)
+
+    def get_dormant_ratio(self, tau: float = 0.025) -> Dict[str, float]:
+        ratios: Dict[str, float] = {}
+        for name, stats in self.stats.items():
+            layer_mean = stats.mean().clamp(min=1e-8)
+            scores = stats / layer_mean
+            n_dormant = (scores < tau).sum().item()
+            ratios[name] = n_dormant / stats.numel()
+        return ratios
 
 
 def dormant_ratio(stats: torch.Tensor, *, tau: float = 0.025) -> float:
+    """Return the fraction of units whose normalized activity falls below tau."""
     layer_mean = stats.mean().clamp(min=1e-8)
     scores = stats / layer_mean
     n_dormant = (scores < tau).sum().item()
@@ -24,6 +47,7 @@ def recycle_core(
     redo_stats: Optional[Dict[str, torch.Tensor]] = None,
     name: Optional[str] = None,
 ) -> int:
+    """Reinitialize dormant rows in fc_in/fc_out while preserving active ones."""
     layer_mean = stats.mean().clamp(min=1e-8)
     is_dormant = (stats / layer_mean) < tau
     n_dormant = is_dormant.sum().item()

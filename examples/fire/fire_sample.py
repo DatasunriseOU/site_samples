@@ -1,4 +1,10 @@
-"""FIRE target-selection excerpt."""
+"""FIRE target-selection excerpt.
+
+This example shows how FIRE decides which weights to orthogonalize before a
+phase change or context-extension step. The point is to touch only the 2D
+weights that matter and avoid embeddings, output heads, and Mamba-only
+surfaces that do not benefit from this reset.
+"""
 
 from __future__ import annotations
 

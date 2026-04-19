@@ -1,4 +1,9 @@
-"""DASH tensor-mode excerpt."""
+"""DASH tensor-mode excerpt.
+
+This example shows the small tensor-level step behind DASH. The goal is to
+shrink rows whose weight direction is already aligned with the gradient, which
+helps keep overconfident neurons from dominating late training.
+"""
 
 from __future__ import annotations
 
@@ -14,6 +19,7 @@ def dash_step(
     alpha: float = 0.05,
     shrink_rate: float = 0.01,
 ) -> torch.Tensor:
+    """Apply one tensor-mode DASH shrink step to a 2D weight matrix."""
     if W.dim() != 2:
         raise ValueError(f"dash_step requires 2D tensors, got {W.dim()}D")
 

@@ -1,47 +1,75 @@
-"""Donor-grounded enriched JSONL fixture builder.
+"""Enriched-record normalization example.
 
-This mirrors the internal enriched-record example while keeping the sample
-self-contained and public-safe.
+This shows how one enriched JSONL record is normalized before parquet writing.
+The problem it solves is schema drift: upstream tools may omit optional fields,
+but parquet writers need one stable record shape every time.
 """
 
 from __future__ import annotations
 
-SAMPLE_TEXT = (
-    "#include <vector>\n\n"
-    "class Foo {\n"
-    "public:\n"
-    "  void bar();\n"
-    "};\n\n"
-    "void Foo::bar() {\n"
-    "  std::vector<int> v;\n"
-    "}\n"
-)
-SAMPLE_STRUCTURE_IDS = [1] * 19 + [4] * 20 + [5] * 17 + [2] * 11 + [3] * 32
-SAMPLE_CHUNK_BOUNDARIES = [
-    {"start": 0, "end": 19, "kind": 1, "dep_level": 0, "name": ""},
-    {"start": 19, "end": 39, "kind": 4, "dep_level": 0, "name": "Foo"},
-    {"start": 39, "end": 56, "kind": 5, "dep_level": 1, "name": "Foo::bar"},
-    {"start": 56, "end": 67, "kind": 2, "dep_level": 0, "name": "Foo::bar"},
-    {"start": 67, "end": 99, "kind": 3, "dep_level": 0, "name": "Foo::bar"},
-]
-SAMPLE_CALL_EDGES: list[dict[str, int]] = []
-SAMPLE_TYPE_EDGES = [{"from": 0, "to": 1}]
-SAMPLE_AST_DEPTH = [1] * 39 + [2] * 17 + [1] * 43
-SAMPLE_SIBLING_INDEX = [0] * 39 + [1] * 17 + [0] * 43
-SAMPLE_AST_NODE_TYPE = [10] * 19 + [20] * 20 + [30] * 17 + [40] * 11 + [50] * 32
+import json
 
 
-def build_enriched_fixture() -> dict[str, object]:
+def _normalize_chunk_boundaries(raw_boundaries: list[dict] | None) -> list[dict[str, int | str]]:
+    normalized: list[dict[str, int | str]] = []
+    for chunk in raw_boundaries or []:
+        normalized.append(
+            {
+                "start": int(chunk.get("start", 0)),
+                "end": int(chunk.get("end", 0)),
+                "kind": str(chunk.get("kind", "")),
+                "name": str(chunk.get("name", "")),
+                "dep_level": min(int(chunk.get("dep_level", 0)), 255),
+            }
+        )
+    return normalized
+
+
+def _normalize_edges(raw_edges: list[dict] | None) -> list[dict[str, int]]:
+    return [{"from": int(edge.get("from", 0)), "to": int(edge.get("to", 0))} for edge in raw_edges or []]
+
+
+def _decode_constituent_provenance(raw: dict) -> list[dict[str, str | None]]:
+    items = raw.get("constituent_provenance")
+    if items is None and raw.get("constituent_provenance_json"):
+        try:
+            items = json.loads(raw["constituent_provenance_json"])
+        except (TypeError, ValueError, json.JSONDecodeError):
+            items = None
+    decoded: list[dict[str, str | None]] = []
+    if not isinstance(items, list):
+        return decoded
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        decoded.append(
+            {
+                "filepath": item.get("filepath"),
+                "language_info": json.dumps(item["language_info"]) if item.get("language_info") is not None else None,
+                "build_info": json.dumps(item["build_info"]) if item.get("build_info") is not None else None,
+            }
+        )
+    return decoded
+
+
+def normalize_enriched_record(raw: dict) -> dict[str, object]:
+    """Normalize one enriched JSONL record into a parquet-ready dict."""
     return {
-        "text": SAMPLE_TEXT,
-        "structure_ids": SAMPLE_STRUCTURE_IDS,
-        "chunk_boundaries": SAMPLE_CHUNK_BOUNDARIES,
-        "call_edges": SAMPLE_CALL_EDGES,
-        "type_edges": SAMPLE_TYPE_EDGES,
-        "ast_depth": SAMPLE_AST_DEPTH,
-        "sibling_index": SAMPLE_SIBLING_INDEX,
-        "ast_node_type": SAMPLE_AST_NODE_TYPE,
-        "repo": "abseil",
-        "filepath": "absl/sample/foo.cc",
-        "commit_hash": "public-example-commit",
+        "text": raw.get("text", ""),
+        "actual_token_count": int(raw.get("actual_token_count", 0) or 0),
+        "structure_ids": list(raw.get("structure_ids", [])),
+        "chunk_boundaries": _normalize_chunk_boundaries(raw.get("chunk_boundaries")),
+        "call_edges": _normalize_edges(raw.get("call_edges")),
+        "type_edges": _normalize_edges(raw.get("type_edges")),
+        "ast_depth": list(raw.get("ast_depth", [])),
+        "sibling_index": list(raw.get("sibling_index", [])),
+        "ast_node_type": list(raw.get("ast_node_type", [])),
+        "platform_info": json.dumps(raw["platform_info"]) if raw.get("platform_info") else None,
+        "language_info": json.dumps(raw["language_info"]) if raw.get("language_info") else None,
+        "build_info": json.dumps(raw["build_info"]) if raw.get("build_info") else None,
+        "constituent_provenance": _decode_constituent_provenance(raw),
+        "constituent_provenance_json": raw.get("constituent_provenance_json"),
+        "repo": raw.get("repo"),
+        "filepath": raw.get("filepath"),
+        "commit_hash": raw.get("commit_hash"),
     }

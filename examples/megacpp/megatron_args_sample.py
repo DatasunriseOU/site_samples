@@ -1,7 +1,10 @@
-"""Grounded donor excerpt for Megatron CLI argument emission.
+"""This example builds the Megatron-native flag bundle for NAM56R-style features.
 
-This sample keeps the real flag-building logic, but replaces project-local plan
-imports with a tiny local contract so the file stays import-clean.
+Why it exists: some features already map cleanly to Megatron CLI flags, while
+others still live in custom runtime code.
+
+What problem it solves: it separates native launch flags from custom feature
+notes so launcher code can stay honest about what Megatron handles directly.
 """
 
 from __future__ import annotations
@@ -10,7 +13,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class SampleMegatronHybridPlan:
+class SampleHybridPlan:
     engram: object | None = None
     ngram_hash: object | None = None
     mhc: object | None = None
@@ -25,6 +28,8 @@ class MegatronArgsBundle:
     custom_notes: tuple[str, ...] = ()
 
     def to_shell_fragment(self) -> str:
+        """Render the flag vector as a flat launcher fragment."""
+
         return " ".join(self.args)
 
 
@@ -34,7 +39,7 @@ def _bool_flag(enabled: bool, flag: str) -> tuple[str, ...]:
 
 def build_megatron_args_bundle(
     *,
-    plan: SampleMegatronHybridPlan,
+    plan: SampleHybridPlan,
     use_mla: bool = True,
     q_lora_rank: int = 64,
     kv_lora_rank: int = 64,
@@ -114,7 +119,9 @@ def build_megatron_args_bundle(
 
     if use_dsa:
         if dsa_indexer_dtype != "bf16":
-            raise ValueError(f"unsupported dsa_indexer_dtype: {dsa_indexer_dtype!r}")
+            raise ValueError(
+                f"unsupported dsa_indexer_dtype: {dsa_indexer_dtype!r} (only 'bf16' is supported)"
+            )
         args.extend(
             [
                 "--experimental-attention-variant",
@@ -133,7 +140,7 @@ def build_megatron_args_bundle(
     if plan.engram is not None:
         notes.append("Engram remains custom; no Megatron-native emitter yet")
     if plan.ngram_hash is not None:
-        notes.append("ngram hash enrichment remains custom; no Megatron-native emitter yet")
+        notes.append("n-gram hash enrichment remains custom; no Megatron-native emitter yet")
     if plan.mhc is not None:
         notes.append("mHC remains custom; no Megatron-native emitter yet")
     if plan.mod is not None:
