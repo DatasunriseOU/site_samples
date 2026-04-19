@@ -47,6 +47,8 @@ Near-copy runtime receipts:
 - `tilelang_tma_bulk_copy_smem_nearcopy.py`: heavier near-copy lowering contract for TileLang TMA bulk-copy layouts
 - `mamba_linear_ce_parity_nearcopy.py`: heavier near-copy class-contract reproducer for Mamba linear-CE parity
 - `dsa_indexer_memory_nearcopy.py`: heavier near-copy reproducer for the fp32 DSA score-intermediate blow-up
+- `sparse_mla_fp8_dispatch_nearcopy.py`: heavier near-copy dispatch surface for FP8-aware SparseMLA routing
+- `sparse_mla_dimension_generalization_nearcopy.py`: heavier near-copy comparison of hardcoded vs generalized SparseMLA dimensions
 
 What problem these files solve:
 - they keep the public model description tied to real recipe and launcher surfaces
@@ -62,6 +64,8 @@ What problem these files solve:
   where compact abstractions hide the real contract too aggressively
 - they keep Megatron/Nemotron translation, MLA integration, recurrent mixer
   seams, and structure-aware embedding contracts inspectable as separate units
+- they expose SparseMLA-specific dispatch and dimension assumptions as explicit
+  public contracts instead of leaving them implicit in one kernel family
 
 Where this fits in the model:
 - these are the top-level recipe, layout, and launch adapters for the training stack

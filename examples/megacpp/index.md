@@ -43,6 +43,8 @@ Near-copy runtime receipts:
 - `mamba_linear_ce_parity_nearcopy.py`
 - `mamba3_mimo_3d_to_2d_smem_nearcopy.py`
 - `tilelang_tma_bulk_copy_smem_nearcopy.py`
+- `sparse_mla_fp8_dispatch_nearcopy.py`
+- `sparse_mla_dimension_generalization_nearcopy.py`
 
 In simple words: this directory is the bridge between the public NAM56R model
 story and the smaller contracts that make the recipe, runtime, and kernel
