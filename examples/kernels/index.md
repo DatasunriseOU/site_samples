@@ -2,6 +2,7 @@
 
 ## Attention kernels
 - `attention_validity_prefix_sample.py`: normalize valid-token and valid-slot prefix metadata.
+- `causal_windowing_predicate_sample.py`: stop fused scoring once future-only tiles are reached.
 - `doc_window_mask_sample.py`: build one dense mask that respects causality, document ids, valid prefixes, and local windows.
 - `exact_token_sparse_telemetry_sample.py`: record when exact-token sparse stays sparse vs reroutes to full attention.
 - `fused_rope_qk_sample.py`: rotates Q and K under one ingress contract before attention.
@@ -9,6 +10,7 @@
 - `dense_fa4_kvcache_decode_sample.py`: bounded append-style decode helper for FA4 intent.
 
 ## Sparse staging kernels
+- `hierarchical_block_expansion_sample.py`: expand children of the best coarse meta-blocks before the final top-k.
 - `triton_row_gather_sample.py`: gathers one contiguous `(N, H, D)` tensor by row index.
 - `triton_row_gather_pair_sample.py`: gathers matching K/V rows under one contract.
 - `moba_block_sparse_decode_sample.py`: resolves requested vs actual backend for blockized sparse decode.

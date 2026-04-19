@@ -5,6 +5,7 @@ real CUDA helper contracts used across training and inference.
 
 What is here:
 - `attention_validity_prefix_sample.py`: normalize token-prefix and slot-prefix validity metadata.
+- `causal_windowing_predicate_sample.py`: causal early-exit rule for sparse Pallas fused scoring.
 - `dense_fa4_execute_proof_sample.py`: rollout-side execute-proof builder for dense FA4.
 - `dense_fa4_kvcache_decode_sample.py`: bounded KV-cache decode contract for FA4 intent.
 - `exact_mask_contract_cache_sample.py`: static cache key for exact-mask clustered sparse kernels.
@@ -16,6 +17,7 @@ What is here:
 - `fused_relu_squared_sample.py`: relu2 expert activation surface.
 - `fused_residual_add_rms_norm_sample.py`: block-boundary residual + norm fusion contract.
 - `fused_rope_qk_sample.py`: fused rotary application for Q/K attention ingress.
+- `hierarchical_block_expansion_sample.py`: coarse-to-fine block expansion plan for subquadratic sparse Pallas scoring.
 - `mhc_fused_static_sample.py`: static 4-stream fused mixing surface for mHC fast paths.
 - `moba_block_sparse_decode_sample.py`: requested-vs-actual backend receipt for blockized sparse decode.
 - `union_selection_query_mask_sample.py`: Phase-2 union-map and query-legality contract for clustered sparse TPU attention.
@@ -39,6 +41,8 @@ How these fit into the model/runtime:
   union maps and optional dense debug masks before the clustered sparse kernel runs.
 - Clustered sparse TPU: the three-phase sample shows how routing and sparse
   attention are separated in the clustered Pallas pipeline.
+- Sparse Pallas internals: causal windowing and hierarchical block expansion
+  show how the planner reduces work before the final sparse kernel runs.
 - Block boundaries: residual + RMSNorm fusion and bias-dropout-add cut repeated
   elementwise traffic.
 - Expert compute: relu2 is one of the cheap expert activation surfaces used in
