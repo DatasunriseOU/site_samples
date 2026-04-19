@@ -11,9 +11,9 @@ MegaCpp serves eight specialist SLMs behind a router, each holding its own KV ca
 
 Training runs causal attention without a cache, so cost is zero. At serving the picture inverts. Standard FA3 cache for one specialist scales as `2 * B * T_max * H * head_dim * bpe` per attention layer; for the depth-52 hybrid with 13 attention layers, batch=8, T_max=8192, H=24, head_dim=128, bf16, that is ~6 GB per specialist. Eight specialists co-resident wants the better part of an H200. Two things change the picture. The hybrid pattern: only attention layers carry a KV cache; Mamba layers carry an SSM state cache that is `O(d_state)` per layer, not `O(T_max * H * head_dim)`. MLA: the compressed-latent cache replaces full per-head K and V with one `kv_lora_rank`-wide latent plus a small RoPE'd key fragment. Paged attention sits on top as the substrate for shared block pools with prefix sharing.
 
-## What we built in the POC
+## What we built in the MegaCpp training stack
 
-Three KV cache implementations live in the prototype.
+Three KV cache implementations live in the MegaCpp training stack.
 
 The contiguous FA3 cache layout uses tensors shaped `(n_cache_slots, B, T_max, H, head_dim)` for K and V (FA3-style: time before heads). Position is tracked per batch element via a `cache_seqlens` int32 tensor that `flash_attn_with_kvcache` updates in place. `attn_layer_map` maps global layer index to cache slot index, allocating slots only for attention layers in a hybrid pattern. On depth-52 with 13 attention layers, this drops cache memory by ~75% vs "one slot per layer".
 
@@ -53,7 +53,7 @@ Three things change between H200 (141 GB HBM3e per device, fast NVLink) and GB10
 
 The serving plan keeps the MLA KV cache as the per-specialist cache type, contiguous FA3 as today's substrate, and the paged path as the deferred-but-wired Track B. The eight-specialist ensemble runs co-resident on one multi-GPU node with one shared scheduler holding per-specialist state.
 
-The production MLA helper in the Megatron stack keeps the same KV layout as the prototype. The fused MLA RoPE Triton kernel wraps latent compression, RoPE on the decoupled portion, and the attention dispatch into one kernel - removing intermediate tensors that would otherwise inflate per-step memory by 18.7 GB on the depth-56 R-variant. The fused MLA projection path handles the pre-attention projection. Both compose with the MLA KV cache.
+The production MLA helper in the Megatron stack keeps the same KV layout as the MegaCpp training stack. The fused MLA RoPE Triton kernel wraps latent compression, RoPE on the decoupled portion, and the attention dispatch into one kernel, removing intermediate tensors that would otherwise inflate per-step memory by 18.7 GB on the depth-56 R-variant. The fused MLA projection path handles the pre-attention projection. Both compose with the MLA KV cache.
 
 The DSA path uses an absorbed-MLA variant with MQA layout (single-head absorbed key, all query heads share it). This is the only place in production where the absorbed reformulation runs, and it is decode-only. Training MLA stays on the standard expand-then-attend formulation because the decomposed score requires materialising a `(B, H, T, T)` attention-weight tensor that breaks Flash Attention. Separate sparse-MLA forward and backward kernels cover the H200 FP8 lane.
 
@@ -98,7 +98,7 @@ def lookup_kv(block_table, slot, layer):
 ## Public references
 
 - [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
-- [Sanitized public sample pack](https://github.com/DatasunriseOU/site_samples)
+- [Public sample pack](https://github.com/DatasunriseOU/site_samples)
 - [DeepSeek-V2 Multi-Head Latent Attention - DeepSeek-AI 2024]
 - [PolarQuant: Quantization-Friendly KV Cache Compression - Han et al., AISTATS 2026]
 - [TurboQuant: Random-Rotation KV Cache Quantization - Zandieh et al., ICLR 2026]

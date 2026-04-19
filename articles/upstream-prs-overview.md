@@ -7,11 +7,11 @@ tags: ["upstream", "open-source", "megatron", "tilelang", "mamba", "liger"]
 
 If you train a frontier-shaped model on a stack made of Megatron-LM, TileLang, Liger-Kernel, `state-spaces/mamba`, and several NVIDIA reference kernels, you will sooner than you expect become the de facto maintainer of all of them. Not officially, but in the sense that the bugs you hit are real, the maintainers may not have hit them yet, and your training run does not get to wait for the upstream sprint cycle. This post is the honest tour of the upstream PR pipeline we keep open: why it exists, the checklist before filing, the categories the work falls into, and the cadence we settled on.
 
-## Why MegaCpp cares about this
+## Why this matters
 
 The selfish reason first: every patch we carry locally is a future merge conflict. We pin active upstream revisions, and we sometimes carry a small set of open upstream patches on top. Those branches move every week, and every patch we never upstreamed has to be manually rebased by someone who still remembers why it exists. The half-life of "I'll write it up later" is roughly one model preset.
 
-The less selfish reason: we benefit from the rest of the ecosystem doing the same thing. The DSA indexer memory work that landed as TensorRT-LLM PR #12198 unblocked our inference plans before we had to write the same patch ourselves. The TileLang `LowerBulkCopy` warn-and-fallback in PR #746 is the only reason our Mamba3 MIMO backward kernels compile under TMA lowering at all. We are downstream of all of these projects, and that arrangement only works long-term if everyone who hits a bug writes it up properly.
+The less selfish reason is that downstream users benefit when the rest of the ecosystem does the same thing. The DSA indexer memory work that landed in TensorRT-LLM unblocked inference planning before the same patch had to be carried locally. The TileLang `LowerBulkCopy` warn-and-fallback is also part of why the Mamba3 MIMO backward kernels compile under TMA lowering at all. This arrangement only works long-term if teams that hit a bug write it up properly.
 
 The third reason is calibration. Writing an upstream PR forces you to separate "broken in our integration" from "broken in the library". A surprising number of bugs evaporate at that boundary. Of the sixteen packs in the current queue, several turned out to be already fixed upstream or aimed at the wrong upstream surface once we re-checked them carefully. The checklist below exists because of that.
 
@@ -25,7 +25,7 @@ Second, a self-contained reproducer. The reproducer must run as `python reproduc
 
 Third, a validation-manifest entry. This records which host last validated the reproducer, what the exit code was, and which sentinels were printed. The manifest is the only thing we trust when we ask "is this pack ready"; we do not trust the date in the markdown body, and we do not trust anyone's memory.
 
-Fourth, the upstream-state field. Before we file, we search the target repo for relevant issues and PRs and record whether the pack is a new report, overlaps an existing thread, or is already fixed. If it is already fixed, the pack does not get filed; instead it gets repurposed as regression coverage. Pack 08 (the TileLang `LowerBulkCopy` 3D smem case) is exactly that story: when we first wrote it the assert was still in the tree, and by the time we re-checked, PRs #746, #761 and #2005 had already shipped a warn-and-fallback, so we kept the reproducer as regression coverage instead of filing a duplicate bug.
+Fourth, the upstream-state field. Before filing, the target project gets searched for relevant issues and pull requests, and the result is recorded as a new report, an overlap with an existing thread, or something already fixed. If it is already fixed, the pack does not get filed; it gets repurposed as regression coverage. The TileLang `LowerBulkCopy` 3D shared-memory case is exactly that story: by the time it was re-checked, the relevant warn-and-fallback work had already shipped, so the reproducer stayed as regression coverage instead of becoming a duplicate bug report.
 
 Fifth, an explicit "post it" gate. No pack, however ready, is filed without a human typing the words. We never automated past that gate.
 
@@ -34,21 +34,21 @@ Fifth, an explicit "post it" gate. No pack, however ready, is filed without a hu
 The pre-flight is short on purpose, because long checklists do not get followed. In order:
 
 1. The reproducer passes today on a host we can name. Not last week. Not "the manifest says it passed". Today.
-2. The template markdown renders cleanly in github.com's preview pane. Code fences survive, tables survive, no private-only links bleed through.
+2. The template markdown renders cleanly in GitHub's preview pane. Code fences survive, tables survive, and no non-public links bleed through.
 3. The reproducer is attached as a file or a gist, not pasted inline. Hundreds of lines of Python in an issue body burns reviewer attention.
 4. No non-public-only language: no infrastructure references, no non-public branch codes, no employee names other than the named authors.
 5. For Megatron PRs we run the project's required formatter before the diff goes in, because the upstream PR template makes that a hard checklist item.
 6. The filing approval is recorded by the people doing the work.
 
-The checklist has caught real things. Pack 03 (the FP8 dispatch hazard for SparseMLA) was originally aimed at the TileLang repo because that is where the kernel lives. Reading the body in preview made it obvious the bug is actually in the Transformer Engine `Float8Tensor` wrapper (`.dtype` lies, `.data_ptr()` returns NULL, `.contiguous()` does not unwrap), and the right repo is `NVIDIA/TransformerEngine`. Similarly, pack 07 had its target listed as `tile-ai/tilelang` in an early manifest; the file being changed is the public Mamba backward kernel sample in `state-spaces/mamba`, and TileLang only enters as the lowering target. Both manifest errors were fixed before either issue existed.
+The checklist has caught real things. The FP8 dispatch hazard for SparseMLA was originally aimed at TileLang because that is where the kernel lives. Reading the body in preview made it obvious the bug is actually in the Transformer Engine `Float8Tensor` wrapper (`.dtype` lies, `.data_ptr()` returns NULL, `.contiguous()` does not unwrap), so the target shifted accordingly. Similarly, an early manifest pointed one Mamba backward note at the wrong repository even though the public sample being changed lived elsewhere. Both targeting errors were fixed before anything was filed.
 
 ## The cadence
 
-We submit in waves, not as a stream. A wave is two to four packs filed within a small window, batched by target repo, then a two-to-three-day pause before the next wave. The reason is simple: maintainers have inboxes. If we drop six issues on the same repo on the same morning, two of them get triaged and the other four sit. If we drop two, both get triaged.
+We submit in waves, not as a stream. A wave is two to four packs filed within a small window, batched by target repository, then a two-to-three-day pause before the next wave. The reason is simple: maintainers have inboxes. If six issues land on the same repository on the same morning, two may get triaged and the other four may sit. If two land, both are more likely to get triaged.
 
-Within a wave we follow a coarse priority order. First, defensive fixes against bugs that crash training (the DSA CUDA-graph capture issue, the Megatron `Float16Module` cast that destroys Mamba3's fp32 contract). These are the easy reviews and they build credibility for the harder ones. Second, fixes that piggyback on an already-open upstream PR (our DSA `_compute_index_scores` memory pack is offered as a comment on the open Fused Indexer Loss Kernel PR rather than as a competing PR; opening a competitor would stall both). Third, the larger refactors that need real maintainer attention (the SparseMLA dimension generalization, the Mamba3 MIMO 3D-to-2D smem refactor). Fourth, bug reports for which we do not have a fix to offer yet (the TileLang FloorMod divide-by-zero in `LayoutInference`, where we have a clean reproducer but the right fix lives inside TVM's iter-map normalizer and we are not the right authors).
+Within a wave we follow a coarse priority order. First come defensive fixes against bugs that crash training, such as the DSA CUDA-graph capture issue or the Megatron `Float16Module` cast that breaks Mamba3's fp32 contract. Second come fixes that can piggyback on an already-open upstream pull request, where a comment is more useful than a competing patch. Third come larger refactors that need real maintainer attention, such as SparseMLA dimension generalization or the Mamba3 MIMO 3D-to-2D shared-memory refactor. Fourth come bug reports for which there is not yet a fix to offer, such as the TileLang FloorMod divide-by-zero in `LayoutInference`.
 
-The cadence rule that took us longest to internalize is that "ready" does not mean "filed today". A pack can sit at `ready=Y` for a week while we wait for the right wave; the cost of holding a ready pack is zero, the cost of dumping six issues on a maintainer is not.
+The cadence rule that takes the longest to internalize is that "ready" does not mean "filed today". A pack can sit in the ready state for a week while waiting for the right wave; the cost of holding a ready pack is low, and the cost of dumping six issues on one maintainer is not.
 
 ## The categories
 
@@ -64,15 +64,15 @@ The fourth category is **memory-footprint reductions**. The DSA `_compute_index_
 
 The fifth category is **integration and dispatcher gaps in Megatron-LM**. The Hopper FLCE dispatcher (pack 10) crashes with `ValueError: Unsupported architecture: 9` on every cc!=10 device because the Blackwell entry was the only branch wired in. The Mamba `LinearCrossEntropyModule` wiring (pack 11) was correctly added in one PR and silently reverted three weeks later by a rebase-miss in another. These are the easiest packs to write and the hardest to file, because the right framing is "your CI did not catch this".
 
-The sixth category is **toolchain and compiler bugs in TileLang**. Pack 13 is the FloorMod divide-by-zero in `LayoutInference` when TMA lowering is enabled on Mamba3 backward kernels. Pack 08 is the now-fixed `LowerBulkCopy InputDim==2` assert that we keep around as a regression guard. These are bug reports, not PRs; the right fix lives inside TVM's iter-map normalizer and we trust the TileLang maintainers to land it correctly.
+The sixth category is **toolchain and compiler bugs in TileLang**. One example is the FloorMod divide-by-zero in `LayoutInference` when TMA lowering is enabled on Mamba3 backward kernels. Another is the now-fixed `LowerBulkCopy InputDim==2` assert, which remains useful as a regression guard. These are bug reports, not patch drops; the right fix lives inside TVM's iter-map normalizer.
 
 The seventh category is **legality-preserving refactors that unlock a lowering path**. Pack 07 (Mamba3 MIMO backward 3D->2D smem flatten) is the entire category. Every `[c, r1, r2]` indexer becomes `[c, r1*R + r2]`; smem footprint and register pressure are identical and gradients are bitwise-equal to the unflattened baseline within bf16 rounding. The reason to do it is that TileLang's TMA bulk-copy lowering requires `InputDim()==2`; once the descriptors are 2D, the backward kernel becomes eligible for TMA pipelining on Hopper.
 
 ## Honest about state
 
-None of the sixteen packs has been filed yet. Some are blocked on a fresh repro (pack 10 needs a clean H200 receipt against an unpatched tree). Pack 14, the SparseMLA precision fix, is a code-level note without a checked-in reproducer bundle, so it does not yet meet our own bar. Pack 16 (the Megatron `Float16Module` cast) shares its reproducer with pack 05 but goes in as a separate issue against `NVIDIA/Megatron-LM`. Pack 08 has been re-classified from "issue to file" to "local regression guard" because the underlying fix already shipped in TileLang PR #746.
+None of the sixteen packs has been filed yet. Some are still blocked on fresh repro evidence. The SparseMLA precision fix remains a code-level note without a checked-in reproducer bundle, so it does not yet meet the bar described here. The `Float16Module` cast note shares reproducer coverage with another runtime issue but would still be tracked separately if filed. The `LowerBulkCopy` note has already been re-classified from "issue to file" to "local regression guard" because the underlying fix has shipped upstream.
 
-David Gornshtein and Boris Tamarkin write these packs alongside the training work. We do not have a dedicated open-source liaison. The packs that get written are the ones whose absence would cost us more rebase time than the writeup costs. That filter is uncomfortably honest, and also why the packs that do exist are concrete enough for someone else to validate.
+These packs are written alongside the training work rather than by a dedicated open-source liaison. The packs that get written are the ones whose absence would cost more rebase time than the writeup costs. That filter is blunt, and also why the packs that do exist are concrete enough for someone else to validate.
 
 ## Production checklist
 
@@ -80,7 +80,7 @@ David Gornshtein and Boris Tamarkin write these packs alongside the training wor
 - Every pack has a reproducer that runs against a named upstream SHA and prints a sentinel.
 - Reproducers stamp the host capability and the dependency versions in their first lines of output.
 - The validation manifest is the source of truth for "is this pack ready", not the markdown body.
-- We file in waves of two to four packs, batched by target repo, with two to three days between waves.
+- We file in waves of two to four packs, batched by target repository, with two to three days between waves.
 - We never open a competing PR against an open upstream PR; we comment on the existing thread instead.
 - We do not file packs that are already fixed upstream; we repurpose them as regression tests.
 - The filing decision is always made by a human and recorded.
@@ -89,8 +89,5 @@ David Gornshtein and Boris Tamarkin write these packs alongside the training wor
 
 ## References
 
-- Filing checklist and validation manifest used to track readiness.
-- TileLang PR #746 ([Refactor] Merge bulk copy and improve layout inference) and follow-ups #761, #2005.
-- Megatron-LM PR #3345 (Hopper FLCE kernels), PR #3226 (LinearCrossEntropyModule wiring), PR #3207 (MTP replay), PR #3674 (DSA absorbed MLA + TileLang fused), PR #4039 (Fused Indexer Loss Kernel), PR #4268 (delayed wgrad overlap).
-- Liger-Kernel issue #968 (closed) and PRs #1126 (draft assertion) / #1182 (reduction plumbing).
-- TensorRT-LLM PR #12198 as the inference-side analogue of pack 12.
+- [GitHub pull request documentation](https://docs.github.com/en/pull-requests)
+- Selected upstream pull requests and issues in TileLang, Megatron-LM, Liger-Kernel, and TensorRT-LLM that match the categories described above.

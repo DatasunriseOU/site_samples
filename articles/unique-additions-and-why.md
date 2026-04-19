@@ -5,7 +5,7 @@ date: "2026-04-18"
 tags: ["architecture", "cppmega", "nam52", "nam56r", "hybrid-models", "megatron"]
 ---
 
-**TL;DR:** The distinctive additions are not random experiments. The durable ones exist because the stack trains hybrid families instead of a single uniform decoder. In practice that means explicit pattern notation, model-family-aware layer specs, custom embedding surfaces, recurrent and Mamba mixers that are selected intentionally rather than implicitly, and a small set of optimization tools such as FIRE and STP that solve problems the base stack does not solve by itself. The useful question is not "what is unique?" but "which additions change the training contract in a way that stays legible under NAM52 and NAM56R?"
+The distinctive additions are not random experiments. The durable ones exist because the stack trains hybrid families instead of a single uniform decoder. In practice that means explicit pattern notation, model-family-aware layer specs, custom embedding surfaces, recurrent and Mamba mixers that are selected intentionally rather than implicitly, and a small set of optimization tools such as FIRE and STP that solve problems the base stack does not solve by itself. The useful question is not "what is unique?" but "which additions change the training contract in a way that stays legible under NAM52 and NAM56R?"
 
 The easiest way to overstate a research codebase is to treat every non-upstream file as a meaningful innovation. The easiest way to understate it is to describe the whole thing as "just Megatron plus some glue." Neither view survives contact with the current source tree. The real additions are the places where the code stops pretending the model is homogeneous.
 
@@ -105,13 +105,12 @@ This distinction matters for migration into MegaCpp. A good migration is not a b
 
 The final reason these additions matter is that they keep the system debuggable. Hybrid model work fails when people cannot tell whether a result belongs to a pattern choice, a block-specific mixer, an expert-routing effect, or an input-representation experiment. The code here avoids that collapse by separating those concerns into named surfaces.
 
-That is what makes the additions worth preserving. They do not just add capability. They add legibility. In practice that is the difference between a prototype that can be maintained and one that can only be admired briefly before everyone forgets how it works.
+That is what makes the additions worth preserving. They do not just add capability. They add legibility. In practice that is the difference between a research-stack that can be maintained and one that can only be admired briefly before everyone forgets how it works.
 
 ## References
 
 - [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
-- [Sanitized public sample pack](https://github.com/DatasunriseOU/site_samples)
-- Public FIRE sample referenced in the repository materials
-- Public STP sample referenced in the repository materials
-- the public Mamba mixer sample
-- the public recurrent spec sample
+- [MegaCpp public sample pack](https://github.com/DatasunriseOU/site_samples)
+- [MegaCpp plasticity toolkit notes](../docs/plasticity-toolkit-notes.md)
+- [MegaCpp STP notes](../docs/stp-notes.md)
+- [MegaCpp hybrid layout notes](../docs/hybrid-layout-notes.md)

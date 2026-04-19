@@ -1,6 +1,6 @@
 # Distributed Debugging Notes
 
-This note summarizes public-safe debugging patterns for multi-GPU training.
+This note summarizes public debugging patterns for multi-GPU training.
 
 Common failure classes:
 - activation growth that looks like a parameter-memory problem

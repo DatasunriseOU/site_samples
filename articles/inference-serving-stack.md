@@ -29,7 +29,7 @@ The router is a small model plus a rules layer. The small model is a distilled c
 
 The router outputs a primary specialist and, for high-stakes requests, a shadow specialist. The shadow is only dispatched when the primary's top-1 probability is below a threshold tuned per intent. For pure `codegen` traffic the threshold is low and we almost never shadow. For `review` traffic, where the cost of a wrong specialist is a confidently wrong review, the threshold is high and we shadow more often.
 
-A few things the router deliberately does not do. No token-level reassignment — once routed, a request stays on its specialist for the whole generation. No cross-specialist output stitching; we tried, and the seams were visible. No online learning from real-time feedback; the classifier is retrained offline weekly on labeled traffic, which is enough.
+A few things the router deliberately does not do. No token-level reassignment — once routed, a request stays on its specialist for the whole generation. No cross-specialist output stitching; the quality penalty is visible. No online learning from real-time feedback; the classifier is retrained offline on labeled traffic.
 
 ## 3. One scheduler per specialist, not one across all of them
 
@@ -123,5 +123,5 @@ The boundary between routing, scheduling, and KV management is the only thing ke
 ## Public references
 
 - [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
-- [Sanitized public sample pack](https://github.com/DatasunriseOU/site_samples)
-- Public routing and serving notes linked from the repository materials
+- [vLLM documentation](https://docs.vllm.ai/)
+- [FlashAttention repository](https://github.com/Dao-AILab/flash-attention)

@@ -17,7 +17,7 @@ we actually shipped is a bounded opt-in path on the canonical H200 stack, with
 a fail-closed applicability matrix, a staged rollout, and a list of variants
 that looked fine in microbenchmark and were rejected on contract grounds.
 
-This post describes that work the way we track it internally: applicability
+This post describes that work the way we track it in code and public receipts: applicability
 split, Build4 test profiles, the dense/full rollout manifest, the hybrid
 prefill/decode plan, and the FA3 control-ppath regressions that killed the
 early FA4 candidates before we ever let them touch a main training run.
@@ -117,7 +117,7 @@ is a dedicated selector:
 
 - `enable_dense_fa4_attention()` and `disable_dense_fa4_attention()` as
   explicit entry points.
-- An internal `_use_dense_fa4(device)` helper that stays separate from the
+- A `_use_dense_fa4(device)` helper that stays separate from the
   sparse backend knobs (`moba_backend=fa4`,
   `donor_runtime_compare=fa4`, `block_sparse_runtime_mode`).
 - A `doc_ids` contract that is an explicit policy decision and not an

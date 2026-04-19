@@ -82,5 +82,5 @@ train.py --fp8-recipe tensorwise \
 ## References
 
 - Public FP8 rollout notes in the public engineering project
-- Sanitized precision and backend comparison notes in `site_samples`
+- Public precision and backend comparison notes in `site_samples`
 - Public training review summaries attached to the public engineering documentation

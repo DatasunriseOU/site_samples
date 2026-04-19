@@ -13,7 +13,7 @@ An 8-specialist ensemble runs MoE layers at every E-block in a depth-52 hybrid p
 
 The constraint that shaped the design is mundane: we have to fall back. CI runs on macOS, ablation paths run on a single H200 without IB, GB10 has no second host, and the offline harness needs to import the MoE module without NVSHMEM in the process. Every layer of the dispatch stack has a non-DeepEP twin, and the choice between them is made at construction time from environment, not at every forward call.
 
-## What we built in the POC
+## What we built in the public MegaCpp MoE dispatch path
 
 The MoE substrate in the codebase is three modules deep, plus a bridge.
 
@@ -33,13 +33,13 @@ the fused MoE kernel module is the device-local expert compute. It picks one of 
 
 the Megatron MoE integration module is the Megatron-Core glue mentioned above. The two helpers worth flagging are `permute` and `group_limited_topk`. Group-limited routing — limit routing to a subset of expert groups per token, take top-k within those groups — composes with our 8-specialist hierarchical routing because each specialist owns its own group. We do not invoke it in the main training loop yet (the specialist boundary is enforced higher up), but it is wired through so we can A/B against the global top-k policy when the spec changes.
 
-Drop policy in the POC: capacity-factor drops are off by construction. The variable-split CUDA path sends every token, and the XLA equal-split path pads to a static capacity that is provably larger than the worst-case load (`cap_per_rank = BT * max_active_slots_per_token`). When the auxiliary load-balance loss does its job, the padded headroom is small. When it does not, we surface the imbalance as a metric rather than silently dropping; that decision predates the DeepEP lift and we kept it. DeepEP itself supports a drop mode; we do not enable it.
+Drop policy in the public MegaCpp MoE path is simple: capacity-factor drops are off by construction. The variable-split CUDA path sends every token, and the XLA equal-split path pads to a static capacity that is provably larger than the worst-case load (`cap_per_rank = BT * max_active_slots_per_token`). When the auxiliary load-balance loss does its job, the padded headroom is small. When it does not, we surface the imbalance as a metric rather than silently dropping; that decision predates the DeepEP lift and we kept it. DeepEP itself supports a drop mode; we do not enable it.
 
 ## How it lands in MegaCpp
 
 The deployment substrate is Megatron-LM with the flex MoE dispatcher.
 
-The Megatron argument bridge builds the argument fragment that turns this on. The relevant chunk: `--moe-token-dispatcher-type flex`, `--moe-router-dtype fp32`, `--moe-permute-fusion`, and conditionally `--moe-grouped-gemm`. The flex dispatcher is Megatron's name for the DeepEP path: pre-allocated fixed buffers instead of the alltoall path that creates 84-224 GiB gradient tensors at EP>2, NVLink for intranode transfer, NVSHMEM IBGDA for multi-node. It silently falls back to the `alltoall` dispatcher if `deep_ep` is not importable, which is the behaviour we want on the paths where DeepEP is not installed. `--moe-router-dtype fp32` is non-negotiable because DeepEP only consumes fp32 router probabilities; this matches the POC's hard rule.
+The Megatron argument bridge builds the argument fragment that turns this on. The relevant chunk: `--moe-token-dispatcher-type flex`, `--moe-router-dtype fp32`, `--moe-permute-fusion`, and conditionally `--moe-grouped-gemm`. The flex dispatcher is Megatron's name for the DeepEP path: pre-allocated fixed buffers instead of the alltoall path that creates very large transient tensors at higher EP, NVLink for intranode transfer, and NVSHMEM IBGDA for multi-node. It silently falls back to the `alltoall` dispatcher if `deep_ep` is not importable, which is the behavior we want on the paths where DeepEP is not installed. `--moe-router-dtype fp32` is non-negotiable because DeepEP only consumes fp32 router probabilities; this matches the public MegaCpp hard rule.
 
 The expert sharding is straightforward. With 64 experts and EP=4, each rank owns 16 experts. The TE `GroupedLinear` path described in the [Transformer Engine bridge](/blog/transformer-engine-bridge-on-nvidia) writeup is what executes the expert GEMM per rank; jagged token counts dispatch as a single fused kernel and the FP8 current-scaling recipe carries through.
 

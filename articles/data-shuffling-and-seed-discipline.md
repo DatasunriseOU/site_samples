@@ -5,7 +5,7 @@ date: "2026-04-18"
 tags: ["data", "reproducibility", "dataloader", "training"]
 ---
 
-Reproducibility is one of those words that sounds like a property of the code and is actually a property of the team. in our POC we hold a specific, finite bar: two runs of the same config, on the same data, with the same seed, on the same hardware family, produce the same loss curve for the first few thousand steps. Beyond that, numerical drift in bf16 reductions makes strict bitwise equality pointless.
+Reproducibility is one of those words that sounds like a property of the code and is actually a property of the whole training setup. In MegaCpp we use a specific, finite bar: two runs of the same config, on the same data, with the same seed, on the same hardware family, should produce the same loss curve for the first few thousand steps. Beyond that, numerical drift in bf16 reductions makes strict bitwise equality pointless.
 
 The bar we do hold covers everything under our control: data order, document packing, batch composition, FIM splits, initial weights. This post is about what it took to get there.
 
@@ -196,5 +196,5 @@ Reproducibility at this level is a maintenance cost. It is also what lets a sing
 - the main training entrypoint
 - the JSONL-to-Parquet ingestion stage
 - the public data pipeline notes
-- a data-pipeline design note
-- the public changelog
+- https://github.com/DatasunriseOU/site_samples/blob/main/docs/data-prep-notes.md
+- https://github.com/DatasunriseOU/site_samples/blob/main/articles/cpp-data-versioning-and-schema.md

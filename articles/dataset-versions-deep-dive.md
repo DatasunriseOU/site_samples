@@ -11,7 +11,7 @@ The high-level overview of v2 through v6 lives in a separate post; this one is t
 
 Migrating a corpus across schema boundaries is the most expensive thing you can do in a data stack. Re-tokenizing 27.6 M documents because you renamed a column burns a week of compute time. Each generation was paid for in large compute budgets and double-digit terabytes; writing the history down is how the next version avoids the same mistakes.
 
-## What we built in the POC
+## What we built in the MegaCpp data pipeline
 
 The shared substrate before any version: eight pinned C/C++ repositories cloned shallow at explicit refs, totaling ~15 GB on disk after shallow clone, plus a 142-repo catalog tracked separately. One hybrid C++ tokenizer (now 131,072 entries). The differences between versions are how we *chunk*, *order*, *enrich*, and *resolve cross-file references* over those same bytes.
 
@@ -31,7 +31,7 @@ Val_bpb attribution: v3 teaches "what was changed and what it replaced" instead 
 
 **v4 - tree-sitter context graph.** The first version that emits a graph. For every modified function in a commit, build a strict 64K-token window containing the target plus its direct callers and direct callees, extracted with a tree-sitter AST walker.
 
-Schema diff vs v3: still text-shaped at the consumer surface, but `text` is now a graph-assembled window. New optional `language_info` (header reclassification, CUDA/HIP/OpenCL markers, SQL primary gating, C++-standard hints), `platform_info` from the platform scanner described in the public data-preparation notes, and `build_info` for compile-command provenance.
+Schema diff vs v3: still text-shaped at the consumer surface, but `text` is now a graph-assembled window. New optional `language_info` (header reclassification, CUDA/HIP/OpenCL markers, SQL primary gating, C++-standard hints), `platform_info` from the platform scanner used in the dataset preparation pipeline, and `build_info` for compile-command provenance.
 
 Storage cost: significant. Shards live in size buckets (4K/16K/64K/128K) that share schema lineage with v4. A single double-digit-TB local cleanup pass deleted four verified `v7` tree-sitter waves once they were verified complete on object storage.
 
@@ -130,7 +130,5 @@ def load_row(row, T):
 
 ## References
 
-- the public curriculum-mapping notes
-- the public changelog
-- the offline tokenized-enrichment step
-- the public data-preparation notes
+- [MegaCpp site_samples articles directory](https://github.com/DatasunriseOU/site_samples/tree/main/articles)
+- [MegaCpp site_samples docs directory](https://github.com/DatasunriseOU/site_samples/tree/main/docs)

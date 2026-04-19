@@ -1,6 +1,6 @@
 ---
-title: "Checkpoint Format and Resume: What We Actually Save, and What We Test"
-description: "DCP vs per-rank checkpoints, async mirroring to GCS, the resume tests we run on every change, world-size changes on resume, and the corruption classes we had to learn to detect."
+title: "Checkpoint Format and Resume: What We Save, and What We Test"
+description: "DCP vs per-rank checkpoints, async mirroring to GCS, resume tests, world-size changes on resume, and the corruption classes that need explicit detection."
 date: "2026-04-18"
 tags: ["checkpoints", "dcp", "training-infra", "resume"]
 ---
@@ -10,8 +10,8 @@ paper about. It only shows up as pain: a rank that went dark at step 37,812 and
 came back with the wrong optimizer shards, a DCP directory whose `.metadata`
 landed but whose tensor files did not, a rotation job that cheerfully deleted
 the only surviving copy of a checkpoint because the background GCS upload had
-not finished yet. This post is about how `checkpoint_manager.py` and
-its test suite got to where they are, and what we still do not trust.
+not finished yet. This post covers the checkpoint manager design, its test
+suite, and the remaining failure modes that still deserve explicit caution.
 
 ## Two Formats, One Manager
 
@@ -123,9 +123,7 @@ invariant: post-success, `.tmp` must be gone.
 ## The Resume Tests We Actually Run
 
 The resume surface is wider than the save surface, so the test matrix is
-wider too. The ones we care about most, from
-sanitized checkpoint manager tests, sanitized checkpoint rotation tests, and
-sanitized distributed checkpoint integration tests:
+wider too. The ones we care about most come from the public checkpoint sample set and the distributed-checkpoint integration examples:
 
 - `test_resume_weights_exact_match`: save a model with a specific weight
   tensor, reload through `load_checkpoint`, assert `torch.equal`. No
@@ -235,8 +233,8 @@ the per-rank `model_*.pt` purely as an export artifact produced on demand
 from a DCP dir, not as a first-class save format. We keep the dual path
 today because eval, emergency, and ad-hoc debugging all depend on the
 per-rank file being the canonical thing `torch.load` opens. That coupling
-is the single biggest source of branches in `checkpoint_manager.py` and
-the single biggest source of bugs we have shipped from it.
+is the single biggest source of branching in the checkpoint manager and one of
+the main historical sources of resume bugs.
 
 ## Format snapshot
 
@@ -249,12 +247,7 @@ the single biggest source of bugs we have shipped from it.
 
 ## References
 
-- `checkpoint_manager.py`
-- sanitized checkpoint manager tests
-- sanitized focused checkpoint tests
-- sanitized checkpoint rotation tests
-- sanitized emergency checkpoint tests
-- sanitized checkpoint isolation tests
-- sanitized distributed checkpoint integration tests
-- a checkpoint design note
-- `CHANGELOG.md`
+- https://docs.pytorch.org/docs/main/distributed.checkpoint.html
+- https://docs.pytorch.org/docs/stable/checkpoint.html
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/distributed/oom_triage_sample.py
+- https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md

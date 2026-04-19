@@ -41,7 +41,7 @@ That is why specialist design belongs next to systems design. The router is not 
 
 ## Shared Experts and Routed Experts Solve Different Problems
 
-One subtle but important theme in the repo's notes is the distinction between shared experts and routed experts. Some design notes explicitly call out that the shared expert still sees all tokens while routed experts see subsets determined by routing. That is not implementation trivia. It means the specialist path keeps one universal channel while allowing high-capacity specialization elsewhere.
+One subtle but important theme in the repo's notes is the distinction between shared experts and routed experts. The public notes for this stack explicitly call out that the shared expert still sees all tokens while routed experts see subsets determined by routing. That is not implementation trivia. It means the specialist path keeps one universal channel while allowing high-capacity specialization elsewhere.
 
 This creates a healthier interpretation of hybrid expert models. The system is not betting everything on hard token partitioning. It keeps a shared path available, which helps explain why expert configurations are discussed in terms of both routed and shared sizes rather than only total parameter count.
 
@@ -73,7 +73,7 @@ This small flag block already implies routing, dispatch, combine, and parallel p
 
 The repo's compile receipts are arguably the best evidence about specialists because they remove wishful thinking. an H200 bring-up receipt shows that a dense TP+SP+FSDP compile lane can be alive while a later real MoE frontier still fails inside standalone `TokenChoiceMoELayer`. That is exactly the sort of fact that a generic "MoE works" statement hides.
 
-The broader changelog reinforces the same lesson. Jagged grouped MoE paths could hurt compile badly enough that a padded path was faster end to end. That means specialists should not be evaluated only by sparse arithmetic efficiency. They must be evaluated by the combined routing plus compiler plus system story.
+The broader engineering notes reinforce the same lesson. Jagged grouped MoE paths could hurt compile badly enough that a padded path was faster end to end. That means specialists should not be evaluated only by sparse arithmetic efficiency. They must be evaluated by the combined routing plus compiler plus system story.
 
 This is one reason the specialist path in this stack feels more credible than a lot of MoE writeups. The repo does not just celebrate experts in theory. It records where they actually complicate runtime behavior.
 
@@ -126,9 +126,11 @@ The codebase earns the sharper interpretation because it records the costs as we
 
 ## References
 
-- the main MoE runtime module
-- the TPU feature-ladder validation flow
-- the training-arguments layer
-- the main training entrypoint
-- an H200 bring-up receipt
-- the public changelog and release notes
+- [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
+- [Expert-parallel and MoE sharding](https://github.com/DatasunriseOU/site_samples/blob/main/articles/expert-parallel-and-moe-sharding.md)
+- [Sequence, context, and expert split taxonomy](https://github.com/DatasunriseOU/site_samples/blob/main/articles/sequence-context-expert-splits.md)
+- [What Megatron can and cannot split](https://github.com/DatasunriseOU/site_samples/blob/main/articles/what-megatron-can-and-cannot-split.md)
+- [H200 bring-up and naming](https://github.com/DatasunriseOU/site_samples/blob/main/articles/h200-bringup-and-naming.md)
+- [Training on H200 eight-GPU machines](https://github.com/DatasunriseOU/site_samples/blob/main/articles/training-on-h200-eight-gpu.md)
+- [Megatron Core MoE API guide](https://docs.nvidia.com/megatron-core/developer-guide/latest/api-guide/moe.html)
+- [Megatron Bridge parallelisms guide](https://docs.nvidia.com/nemo/megatron-bridge/latest/parallelisms.html)

@@ -12,7 +12,7 @@ Multi-Head Latent Attention is the one piece of the DeepSeek-V3 architecture tha
 
 ## What MLA looks like when we train it
 
-The straightforward MLA path is what our POC training code does today. The KV projection produces a low-rank latent:
+The straightforward MLA path is what our MegaCpp training code does today. The KV projection produces a low-rank latent:
 
 ```
 c_kv   = W_dkv @ x              # (B, T, kv_lora_rank)
@@ -105,6 +105,6 @@ For the C++ specialists specifically, the combination of MLA training + absorbed
 - `24-mla-weight-absorption-analysis.md`
 - `deepseek_mla_strategy.md`
 - `06-long-context.md`
-- internal training review notes
+- public training notes in `site_samples`
 - `architecture_and_eval_en.md`
 - `v4_architecture.md`

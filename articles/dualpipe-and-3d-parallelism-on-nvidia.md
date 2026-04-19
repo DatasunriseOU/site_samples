@@ -13,7 +13,7 @@ The constraint is shape, not size. A depth-52 hybrid preset interleaves A-blocks
 
 So the job is twofold: lay out a mesh that fits — TP for dense, PP for depth, DP/FSDP2 for replication, EP for MoE — then schedule the pipeline so the bubble stops being the dominant cost. DualPipe and DualPipeV give us bidirectional F/B overlap plus a W (weight-grad) decomposition that drives the bubble below 1F1B at the same stage count. The codebase built the cube and the DualPipe wrapper end-to-end; MegaCpp lifts the layout planning while delegating the schedule to a focused DualPipeV integration on top of upstream Megatron.
 
-## What we built in the POC
+## What we built in the public MegaCpp parallelism path
 
 Five modules carry the parallelism story.
 
@@ -47,7 +47,7 @@ The family-aware spec builder and TE spec builder assemble the `MambaStackSubmod
 
 The Megatron launch-argument builder emits the runtime flags. The 8-GPU H200 single-node fragment is `--tensor-model-parallel-size 2 --pipeline-model-parallel-size 1 --expert-model-parallel-size 4 --sequence-parallel`. Multi-node H200 moves TP up to 4 and EP up to 8. DP is implicit (`world_size / (TP × PP × EP)`). GB10 collapses the cube to TP=1, PP=1, EP=1, DP=1 — on that path the parallelism story is "all the work is in the kernel, not the cube".
 
-The POC pieces that did not survive the lift: our early pipeline partitioner, the Megatron block wrapper, and the in-process aux-loss injector — Megatron's `TransformerLayer` and `parallel_state` already do those jobs. The stage modules in the deployment DualPipeV wrapper are a focused re-implementation that knows how to slice a Megatron `MambaModel` into the 4 virtual stages DualPipeV needs.
+MegaCpp pieces that did not survive the lift: our early pipeline partitioner, the Megatron block wrapper, and the in-process aux-loss injector — Megatron's `TransformerLayer` and `parallel_state` already do those jobs. The stage modules in the deployment DualPipeV wrapper are a focused re-implementation that knows how to slice a Megatron `MambaModel` into the 4 virtual stages DualPipeV needs.
 
 ## Bubble accounting
 
@@ -101,11 +101,10 @@ apply_expert_parallel(model, ep_size=ep)
 
 ## References
 
-- Modules: the distributed parallelism module, the Megatron TP adapter, the Megatron block wrapper, the Megatron bridge, the research DualPipe schedule layer, the public STP module sample, the deployment DualPipeV wrapper, the DualPipeV activation patch, the hybrid schedule plan patch, the family-aware spec builder, the TE spec builder, and the Megatron argv emitter.
 - [DualPipe — DeepSeek-AI, GitHub](https://github.com/deepseek-ai/DualPipe)
-- [DeepSeek-V3 — arXiv:2412.19437]
+- [DeepSeek-V3 Technical Report](https://arxiv.org/abs/2412.19437)
 - [Megatron-LM — NVIDIA, GitHub](https://github.com/NVIDIA/Megatron-LM)
-- [torch.distributed.pipelining — PyTorch docs](https://pytorch.org/docs/stable/distributed.pipelining.html)
-- [torchtitan parallelism order — PyTorch torchtitan, GitHub](https://github.com/pytorch/torchtitan)
-- [Improving LLM Data Efficiency with JEPA — arXiv:2602.22617]
-- [DGX Spark / GB10 platform notes — NVIDIA developer forums]
+- [PyTorch `torch.distributed.pipelining`](https://pytorch.org/docs/stable/distributed.pipelining.html)
+- [TorchTitan](https://github.com/pytorch/torchtitan)
+- [Hybrid layout docs](https://github.com/DatasunriseOU/site_samples/tree/main/docs)
+- [STP sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/stp/stp_sample.py)

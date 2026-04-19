@@ -5,28 +5,28 @@ author: MegaCpp Engineering
 tags: [hybrid-models, scheduling, mamba, moe, pipeline-parallel]
 summary: >
   Hybrid layer interleaving is not just a naming scheme for mixed architectures.
-  In the MegaCpp stack it becomes an execution contract that decides which
+  In practice it becomes an execution contract that decides which
   layers can be scheduled uniformly, which need opaque wrappers, and where MoE
   semantics differ from attention or recurrent paths.
 description: >
   A code-grounded explanation of how interleaved schedules work for NAM52 and
-  NAM56R-style hybrid models, based on the prototype layer classes and MegaCpp’s
-  hybrid schedule planner.
+  NAM56R-style hybrid models, based on hybrid pattern notes,
+  scheduling examples, and authoritative parallelism references.
 ---
 
 # Hybrid Layer Interleaving: Why A/M/E/R Schedules Need Real Execution Plans
 
-**TL;DR:** hybrid layer interleaving only works when the runtime knows exactly what each layer family promises. The prototype stack and MegaCpp scheduler do this explicitly: `ABlock`, `MBlock`, `EBlock`, and `RBlock` are separate contracts, pattern strings such as `AEMEAEMEAEMR` are machine-usable schedules, and the interleaved planner wraps non-MoE layers differently from MoE transformer layers so execution can stay uniform without pretending all layers behave the same.
+Hybrid layer interleaving only works when the runtime knows exactly what each layer family promises. The examples and glossary in this repo make that contract explicit: `ABlock`, `MBlock`, `EBlock`, and `RBlock` are separate roles, pattern strings such as `AEMEAEMEAEMR` are machine-usable schedules, and the interleaved planner wraps non-MoE layers differently from MoE transformer layers so execution can stay uniform without pretending all layers behave the same.
 
 Interleaving sounds simple in abstract form. You alternate attention, expert, Mamba, and recurrent layers so the model mixes inductive biases instead of committing to one family. But an interleaved architecture is only operationally useful if the training stack can answer a more demanding question: how should those layers be represented in the scheduler?
 
-That question is where many architecture writeups get thin. They stop at pattern notation. The MegaCpp stack is more useful because it continues into execution planning. the public hybrid schedule sample is not content to know that a model is hybrid. It classifies which layers are real MoE transformer layers, which layers should be treated as opaque scheduling nodes, and how to keep an interleaved scheduler from branching itself into a maintenance nightmare.
+That question is where many architecture writeups get thin. They stop at pattern notation. The useful next step is execution planning. A public hybrid schedule note should classify which layers are real MoE transformer layers, which layers should be treated as opaque scheduling nodes, and how to keep an interleaved scheduler from branching itself into a maintenance nightmare.
 
 ## Pattern notation is only the first layer of meaning
 
-The architecture notation used around NAM52 and NAM56R is compact but intentional: `A` for attention, `M` for Mamba, `E` for expert or MoE, `R` for recurrent. In the prototype stack, these are realized as `ABlock`, `MBlock`, `EBlock`, and `RBlock`. The comments for `nemotron_style` are explicit that each layer does exactly one thing: sequence mixing or point-wise FFN, not a combined transformer block that hides both.
+The architecture notation used around NAM52 and NAM56R is compact but intentional: `A` for attention, `M` for Mamba-style sequence mixing, `E` for expert or MoE, `R` for recurrent. In the public glossary and layout notes for this repo, these are explained as `ABlock`, `MBlock`, `EBlock`, and `RBlock`: attention-heavy, sequence-mixer, conditional-capacity, and recurrent-style blocks. The point is that each layer family does one thing instead of hiding multiple unrelated roles inside a generic transformer block.
 
-That separation is the foundation of interleaving. If `A` and `E` were both overloaded containers with attention and FFN inside, the scheduler would have much less leverage. Instead, the model encodes the architecture as a sequence of narrow roles. The MegaCpp recipe for NAM56R preserves the same idea by turning `AEMEAEMEAEMR` into a Megatron-facing pattern string where `E` remains visible as an expert-bearing position.
+That separation is the foundation of interleaving. If `A` and `E` were both overloaded containers with attention and FFN inside, the scheduler would have much less leverage. Instead, the model encodes the architecture as a sequence of narrow roles. The public hybrid pattern sample preserves the same idea by turning `AEMEAEMEAEMR` into a layer-by-layer expansion where `E` remains visible as an expert-bearing position.
 
 This is why pattern strings are worth keeping in engineering discussions. They are not branding. They are shorthand for execution-relevant layer families.
 
@@ -39,19 +39,19 @@ This is why pattern strings are worth keeping in engineering discussions. They a
 
 Once you internalize that table, interleaving stops looking like a cosmetic depth pattern and starts looking like a typed program.
 
-## What the prototype layer split buys you
+## What the layer split buys you
 
-The `nemotron_style` path in the main model runtime module exists specifically to make this typed architecture practical. The comments are blunt: `ABlock` is attention only, `MBlock` is Mamba only, `EBlock` is expert FFN only. That means the scheduler can reason about what a layer is supposed to contribute without first deconstructing a monolithic transformer block.
+The key practical property is that the scheduler can treat `ABlock`, `MBlock`, `EBlock`, and `RBlock` as typed roles rather than reverse-engineering a monolithic transformer block. `ABlock` means attention-heavy mixing, `MBlock` means state-space or scan-heavy mixing, `EBlock` means routed or dense FFN capacity, and `RBlock` means recurrent-style consolidation. That lets the scheduler reason about what a layer contributes without first deconstructing its internals.
 
-It also means the runtime can attach family-specific optimizations and caveats. `EBlock` owns MoE routing flags, shared expert behavior, aux loss, and z-loss. `MBlock` has its own warnings around context parallel support. `RBlock` owns the recurrent integration path, including the optional M2RNN bridge. `ABlock` carries the attention-specific surfaces, including advanced attention integrations.
+It also means the runtime can attach family-specific optimizations and caveats. `EBlock` owns MoE routing, shared-expert behavior, and aux-loss behavior. `MBlock` has its own state-update and sharding constraints. `RBlock` owns recurrent integration paths, including M2RNN-style memory. `ABlock` carries the attention-specific surfaces, including cache, projection, and overlap behavior.
 
 That kind of separation pays off most in two places.
 
 First, it makes architectural experimentation compositional. You can ask whether a depth schedule needs more `M` or more `E` positions without rewriting the meaning of every layer. Second, it makes parallel runtime planning tractable. The scheduler does not need to reverse-engineer hidden subgraphs to know whether a node is a candidate for MoE-aware planning.
 
-## The MegaCpp planner’s real contribution
+## The planner's real contribution
 
-The hybrid schedule plan is the missing half of the story. It documents that mixed models contain both MoE transformer layers and non-MoE layers such as Mamba or DSA attention surfaces. The planner therefore introduces two conceptual node types: one for MoE-aware transformer-layer scheduling and one opaque wrapper for everything else.
+The hybrid schedule plan is the missing half of the story. It documents that mixed models contain both MoE transformer layers and non-MoE layers such as Mamba-style mixers or recurrent surfaces. The planner therefore introduces two conceptual node types: one for MoE-aware transformer-layer scheduling and one opaque wrapper for everything else.
 
 That decision is subtle and correct. An interleaved scheduler wants a common interface so it can step through a depth schedule without open-coded family branches everywhere. But pretending every layer is a MoE transformer layer would be wrong. The opaque wrapper gives non-MoE families a scheduling slot with a consistent surface while preserving the fact that they are operationally different.
 
@@ -116,7 +116,7 @@ This is not “just a config.” It is a statement that the architecture is type
 
 ## The practical lesson
 
-The practical lesson from the prototype stack and MegaCpp is that hybrid layer interleaving should be treated as a planning problem, not just an architecture problem. If all you preserve is the pattern string, you lose the layer contracts. If all you preserve is a generic scheduler, you lose the meaning of the pattern. The useful system keeps both.
+The practical lesson is that hybrid layer interleaving should be treated as a planning problem, not just an architecture problem. If all you preserve is the pattern string, you lose the layer contracts. If all you preserve is a generic scheduler, you lose the meaning of the pattern. The useful system keeps both.
 
 That is why `ABlock`, `MBlock`, `EBlock`, and `RBlock` matter so much. They make the model legible to the runtime. And that is why the hybrid schedule plan matters: it turns that legibility into execution.
 
@@ -126,7 +126,7 @@ Once you see interleaving this way, several design choices stop looking incident
 
 Another underrated benefit of the typed hybrid schedule is that it makes debugging more local. When a regression appears in a mixed model, the first useful question is often “which family broke?” not “which depth index broke?” If the architecture is expressed only as a flat list of anonymous layers, that question is harder to answer. In this stack, the pattern and class split make it straightforward.
 
-That is visible in the test surface. sanitized mod-block tests builds tiny Nemotron-style configurations such as `AE` so that attention and expert behavior can be isolated cleanly. The tests are not written as if every layer were interchangeable. They intentionally create small hybrid schedules because the runtime behavior depends on the family split. That same discipline helps when scaling to NAM52 or NAM56R: if a bug only reproduces when an `E` surface follows an `A` surface, the typed schedule gives you a direct way to describe and reproduce it.
+That is visible in the public example surface. Small `AE`-style hybrid schedules isolate attention and expert behavior cleanly. The tests are not written as if every layer were interchangeable. They intentionally create small hybrid schedules because the runtime behavior depends on the family split. That same discipline helps when scaling to NAM52 or NAM56R: if a bug only reproduces when an `E` surface follows an `A` surface, the typed schedule gives you a direct way to describe and reproduce it.
 
 This is especially important for interleaving because many integration bugs happen at the family boundary rather than inside one family. Norm placement, checkpoint boundaries, aux-loss propagation, and stage-local bookkeeping can all drift when the runtime crosses from attention-only to expert-only or from Mamba to recurrent mixing. A schedule that preserves family identity makes those seams visible instead of burying them in a generic “layer N” label.
 
@@ -140,8 +140,9 @@ That matters for pipeline work too. A stage with several `E` positions in close 
 
 ## References
 
-- the main model runtime module
-- public hybrid schedule notes
-- public NAM56R recipe notes
-- sanitized mod-block tests
-- public bug notes and validation retrospectives
+- [Hybrid pattern sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/hybrid/hybrid_pattern_sample.py)
+- [Hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md)
+- [Model glossary](https://megacpp.com/blog/megacpp-model-glossary/)
+- [Megatron Core parallelism guide](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html)
+- [Megatron Core MoE guide](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/features/moe.html)
+- [Mamba-3 paper](https://arxiv.org/abs/2603.15569)

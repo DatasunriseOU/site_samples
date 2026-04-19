@@ -137,10 +137,10 @@ Second, distrust generic English words in domain bands. If a proposed "GraphQL" 
 
 Third, comments are not noise. They are a quarter of the corpus and they teach the model how engineers explain code to each other. The tokenizer must handle them well; the BPE must learn common comment patterns; the data pipeline must not strip them. v3 explicitly invested in this, and the eval numbers reward it.
 
-v3 is what we ship today. There will be a v4 — probably driven by adding more languages embedded in C++ strings (HLSL/MSL/Metal/SPIR-V shader text, CUDA PTX, larger SQL dialects), by a dedicated embedded-RTOS vocabulary, and by a second sweep of corpus frequency analysis on a corpus that no longer underweights long-context repos. When it ships, this post is the template for the writeup.
+v3 is the current public baseline described here. A later iteration will likely be driven by more languages embedded in C++ strings (HLSL, MSL, Metal, SPIR-V shader text, CUDA PTX, and larger SQL dialects), a dedicated embedded RTOS vocabulary, and another sweep of corpus frequency analysis on a broader long-context mix.
 
 ## References
 
 - [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
-- [Sanitized public sample pack](https://github.com/DatasunriseOU/site_samples)
-- The public data-preparation, tokenizer, and curriculum notes linked from the MegaCpp repositories.
+- [MegaCpp public sample pack](https://github.com/DatasunriseOU/site_samples)
+- Public data-preparation, tokenizer, and curriculum material linked from the MegaCpp repositories.

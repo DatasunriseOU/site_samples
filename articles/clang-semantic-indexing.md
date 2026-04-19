@@ -78,7 +78,7 @@ The second is the enriched dataset family. The semantic indexer's enriched mode 
 
 ## What we are not doing, and what is left
 
-We do not run the indexer in CI. The cost is too high and the inputs (raw repos, libclang version, OS-level headers) are too environmental to make a green check meaningful. We instead run focused regression coverage on the deterministic parts — sanitized clang indexer tests, sanitized AST enrichment tests, sanitized language-info tests — and pin the libclang version per build image. We do not do whole-program LTO-style analysis either: the indexer is project-local, cross-project edges are not resolved, and we let the model see both projects in the corpus and let attention figure it out.
+We do not run the full indexer in CI. The cost is too high and the inputs (raw repositories, libclang version, OS-level headers) vary enough that a green check would not mean much. Instead, we run focused regression coverage on the deterministic parts of the pipeline and pin the libclang version per build image. We also do not attempt whole-program LTO-style analysis: the indexer is project-local, cross-project edges are not resolved, and the training corpus carries those projects as separate but co-visible sources.
 
 Two open items. A streaming version of the indexer that does not require holding the entire `ProjectIndex` in memory; on `linux v6.10` and `pytorch`, peak RSS runs into multiple GB. And a better story for templates: we dedup by md5 of the assembled text, but template-heavy projects emit many slightly different documents that are semantically equivalent for the model. Some normalization pass — strip template parameters, hash on structure rather than text — would probably cut the dataset 10–20 % at no quality loss. We have not measured.
 
@@ -104,9 +104,9 @@ Minimal semantic-index invocation shape:
 
 ## References
 
-- the public semantic-enrichment sample
-- the public data pipeline notes
-- the public changelog
-- sanitized clang indexer tests
-- sanitized AST enrichment tests
-- the public data-preparation notes
+- [Semantic indexing notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/semantic-indexing-notes.md)
+- [Data preparation notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/data-prep-notes.md)
+- [Reference corpus pins](https://github.com/DatasunriseOU/site_samples/blob/main/docs/reference-corpus-pins.md)
+- [Sample `compile_commands.json`](https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands.sample.json)
+- [JSON Compilation Database Format Specification](https://clang.llvm.org/docs/JSONCompilationDatabase.html)
+- [Libclang tutorial and API index](https://clang.llvm.org/docs/LibClang.html)

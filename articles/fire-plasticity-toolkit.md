@@ -1,19 +1,19 @@
 ---
 title: "FIRE, DASH, and ReDo as one plasticity toolkit"
-description: "How the prototype turned three separate plasticity ideas into one operational toolkit, what actually landed in code, and what the MegaCpp production codebase should preserve."
+description: "How three separate plasticity ideas fit into one toolkit, what the public samples actually show, and which design choices are worth preserving as the stack evolves."
 date: "2026-04-18"
 tags: ["fire", "dash", "redo", "plasticity", "nam52", "nam56r", "training"]
 ---
 
-The plasticity toolkit is interesting because it is not just "we added FIRE." It combines three distinct interventions with different time scales: FIRE for phase boundaries, DASH for periodic directional shrinkage, and ReDo for recycling dormant neurons. The public-safe control surface is small enough to inspect directly in [the toolkit sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/nanochat/fire/fire-plasticity-toolkit__fire_dash_redo_surface__v1.py) and [the accompanying note](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/nanochat/fire/fire-dash-redo-in-practice__toolkit_notes__v1.md).
+The plasticity toolkit is interesting because it is not just "we added FIRE." It combines three distinct interventions with different time scales: FIRE for phase boundaries, DASH for periodic directional shrinkage, and ReDo for recycling dormant neurons. The public sample is small enough to inspect directly, and the public-facing writeups are enough to show the division of labor without overclaiming a one-to-one paper implementation.
 
-Most papers sell plasticity as one magic lever. The prototype does the opposite. It treats plasticity as a maintenance stack. One tool repairs geometry at a boundary, one tool nudges weights during training, and one tool revives neurons that have gone quiet. That decomposition is the reason the implementation is worth studying. It is also why the carry-over into the MegaCpp production codebase should preserve structure and timing, not just names.
+Many plasticity discussions collapse everything into one magic lever. This toolkit does the opposite. It treats plasticity as a maintenance stack. One tool repairs geometry at a boundary, one tool nudges weights during training, and one tool revives neurons that have gone quiet. That decomposition is the reason the implementation is worth studying. It is also why later integrations should preserve structure and timing, not just names.
 
-The public source map is unusually clear once it is presented in sanitized form. Comparison notes list FIRE, DASH, and ReDo separately, then immediately explain how they are combined. Paper-review notes record the implementation traps the paper does not cover. Integration notes document the decisions that turned the paper idea into a usable training tool. Public module samples and sanitized test excerpts then pin the behavior down without exposing non-public infrastructure details.
+The source map is unusually clear once it is presented through public materials. The toolkit sample shows the combined control surface, and the public references for FIRE, DASH, and ReDo are useful as background context. That is enough to ground the engineering story without leaning on private notes or claiming exact external parity where the public sample already says enough.
 
 ## The toolkit works because the methods are scheduled differently
 
-The first mistake people make with plasticity work is trying to apply every intervention at the same cadence. The prototype does not do that.
+The first mistake people make with plasticity work is trying to apply every intervention at the same cadence. This toolkit does not do that.
 
 FIRE is a boundary operation. It projects 2D weight matrices toward orthogonality with Newton-Schulz iterations and is meant for moments when the training regime changes, such as context extension or other curriculum transitions. That is a one-shot structural reset.
 
@@ -29,15 +29,15 @@ ReDo is different again. It needs activity diagnostics over time. `ReDoDiagnosti
 
 This separation is the key design win. The toolkit is not three variants of the same knob. It is three maintenance layers aimed at different times and different failure modes.
 
-## What the FIRE implementation really adds beyond the paper
+## What the FIRE implementation really adds in practice
 
-The paper review notes make a strong point: the theory is nice, but the repo had to solve multiple engineering problems the paper does not really discuss. The most important one is optimizer state staleness.
+The public sample makes a strong point: the theory is nice, but a working training system still has to solve multiple engineering problems that short method summaries do not really discuss. The most important one is optimizer state staleness.
 
-After FIRE rewrites a weight matrix, the optimizer's stored state still describes the old basis. If you keep Adam-style `exp_avg` and `exp_avg_sq`, or Muon momentum buffers, the next updates can partially undo the re-orthogonalization. The repo fixes that with selective optimizer-state reset, not a global wipe. `reset_optimizer_states_for_fired_params()` clears state only for parameters that were actually touched.
+After FIRE rewrites a weight matrix, the optimizer's stored state still describes the old basis. If you keep Adam-style `exp_avg` and `exp_avg_sq`, or Muon momentum buffers, the next updates can partially undo the re-orthogonalization. The public sample addresses that with selective optimizer-state reset, not a global wipe. `reset_optimizer_states_for_fired_params()` clears state only for parameters that were actually touched.
 
 That is not cosmetic. It is the difference between a clean intervention and a self-canceling one.
 
-The second important addition is DTensor safety. The changelog and integration notes explicitly call out work to make DASH and FIRE safe under FSDP2-style sharding. Helpers such as `_local_tensor_if_dtensor()` and `_match_grad_to_local_shard()` exist because the real parameter seen by the optimizer may be a shard, not a monolithic tensor. A notebook implementation can ignore that. A training system cannot.
+The second important addition is DTensor safety. The public sample explicitly makes DASH and FIRE safe under FSDP2-style sharding. Helpers such as `_local_tensor_if_dtensor()` and `_match_grad_to_local_shard()` exist because the real parameter seen by the optimizer may be a shard, not a monolithic tensor. A notebook implementation can ignore that. A training system cannot.
 
 The third addition is parameter targeting. The default path in the toolkit is careful about what it touches. Two-dimensional projection weights are in scope. Embeddings, head weights, scalar state parameters, and various bias-like tensors are generally not. That is especially important in hybrid architectures where not every learnable parameter represents the same kind of geometry.
 
@@ -79,13 +79,13 @@ That table is the real operational takeaway. Plasticity is not a global property
 
 ## What the tests prove, and what they do not
 
-The test suite around the toolkit is useful because it proves the repo is not relying on hand-wavy claims. The tests cover FIRE's effect on a proxy geometry metric, verify that the model still runs after intervention, and exercise the broader plasticity wiring. That means the toolkit has crossed the line from concept to maintained code.
+The test coverage around the toolkit is useful because it shows the sample is not relying on hand-wavy claims. The checks cover FIRE's effect on a proxy geometry metric, verify that the model still runs after intervention, and exercise the broader plasticity wiring. That means the toolkit has crossed the line from concept to maintained code.
 
 But the tests also reveal the right humility. A passing unit test does not prove that a late-phase FIRE pass improves convergence in every NAM56R lane. A passing ReDo test does not prove that every dormant-neuron issue is solved. The toolkit should therefore be read as a set of grounded mechanisms with operational constraints, not as a guaranteed universal win.
 
-That is exactly why the integration notes and review material are so valuable. They preserve the mismatch between elegant paper-level story and messy training reality: optimizer state has to be reset, sharded tensors have to be handled locally, and activation choice changes whether dormant-neuron recycling is even the right tool.
+That is exactly why the public sample is so valuable. It preserves the mismatch between an elegant method-level story and messy training reality: optimizer state has to be reset, sharded tensors have to be handled locally, and activation choice changes whether dormant-neuron recycling is even the right tool.
 
-## What the MegaCpp production codebase should preserve from this work
+## What later integrations should preserve from this work
 
 The port should keep the decomposition, not just the names. That means at least four things.
 
@@ -94,25 +94,27 @@ The port should keep the decomposition, not just the names. That means at least 
 3. Preserve the distinction between periodic DASH and diagnostic-driven ReDo.
 4. Preserve the idea that block family and activation family determine which tool is appropriate.
 
-The MegaCpp production codebase already has the right kind of surrounding architecture for this. Its hybrid specs and NAM56R planning docs are written in terms of explicit runtime surfaces, not mystical training folklore. That is the correct environment for a toolkit like this. FIRE can land as a curriculum-boundary utility, DASH as a lightweight periodic maintenance option, and ReDo only where the activation path and hook surfaces make the signal trustworthy.
+The main thing worth preserving is the separation of responsibilities. FIRE fits best as a curriculum-boundary utility, DASH as a lightweight periodic maintenance option, and ReDo only where the activation path and hook surfaces make the signal trustworthy. Flattening all three into a single switch would discard most of the design value the public sample makes visible.
 
-The main thing to avoid is flattening the toolkit into a single feature flag. Once that happens, all the useful timing and targeting discipline disappears. The prototype's strongest contribution is showing that plasticity support can be modular, code-grounded, and still operational.
+The main thing to avoid is flattening the toolkit into a single feature flag. Once that happens, all the useful timing and targeting discipline disappears. The strongest contribution here is showing that plasticity support can be modular, code-grounded, and still operational.
 
-## Why this matters beyond one paper implementation
+## Why this matters beyond one implementation snapshot
 
-The deepest value of the toolkit is not that it proves one paper right. It is that it turns plasticity from an abstract training slogan into a set of maintainable engineering surfaces. That is a big difference.
+The deepest value of the toolkit is not that it proves one external reference right. It is that it turns plasticity from an abstract training slogan into a set of maintainable engineering surfaces. That is a big difference.
 
 FIRE gives a principled way to repair geometry at transitions. DASH gives a cheap maintenance move for rows that are becoming too self-aligned. ReDo gives a direct response to dead neurons when the activation family makes that a real problem. Put together, they form a credible answer to a common late-training complaint: the model is still updating, but it is learning less than it should.
 
-That is why this work should survive the prototype. Not because every run needs all three methods, but because the repo has already done the harder part: it showed how to integrate them with sharding, optimizer state, tests, and hybrid block selection. For a system that wants to keep NAM52 and NAM56R-style experimentation honest while moving toward a cleaner Megatron-native future, that is the part worth keeping.
+That is why this work should survive beyond one sample snapshot. Not because every run needs all three methods, but because the public sample already shows the harder part: how to separate cadences, target the right parameter families, and keep the interventions compatible with sharding and optimizer state. That is the part worth keeping.
 
 ## Code and notes
 
-- [FIRE, DASH, and ReDo control surface](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/nanochat/fire/fire-plasticity-toolkit__fire_dash_redo_surface__v1.py)
-- [Toolkit note](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/nanochat/fire/fire-dash-redo-in-practice__toolkit_notes__v1.md)
+- [FIRE: Functional Interpolation for Relative Entropy Minimization](https://arxiv.org/abs/2602.08040)
+- [DASH: Dynamic Adaptation via Shrinkage of High-Alignment Directions](https://arxiv.org/abs/2410.23495)
+- [ReDo: Rethinking Dead Neurons in Neural Networks](https://arxiv.org/abs/2302.12902)
 
 ## Further reading
 
 - [FIRE paper](https://arxiv.org/abs/2602.08040)
 - [DASH paper](https://arxiv.org/abs/2410.23495)
 - [ReDo paper](https://arxiv.org/abs/2302.12902)
+- [PyTorch Distributed Tensor documentation](https://pytorch.org/docs/stable/distributed.tensor.html)

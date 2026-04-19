@@ -1,23 +1,21 @@
 ---
 title: "EP, PP, TP, CP, SP, DP: The Parallelism Map We Actually Use"
 date: 2026-04-18
-author: MegaCpp Engineering
+author: Engineering Team
 tags: [distributed-training, expert-parallel, pipeline-parallel, tensor-parallel]
 summary: >
-  A practical overview of the six-way parallelism vocabulary in the MegaCpp
-  stack, grounded in the training scripts, runtime notes, and bring-up receipts
-  rather than in vendor diagrams.
+  A practical overview of the main parallelism vocabulary in modern LLM
+  training, grounded in public framework semantics rather than vendor diagrams.
 description: >
   What data, tensor, sequence, context, pipeline, and expert parallelism each
-  own in the current stack, how they compose, and where the real integration
-  risks still live in the POC and in the MegaCpp production codebase.
+  own, how they compose, and where the real integration risks still live.
 ---
 
 # EP, PP, TP, CP, SP, DP: The Parallelism Map We Actually Use
 
-**TL;DR:** These acronyms are not six knobs that all do “more scale.” They each own a different failure mode. DP owns replication and optimizer state economics. TP owns large matrix partitions. SP keeps activation layout compatible with TP. CP makes long context workable when sequence length itself is the problem. EP owns MoE capacity and token routing. PP owns stage boundaries, schedule semantics, and loss accounting. The system gets healthier when each boundary has one clear owner, and it gets fragile when two modes both think they own the same tensor or loss path.
+These acronyms are not six knobs that all do “more scale.” They each own a different failure mode. DP owns replication and optimizer state economics. TP owns large matrix partitions. SP keeps activation layout compatible with TP. CP makes long context workable when sequence length itself is the problem. EP owns MoE capacity and token routing. PP owns stage boundaries, schedule semantics, and loss accounting. The system gets healthier when each boundary has one clear owner, and it gets fragile when two modes both think they own the same tensor or loss path.
 
-The useful way to understand distributed training is not to memorize definitions in isolation. It is to ask what resource pressure each mode is relieving and what new contract it introduces. The POC and the MegaCpp production codebase are unusually clear on that point because the evidence is spread across runtime notes, launcher arguments, schedule code, and bring-up reports rather than hidden in marketing diagrams. The best receipts in the tree do not say “parallelism is supported.” They say exactly which composition is alive, where the next blocker moved, and which semantic edge still needs explicit wiring.
+The useful way to understand distributed training is not to memorize definitions in isolation. It is to ask what resource pressure each mode is relieving and what new contract it introduces. Public bring-up notes are unusually clear on that point because the evidence is spread across launcher arguments, schedule code, and verification reports rather than hidden in marketing diagrams. The best receipts do not say “parallelism is supported.” They say exactly which composition is alive, where the next blocker moved, and which semantic edge still needs explicit wiring.
 
 ## One table that matches the code
 
@@ -38,9 +36,9 @@ The other important thing the code makes clear is that FSDP2 is not a seventh re
 
 If you only keep one composition rule in your head, keep this one: TP without SP is often an incomplete story for training, especially once activation pressure matters. TP splits projections and other large tensor operations so that one rank no longer owns the whole weight or whole intermediate. That is the easy part conceptually. The harder part is what happens to the sequence-shaped activations that move between those projections.
 
-In the POC, the healthy path is to let SP carry that activation-layout burden. That is why the H200 bring-up notes keep talking about `TP + SP` as a natural baseline before adding more dimensions. Once TP is on, SP is no longer a random optional accelerator. It becomes the mechanism that prevents every rank from silently rematerializing full-sequence views at every boundary.
+In practice, the healthy path is to let SP carry that activation-layout burden. That is why bring-up notes often treat `TP + SP` as a natural baseline before adding more dimensions. Once TP is on, SP is no longer a random optional accelerator. It becomes the mechanism that prevents every rank from silently rematerializing full-sequence views at every boundary.
 
-The MegaCpp production codebase reflects the same logic in a different codebase. `fastmtp_layer.py` explicitly mentions avoiding unnecessary Megatron SP/TP complexity in the minimal shared block, and that is revealing. When a path opts out of that complexity, it has to do so intentionally. The default assumption elsewhere is that SP and TP shape the runtime contract together.
+Public Megatron-style excerpts reflect the same logic in a different form. When a path opts out of Megatron SP/TP complexity in a minimal shared block, it has to do so intentionally. The default assumption elsewhere is that SP and TP shape the runtime contract together.
 
 The right mental model is simple: TP answers “who owns this chunk of compute?” SP answers “who owns this chunk of sequence activation while that compute happens?” If a feature claims to support TP but repeatedly falls back to fully gathered sequence activations, it is not really carrying the TP memory contract all the way through.
 
@@ -60,11 +58,11 @@ That is not a literal checked-in launcher, but it is the cleanest baseline shape
 
 People often explain expert parallelism as if it were just another way to shard a big layer. That undersells the difference. TP partitions a tensor operation that already exists. EP changes the runtime into a routing problem. Tokens must be scored, assigned, moved, computed, and combined back into the model stream. That means EP owns both capacity distribution and the communication that follows from that choice.
 
-The POC’s H200 receipt is blunt about this. A major blocker on the `TP + SP + EP + FSDP2` lane was not a generic compiler issue. It was wrong EP-active detection that caused the `Block+MoE` path to take a non-EP route when `expert_tp_mesh` was still `None` even though expert parallelism was logically on. That is exactly the kind of failure you get when you pretend EP is just another tensor split. It is not. It has its own mesh semantics and its own dispatch/combine ownership.
+One representative H200 receipt is blunt about this. A major blocker on the `TP + SP + EP + FSDP2` lane was not a generic compiler issue. It was wrong EP-active detection that caused the `Block+MoE` path to take a non-EP route when `expert_tp_mesh` was still `None` even though expert parallelism was logically on. That is exactly the kind of failure you get when you pretend EP is just another tensor split. It is not. It has its own mesh semantics and its own dispatch/combine ownership.
 
-The MegaCpp production codebase shows the same difference from a production angle. `index_cache_patch.py` is not about tensor sharding in the TP sense. It is about reducing repeated indexer work across DSA layers and handling the fact that when PP splits DSA layers across stages, a shared layer may suddenly have no preceding full layer on that stage and must be auto-promoted. That is a routing and stage-boundary story, not a matrix-partition story.
+Public DSA notes show the same difference from a deployment angle. Index-cache work is not about tensor sharding in the TP sense. It is about reducing repeated indexer work across DSA layers and handling the fact that when PP splits DSA layers across stages, a shared layer may suddenly have no preceding full layer on that stage and must be auto-promoted. That is a routing and stage-boundary story, not a matrix-partition story.
 
-For NAM56R-style lanes this distinction matters even more. the public NAM56R launch sample keeps pattern strings like `AEMEAEMEAEMR` grounded in launch logic, and the README’s production tables describe MoE with routed experts, top-k routing, and shared-expert behavior. The `E` in that pattern is not just “a heavier dense layer.” It introduces a separate token ownership problem, which is why EP gets its own axis.
+For NAM56R-style lanes this distinction matters even more. Public MegaCpp samples keep pattern strings like `AEMEAEMEAEMR` grounded in launch logic, and the corresponding public docs describe MoE with routed experts, top-k routing, and shared-expert behavior. The `E` in that pattern is not just “a heavier dense layer.” It introduces a separate token ownership problem, which is why EP gets its own axis.
 
 ## PP changes semantics, not just placement
 
@@ -88,9 +86,9 @@ Again, that snippet is schematic. The important part is the shape of the contrac
 
 Context parallelism gets muddled with SP because both touch sequence-shaped data, but the code and docs make a cleaner distinction. SP is primarily an activation-layout companion to TP. CP is about making the context length itself feasible when sequence length has outgrown one rank’s comfortable ownership.
 
-The TPU and long-context notes in the POC are where this becomes legible. CP is not present as a default on every launcher because it should not be. It exists for a specific problem: when even TP plus SP is not enough to make long contexts healthy. `index_cache_patch.py` also hints at this by explicitly noting a “CP gather for keys/values.” That is exactly the kind of boundary where CP is doing real work that SP does not replace.
+The TPU and long-context notes are where this becomes legible. CP is not present as a default on every launcher because it should not be. It exists for a specific problem: when even TP plus SP is not enough to make long contexts healthy. Public documentation also hints at this by explicitly discussing CP gathers for keys and values. That is exactly the kind of boundary where CP is doing real work that SP does not replace.
 
-The practical consequence is that CP should be thought of as a specialty mode with a high payoff on the right workloads, not as a universal elegance layer. If your model is not context-bound, CP may add complexity faster than it adds value. If your model is long-context and attention or state-space paths are dominated by sequence length, CP becomes one of the few honest ways to keep scaling.
+The practical consequence is that CP should be thought of as a specialty mode with a high payoff on the right workloads, not as a universal elegance layer. If your model is not context-bound, CP may add complexity faster than it adds value. If your model is long-context and attention-style paths are dominated by sequence length, CP becomes one of the few honest ways to keep scaling.
 
 ## Why the block notation matters
 
@@ -106,12 +104,21 @@ The most reusable rule across all receipts is not “enable more axes.” It is 
 
 This rule sounds obvious only after a bug has been fixed. Before the fix, the failures usually present as something more mysterious: a compile blocker, a process-group mismatch, a silent throughput collapse, or a loss path that only fails on one composite lane. The H200 bring-up history repeatedly resolved those failures by clarifying ownership, not by inventing a new abstraction layer.
 
-The good news is that this rule scales. It works for the POC’s CUDA and TPU lanes, and it works for the MegaCpp production codebase's production-oriented launch surfaces. The cost is discipline in naming, receipts, and staged bring-up. The payoff is that “parallelism support” starts to mean something specific.
+The good news is that this rule scales. It works across CUDA and TPU lanes. The cost is discipline in naming, receipts, and staged bring-up. The payoff is that “parallelism support” starts to mean something specific.
+
+## Taxonomy corrections that prevent category mistakes
+
+- SP is not a synonym for CP. SP is a TP companion that keeps activations sequence-sharded within TP-aware regions. CP is a long-context distribution strategy.
+- FSDP2 is not a separate axis beside DP. It is one implementation of DP-style sharding in native PyTorch.
+- DCP means distributed checkpointing, not distributed context parallelism.
+- Activation recompute and checkpointing are memory-management techniques, not split axes.
+- EP owns expert routing and expert residency. PP owns stage placement and schedule semantics. TP owns large tensor partitions. Mixing those ownership boundaries in prose usually hides the real failure mode.
 
 ## References
 
-- MegaCpp training configuration and pipeline runtime notes
-- the distributed parallelism module
-- the expert runtime notes
-- the H200 bring-up receipts for TP/SP/EP/FSDP combinations
-- the NAM56R launch and production-status notes
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/features/context_parallel.html
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/features/moe.html
+- https://docs.pytorch.org/docs/stable/notes/ddp.html
+- https://docs.pytorch.org/docs/main/distributed.fsdp.fully_shard.html
+- https://docs.pytorch.org/docs/main/distributed.checkpoint.html

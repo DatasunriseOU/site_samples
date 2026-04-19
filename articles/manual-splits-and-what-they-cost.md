@@ -5,7 +5,7 @@ author: MegaCpp Engineering
 tags: [pipeline-parallelism, model-partitioning, megatron, moe, mamba]
 summary: >
   Manual model splits can rescue difficult topologies, but they also hard-code
-  operational debt. The POC shows exactly where explicit boundaries help and
+  operational debt. MegaCpp shows exactly where explicit boundaries help and
   where they become the wrong abstraction.
 description: >
   A grounded look at explicit pipeline boundaries, pipe-delimited patterns,
@@ -15,15 +15,15 @@ description: >
 
 # Manual Splits and What They Cost
 
-**TL;DR:** Manual splits are sometimes the only way to make a hybrid stack trainable, especially when attention, MoE, recurrent blocks, and auxiliary embeddings do not partition cleanly. But the POC also shows the tax you pay: every explicit stage boundary becomes a maintenance contract for RoPE state, embeddings, loss heads, metadata, and schedule assumptions. The right use of manual splits is tactical, not ideological.
+Manual splits are sometimes the only way to make a hybrid stack trainable, especially when attention, MoE, recurrent blocks, and auxiliary embeddings do not partition cleanly. But they carry a tax: every explicit stage boundary becomes a maintenance contract for RoPE state, embeddings, loss heads, metadata, and schedule assumptions. The right use of manual splits is tactical, not ideological.
 
 When people discuss pipeline parallelism, they often skip over the part that actually breaks systems: deciding where the split points go. A clean transformer with repeated identical blocks can be partitioned by count. A real hybrid stack cannot. Once the model contains different block families, optional side inputs, expert-heavy layers, and recurrent segments, a naive equal split becomes a proxy for "hope the runtime will sort it out later." It usually will not.
 
-That is why the POC kept a real path for explicit boundaries. The important detail is not merely that the model can be partitioned. The important detail is that the runtime acknowledges two different partitioning modes: automatic partitioning and pipe-delimited explicit boundaries in the pattern string. That makes the split decision visible, auditable, and debuggable.
+That is why MegaCpp keeps a real path for explicit boundaries. The important detail is not merely that the model can be partitioned. The important detail is that the runtime acknowledges two different partitioning modes: automatic partitioning and pipe-delimited explicit boundaries in the pattern string. That makes the split decision visible, auditable, and debuggable.
 
 ## Why explicit boundaries exist at all
 
-The pipeline runtime in the POC does not hide what a stage really owns. `create_pipeline_stage` builds a stage from concrete layer spans, attaches embeddings to the first stage, attaches the head to the last stage, and wires in RoPE buffers, optional n-gram or structure embeddings, and stage-local window sizes. That is already enough to explain why manual boundaries matter. A stage is not just "some layers." It is a bundle of responsibilities.
+The pipeline runtime in MegaCpp does not hide what a stage really owns. `create_pipeline_stage` builds a stage from concrete layer spans, attaches embeddings to the first stage, attaches the head to the last stage, and wires in RoPE buffers, optional n-gram or structure embeddings, and stage-local window sizes. That is already enough to explain why manual boundaries matter. A stage is not just "some layers." It is a bundle of responsibilities.
 
 The runtime contract around pipe-delimited `nem_pattern` supports this directly. If explicit PP boundaries are provided, the runtime expects the delimiter count to match the requested number of stages. That sounds strict because it is strict. Manual splits are effectively part of the program.
 
@@ -45,7 +45,7 @@ The repo language around ablock, mblock, eblock, rblock, and cblock is useful he
 
 ## The hidden cost is stage-local plumbing
 
-The biggest mistake in discussions of manual splits is treating them as if the cost were only balancing FLOPs. In the POC, the more persistent cost was plumbing. Every explicit boundary decides where side data must exist and where it must not.
+The biggest mistake in discussions of manual splits is treating them as if the cost were only balancing FLOPs. In MegaCpp, the more persistent cost was plumbing. Every explicit boundary decides where side data must exist and where it must not.
 
 The first stage owns token embedding and several optional input-side embeddings. The last stage owns the head and also receives auxiliary pieces such as MTP-related references when enabled. RoPE buffers are provided broadly enough to survive resume and split changes. Relation-bias handling needs access on all stages that compute the corresponding additive bias.
 
@@ -89,7 +89,7 @@ That ordering is important because manual splits should be the last resort that 
 
 Another cost of explicit splits is that they preserve history, not just intent. A boundary that made sense before a model changed may become the wrong boundary after side features, compile strategy, or expert implementation change. The pipeline code comments about interleaving and schedule equivalence are a reminder that schedulers evolve. What counted as a balanced stage at one point can become a bad stage later.
 
-The same is true for MoE behavior. The expert path in the POC includes variable-split dispatch, compile-disabled outer routing, and comments about avoiding padded equal-split behavior where it wastes memory. If the cost profile of eblocks changes, the old split might still be syntactically valid while being operationally bad.
+The same is true for MoE behavior. The expert path in MegaCpp includes variable-split dispatch, compile-disabled outer routing, and logic that avoids padded equal-split behavior where it wastes memory. If the cost profile of eblocks changes, the old split might still be syntactically valid while being operationally bad.
 
 This is the tax manual splits impose: they make topology explicit, but they also make topology sticky.
 
@@ -99,7 +99,7 @@ Despite all of that, manual splits are not a mistake. They are often exactly the
 
 The key is to be honest about the price. Manual splits are a control surface, not a simplification. Every explicit delimiter in a pattern string is a promise that the surrounding runtime assumptions still hold.
 
-That is why the best use of manual splits in the POC was not "we prefer hand tuning." The best use was "the model is heterogeneous enough that implicit heuristics are no longer a sufficient explanation."
+That is why the best use of manual splits in MegaCpp was not "we prefer hand tuning." The best use was "the model is heterogeneous enough that implicit heuristics are no longer a sufficient explanation."
 
 ## The real cost is organizational, not just technical
 
@@ -126,6 +126,6 @@ The right habit is to treat manual splits as versioned architecture, not a tempo
 
 ## References
 
-- the pipeline runtime notes
-- the expert and dense runtime implementation notes
-- the training-configuration layer
+- https://github.com/DatasunriseOU/site_samples/tree/main/docs
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/hybrid/hybrid_pattern_sample.py
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/api-guide/pipeline_parallel.html

@@ -13,9 +13,9 @@ Two facts dictate the design. First, the production training stack inherits Nemo
 
 So we run a hybrid. Each specialist is wrapped by exactly one of the two stacks, never both. The trunk uses Megatron DDP. The cross-specialist gradients flow through whatever the specialist's wrapper exposes. Picking the wrapper per specialist instead of per cluster is the single biggest decision in this post; everything else is a consequence.
 
-## What we built in the POC
+## What we built in the public MegaCpp NVIDIA stack
 
-The two implementation surfaces in the research repo are `megatron_ddp.py` and `fsdp_cuda.py`, with `dtensor_utils.py` providing the DTensor plumbing they share and `fsdp.py` carrying the XLA SPMD analogue we explicitly do not use here.
+The two implementation surfaces in the public MegaCpp NVIDIA story are `megatron_ddp.py` and `fsdp_cuda.py`, with `dtensor_utils.py` providing the DTensor plumbing they share and `fsdp.py` carrying the XLA SPMD analogue we explicitly do not use here.
 
 `megatron_ddp.py` is a thin shim. `wrap_model_with_megatron_ddp()` builds a `TransformerConfig` from our `GPTConfig` (via the Megatron bridge), wraps the model in a `_MegatronConfigInjector` so Megatron's `get_model_config()` discovers a real `TransformerConfig` rather than our native one, and constructs the DDP on a side CUDA stream so it composes with CUDA graphs. Before construction we call `_mark_expert_parallel_params()`, which walks the module tree, finds `FusedExpertBank` / `ExpertMLP` / `FusedMoEExpertBank` modules and any submodule under a `.experts.` path, and stamps `param.allreduce = False` on their parameters. Megatron DDP reads that attribute to split params into dense buffers (allreduced over the data-parallel group) and expert-parallel buffers (reduce-scattered over the expert-data-parallel group). Forget this and the expert grads silently land in the wrong process group.
 
@@ -39,13 +39,13 @@ The bucket-sizing math from `megatron_optimizer.py:get_default_bucket_size_mb` g
 
 `_block_reshard_after_forward_value` becomes a config field, not an env knob. Same for `_block_prefetch_limit`. The hybrid mesh sharding (the "integer N" path) is the only way we have made FSDP2 cheaper at large DP counts without giving up backward all-gather, and we ship it as a first-class option.
 
-What we drop: the standalone XLA `apply_fsdp_sharding` from `fsdp.py` does not enter MegaCpp. The XLA path is owned by the JAX/Pallas branch and is documented separately. Inside the NVIDIA package, FSDP2 is the only sharding-by-replication wrapper.
+What we drop: the standalone XLA `apply_fsdp_sharding` path does not enter MegaCpp. The XLA implementation is documented separately. Inside the NVIDIA package, FSDP2 is the only DP-style sharding wrapper.
 
 What moves to a kernel path: nothing in the wrappers themselves, but the gradient bucket reduce-scatter compiles out to NCCL primitives and we pin the NCCL algorithm per SKU. That is the only piece of NCCL tuning that survived contact with both H200 and GB10.
 
 ## Ablations and what we kept
 
-The freeze plan for the eight specialists is the boring engineering. Each specialist has a list of modules that are frozen during its specialist-phase training: the embedding, the trunk transformer blocks below the specialization point, the routing head when not under training, and the LoRA-adapter base weights. FSDP2 handles frozen params correctly out of the box (the changelog has entries from earlier FSDP1 days where it did not). Megatron DDP handles frozen params via the `allreduce` attribute as well; what we had to fix is that frozen params still need to be visible to the optimizer's parameter scan, otherwise late-added groups (the NCP, TOP, and GateSkip heads) miss their LR schedule. The fix is one rule: freeze in-place, do not `del` the parameter from the module.
+The freeze plan for the eight specialists is the boring engineering. Each specialist has a list of modules that are frozen during its specialist-phase training: the embedding, the trunk transformer blocks below the specialization point, the routing head when not under training, and the LoRA-adapter base weights. FSDP2 handles frozen params correctly out of the box. Megatron DDP handles frozen params via the `allreduce` attribute as well; what we had to fix is that frozen params still need to be visible to the optimizer's parameter scan, otherwise late-added groups miss their LR schedule. The fix is one rule: freeze in-place, do not `del` the parameter from the module.
 
 Bucket sizing on H200 is dominated by NVLink contention rather than HBM. We tried 25 MB, 80 MB, 128 MB, and 256 MB on the depth-52 preset. 80 MB and 128 MB are within noise; 25 MB loses a few percent of step time to NCCL overhead; 256 MB starts to hit param-gather stalls when EP=2 narrows the DP group. The Megatron default plus our bf16 grad rule lands inside the safe band by construction.
 
@@ -99,8 +99,8 @@ def _mark_expert_parallel_params(model):
 
 ## References
 
-- `megatron_ddp.py`, `fsdp_cuda.py`, `dtensor_utils.py`, `fsdp.py`, `megatron_optimizer.py`, `megatron_bridge.py`
-- [PyTorch FSDP2 (`fully_shard`) documentation — pytorch.org]
-- [Megatron-Core DistributedDataParallel and DistributedOptimizer — NVIDIA Megatron-LM]
-- [Nemotron Nano 3 30B-A3B training recipe — NVIDIA technical report]
-- [ZeRO: Memory Optimizations Toward Training Trillion Parameter Models — Rajbhandari et al., SC20]
+- [PyTorch FSDP2 / `fully_shard`](https://pytorch.org/docs/stable/distributed.fsdp.fully_shard.html)
+- [Megatron Core developer guide](https://docs.nvidia.com/megatron-core/developer-guide/latest/)
+- [Megatron-LM — NVIDIA, GitHub](https://github.com/NVIDIA/Megatron-LM)
+- [ZeRO: Memory Optimizations Toward Training Trillion Parameter Models](https://arxiv.org/abs/1910.02054)
+- [Public distributed debugging notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md)

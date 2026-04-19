@@ -1,31 +1,31 @@
 ---
 title: "What Megatron Can and Cannot Split"
 date: 2026-04-18
-author: MegaCpp Engineering
+author: Engineering Team
 tags: [megatron, tensor-parallel, pipeline-parallel, moe, mamba, nam56r]
 summary: >
-  Megatron-style partitioning is powerful, but not universal. The research repo
-  makes the real boundary clear: dense regular computation splits cleanly,
-  heterogeneous ownership often does not, and some surfaces must remain explicit.
+  Megatron-style partitioning is powerful, but not universal. Modern runtimes make the
+  real boundary clear: dense regular computation splits cleanly, heterogeneous
+  ownership often does not, and some surfaces must remain explicit.
 description: >
   A grounded look at split-friendly and split-hostile model surfaces: TP, SP,
   PP, EP, recurrent state, side embeddings, and why some boundaries remain
   architectural rather than automatic.
 ---
 
-**TL;DR:** Megatron is excellent at partitioning regular dense computation. It is much less magical on heterogeneous ownership surfaces such as expert routing, recurrent state transitions, side-channel embeddings, and topology-sensitive pipeline boundaries. The practical skill is not maximizing how much gets split, but deciding which surfaces should be split aggressively and which should remain explicit architectural boundaries.
+Megatron is excellent at partitioning regular dense computation. It is much less magical on heterogeneous ownership surfaces such as expert routing, recurrent state transitions, side-channel embeddings, and topology-sensitive pipeline boundaries. The practical skill is not maximizing how much gets split, but deciding which surfaces should be split aggressively and which should remain explicit architectural boundaries.
 
-Megatron-style systems are compelling because they offer a powerful vocabulary for scale: tensor parallelism splits weight matrices, sequence parallelism changes activation ownership, pipeline parallelism partitions depth, and expert parallelism distributes expert banks. On slides that can look close to universal. In code it is not universal at all.
+Megatron-style systems are compelling because they offer a powerful vocabulary for scale: tensor parallelism splits weight matrices, sequence parallelism changes activation ownership on the TP axis, context parallelism changes long-sequence ownership across ranks, pipeline parallelism partitions depth, and expert parallelism distributes expert banks. On slides that can look close to universal. In code it is not universal at all.
 
-The right question is therefore not "can Megatron split the model?" The right question is "which surfaces preserve their meaning when split?" The answer is visible in the current runtime because the stack supports TP, SP, PP, optional virtual staging, expert-distribution modes, and hybrid family layouts such as NAM56R. Reading those files makes one thing clear: regular dense math is naturally split-friendly, but control-heavy or topology-bearing surfaces still need explicit ownership rules.
+The right question is therefore not "can Megatron split the model?" The right question is "which surfaces preserve their meaning when split?" The answer is visible in current runtimes because the stack supports TP, SP, PP, optional virtual staging, expert-distribution modes, and hybrid family layouts. Reading those code paths makes one thing clear: regular dense math is naturally split-friendly, but control-heavy or topology-bearing surfaces still need explicit ownership rules.
 
 ## What Megatron splits very well
 
 The strongest targets are the ones the framework was effectively designed around: repeated dense projections and repeated depth. Attention projections, dense MLP projections, and the inner body of standard blocks all have predictable shapes and communication patterns. Those properties are exactly what tensor and sequence parallelism want.
 
-That is why TP and SP remain the most transferable parts of the Megatron story. They work best when the runtime can treat the computation as regular linear algebra with known collective boundaries. The dense path does not become trivial, but it stays legible enough for compiler transforms, sharding strategies, and checkpoint rules to agree.
+That is why TP and SP remain the most transferable parts of the Megatron story. They work best when the runtime can treat the computation as regular linear algebra with known collective boundaries. CP solves a different problem: not dense matrix ownership, but long-context sequence ownership. The dense path does not become trivial, but it stays legible enough for compiler transforms, sharding strategies, and checkpoint rules to agree.
 
-the distributed runtime reflects that orientation. It is full of explicit decomposition logic, but the places where decomposition is cleanest are the places where shapes and ownership are stable. Likewise, the training configuration exposes TP, SP, PP, virtual-stage, and expert-distribution flags because these are not theoretical axes. They are the real knobs the runtime can use when the underlying structure is cooperative.
+Public distributed-training notes reflect that orientation. They are full of explicit decomposition logic, but the places where decomposition is cleanest are the places where shapes and ownership are stable. Likewise, the training configuration exposes TP, SP, PP, virtual-stage, and expert-distribution flags because these are not theoretical axes. They are the real knobs the runtime can use when the underlying structure is cooperative.
 
 | Surface | Split quality | Why it works |
 | --- | --- | --- |
@@ -40,7 +40,7 @@ That is the part people usually mean when they say Megatron scales well. They ar
 
 Pipeline parallelism is often described as "split the layers by depth." That description is incomplete. Real pipeline splitting is only valid after the system decides what each stage owns besides the obvious repeated block range.
 
-The research repo makes this explicit. The runtime has to reason not only about how many layers land on each stage, but also about which stage owns embeddings, heads, RoPE-related state, auxiliary embeddings, and family-specific support modules. That means PP is not merely arithmetic partitioning. It is architectural partitioning.
+Modern runtimes make this explicit. The runtime has to reason not only about how many layers land on each stage, but also about which stage owns embeddings, heads, RoPE-related state, auxiliary embeddings, and family-specific support modules. That means PP is not merely arithmetic partitioning. It is architectural partitioning.
 
 This is one reason pattern notation matters. A family like NAM56R is not just a depth number. `AEMEAEMEAEMR` implies heterogeneous block roles across the stack. If you cut depth carelessly, you may preserve layer count while damaging ownership semantics. A stage boundary that is fine for dense `ablock` repetition may be awkward if it slices through an `eblock` routing-heavy region or an `rblock` state-carrying region.
 
@@ -102,6 +102,7 @@ That does not mean the design is bad. It means the design is honest. Once the mo
 | Dense projections | Yes | rarely |
 | Repeated depth body | Yes, with stage planning | sometimes |
 | Expert banks | Yes | yes, around routing |
+| Long-context token ownership | Yes, when the model is CP-aware | yes, around sequence exchange and gathers |
 | Recurrent/stateful surfaces | Sometimes | often |
 | Side-channel embeddings | Sometimes | usually |
 
@@ -115,6 +116,18 @@ That is a more mature target than trying to force every surface into a generic d
 
 The same point also explains why hybrid-family notation is worth preserving. If a report mentions NAM52 or NAM56R, that is not branding. It is a reminder that the stack contains different block families with different split behavior. A pattern string like `AEMEAEMEAEMR` is useful because it signals where automatic assumptions stop being safe.
 
+## What Megatron does not split for you
+
+Megatron can partition dense tensors, pipeline stages, expert groups, and long-context work when the ownership model is explicit. It does not erase the need to define architectural boundaries.
+
+Distributed checkpointing, often shortened to DCP, is not a compute split axis. It governs how state is saved and restored.
+
+Activation recompute and checkpointing are also not partitioning modes. They change the memory and compute tradeoff, but they do not decide where parameters, tokens, or experts live.
+
+Two taxonomy corrections matter in practice. First, SP and CP are not interchangeable token-splitting names. SP is a TP companion for activation layout; CP is a long-context ownership strategy. Second, EP is not a substitute for TP or PP. EP distributes expert banks and routed-token transport; TP and PP still own dense math and depth placement.
+
+The remaining hard cases are the ones where ownership is conditional or family-specific: routed control flow, auxiliary losses, cross-stage side channels, recurrent state handoff, and expert-local bookkeeping. Those still need explicit contracts even when the dense path is fully under Megatron control.
+
 ## So what can Megatron split, and what can it not?
 
 Megatron can split regular dense computation extremely well. It can split expert banks well. It can split depth well once stage boundaries are chosen meaningfully. It cannot automatically dissolve routing complexity, recurrent state semantics, or auxiliary-input ownership into linear algebra.
@@ -123,7 +136,8 @@ That is the boundary that matters in practice. Once you accept it, the framework
 
 ## References
 
-- the distributed runtime implementation
-- the training configuration and launcher notes
-- the public DSA retrospective
-- the NAM56R layout notes
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/features/context_parallel.html
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/features/moe.html
+- https://docs.pytorch.org/docs/main/distributed.checkpoint.html
+- https://docs.pytorch.org/docs/stable/checkpoint.html

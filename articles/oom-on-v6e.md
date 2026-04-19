@@ -1,13 +1,13 @@
 ---
 title: "OOM on v6e: Why Memory Pressure Looked Different on TPU"
-description: "What the prototype learned from TPU v6e out-of-memory failures, why the obvious fixes were often wrong, and how the lane eventually measured memory honestly."
+description: "What TPU v6e out-of-memory failures taught us, why the obvious fixes were often wrong, and how the lane eventually measured memory honestly."
 date: "2026-04-18"
-tags: ["tpu", "v6e", "oom", "memory", "xla", "the POC"]
+tags: ["tpu", "v6e", "oom", "memory", "xla"]
 ---
 
 # OOM on v6e: Why Memory Pressure Looked Different on TPU
 
-**TL;DR:** OOM on TPU v6e was not a slightly different version of GPU OOM. The lane needed chip-level visibility, a deterministic retry ladder, and much less trust in GPU-origin intuitions. In the POC, the winning move was not “reduce batch until it fits.” It was “measure memory on the right unit, preserve the exact model shape in the report, and shrink the right dimension in the right order.”
+OOM on TPU v6e was not a slightly different version of GPU OOM. The lane needed chip-level visibility, a deterministic retry ladder, and much less trust in GPU-origin intuitions. The winning move was not “reduce batch until it fits.” It was “measure memory on the right unit, preserve the exact model shape in the report, and shrink the right dimension in the right order.”
 
 TPU memory failures are frustrating because they often look generic at first. The process dies, the trace is noisy, and the first instinct is to do what worked on GPU: shrink batch size, toggle checkpointing, and hope the next run lands. The local TPU docs and runtime notes argue for a more disciplined view. On the TPU lane, compiler decisions, SPMD layout, and per-chip pressure can dominate the story. If you only watch aggregate memory, you can easily debug the wrong problem.
 
@@ -92,7 +92,7 @@ This is especially important because a step-zero OOM is easy to summarize lazily
 
 That matters because TPU OOM is often expensive to reproduce. A long compile window followed by a step-zero failure is not something you want to rediscover just because the earlier report forgot whether the lane used the NAM52 dense shape or the NAM56R hybrid shape.
 
-The same logic also keeps TPU and GPU lanes from bleeding into each other conceptually. The POC’s H200 notes are very explicit about CUDA runtime invariants, root-volume hygiene, and validated launcher environments. The TPU notes are explicit about PJRT, wheel lineage, and chip-level truth. Keeping those receipts separate is how the team avoids applying the wrong fix to the wrong platform.
+The same logic also keeps TPU and GPU lanes from bleeding into each other conceptually. The H200 notes are very explicit about CUDA runtime invariants, root-volume hygiene, and validated launcher environments. The TPU notes are explicit about PJRT, wheel lineage, and chip-level truth. Keeping those receipts separate is how the team avoids applying the wrong fix to the wrong platform.
 
 ## What survived from the v6e OOM work
 
@@ -110,9 +110,9 @@ Fourth, exact naming should stay inside the report. `NAM52`, `NAM56R`, and patte
 
 Finally, an honest frontier is better than a heroic myth. If a given topology does not fit on v6e under the real runtime and real stack, the useful output is a recorded limit, not a vague promise that one more small tweak will surely fix it.
 
-## What MegaCpp should inherit
+## What A Cross-Platform Training Stack Should Inherit
 
-MegaCpp should inherit the TPU lesson even when running on different hardware: measure the bottleneck on the unit that actually fails, keep the lane description exact, and script the retry behavior instead of relying on operator memory. Those are not TPU-only ideas. TPU just made the cost of ignoring them impossible to hide.
+A cross-platform training stack should inherit the TPU lesson even when running on different hardware: measure the bottleneck on the unit that actually fails, keep the lane description exact, and script the retry behavior instead of relying on operator memory. Those are not TPU-only ideas. TPU just made the cost of ignoring them impossible to hide.
 
 There is a deeper mixed-platform lesson here too. When one project spans TPU research and GPU production lanes, the louder platform tends to dictate debugging style. The v6e memory work is a reminder that shared discipline matters more than shared folklore: exact measurement, exact receipts, and platform-specific units of truth.
 

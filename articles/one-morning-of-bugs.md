@@ -10,7 +10,7 @@ A training wave is a good stress test of every dependency in the stack at once. 
 
 ## Why MegaCpp cares about this
 
-The prototype sits on top of a stack under active development: nightly PyTorch, current accelerator libraries, current Megatron-Core, current `mamba_ssm`, TileLang near the tip of development, Liger-Kernel, and Triton nightly builds. Pretending that dependency graph is stable is how you lose a training window to a regression that nobody outside your run would have noticed.
+MegaCpp sits on top of a stack under active development: nightly PyTorch, current accelerator libraries, current Megatron-Core, current `mamba_ssm`, TileLang near the tip of development, Liger-Kernel, and Triton nightly builds. Pretending that dependency graph is stable is how you lose a training window to a regression that nobody outside your run would have noticed.
 
 The product consequence matters even more. Production MegaCpp inherits whatever we choose to work around in research. If we only patch the symptom and never write the upstream-quality fix, we carry that patch indefinitely. Waiting passively for upstream is not viable on a fast-moving stack. The middle path is a patch lane: fix locally when needed, prepare the upstream-quality explanation quickly, and retire the local patch when upstream absorbs it.
 

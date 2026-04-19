@@ -72,7 +72,7 @@ The cadence has a second benefit: it is when retirements actually happen. Withou
 
 Production MegaCpp inherits the patch lane, but the shape changes.
 
-First, the import-time patch surface shrinks. A fast-moving prototype can justify small feature-detected overlays; long-lived product code should move those decisions into clearer seams such as subclassing, configuration, or explicit integration points.
+First, the import-time patch surface shrinks. A fast-moving research-stack can justify small feature-detected overlays; long-lived product code should move those decisions into clearer seams such as subclassing, configuration, or explicit integration points.
 
 Second, the environment matrix narrows. Production ships fewer hardware lanes than research, and the difference between research and production stacks is tracked explicitly.
 
@@ -86,7 +86,7 @@ We tried a single lockfile across CUDA, TPU, and CPU. It was painful to produce,
 
 We tried to carry every Megatron fix as a full fork. That worked, but rebasing against a moving development branch became too expensive for changes that were often very small. We kept fuller forks where the diff justified them and used lighter overlays elsewhere.
 
-We also tried a strict upstream-first rule: never land a local patch until a polished upstream PR exists. That sounds principled, but on a fast-moving research stack it can waste an entire training window. We replaced it with a better rule: fix locally when needed, draft the upstream-quality explanation immediately, and submit when the patch is ready.
+We also tried a strict upstream-first rule: never land a local patch until a polished upstream PR exists. That sounds principled, but on a fast-moving training stack it can waste an entire training window. We replaced it with a better rule: fix locally when needed, draft the upstream-quality explanation immediately, and submit when the patch is ready.
 
 What we kept is the part that compounds: pinned environments, a small set of local forks or overlays, a public-facing patch inventory, a regular upstream diff, and a weekly merge-back cadence. We also kept three hard rules: every local patch must be tracked, every tracked patch needs a retirement condition, and nothing retires silently.
 
@@ -104,7 +104,7 @@ What we kept is the part that compounds: pinned environments, a small set of loc
 
 ## References
 
-- Public environment notes for nightly and accelerator-specific stacks
-- Public changelog and release notes
-- Public upstream issues and pull requests where relevant
-- Validation evidence, summarized in publication-safe form
+- [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
+- [MegaCpp public sample pack](https://github.com/DatasunriseOU/site_samples)
+- [PyTorch previous versions guide](https://pytorch.org/get-started/previous-versions/)
+- [PyPA packaging guide](https://packaging.python.org/en/latest/)

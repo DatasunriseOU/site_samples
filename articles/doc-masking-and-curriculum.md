@@ -98,5 +98,5 @@ doc_ids = torch.cumsum(is_bos.to(torch.int32), dim=-1)
 ## References
 
 - [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
-- [Sanitized public sample pack](https://github.com/DatasunriseOU/site_samples)
+- [MegaCpp public sample pack](https://github.com/DatasunriseOU/site_samples)
 - The public masking, curriculum, and data-pipeline notes linked from the MegaCpp repositories.

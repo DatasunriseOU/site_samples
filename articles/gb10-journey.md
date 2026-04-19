@@ -71,7 +71,7 @@ After the P1 disk state was reverted, we ran a 13-layer hybrid cut (1 MLA + 3 DS
 - Plus the true per-layer dims (hidden=3584, ffn=18944, 28 heads) at moderate MBS: finite.
 - Plus the canonical MBS with `CPPMEGA_INDEX_CACHE=1`: finite, peak memory in the high-80s of GB, validation PPL in the expected band.
 
-That last one is as close to the canonical golden config as a single GB10 can physically run. Every component that the production trainer uses and that fits on `sm_121a` produces finite gradients on GB10. The NaN that haunted the multi-GPU system lives in the intersection of EP=8 collective backward, megatron-lm SHA drift, and TE FP8 tensorwise behaviour — none of which a single GB10 can exercise.
+That last one is as close to the canonical golden config as a single GB10 can physically run. Every component that the full training runtime uses and that fits on `sm_121a` produces finite gradients on GB10. The NaN that haunted the multi-GPU system lives in the intersection of EP=8 collective backward, megatron-lm SHA drift, and TE FP8 tensorwise behaviour, none of which a single GB10 can exercise.
 
 ## What we kept and what we threw away
 

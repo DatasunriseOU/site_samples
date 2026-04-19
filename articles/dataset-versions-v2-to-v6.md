@@ -15,7 +15,7 @@ Before any of the versions, there is the corpus. Eight pinned C/C++ repositories
 
 `v2` is the first dataset that was more than a flat dump. It walks the commit history of each repo and, for each commit touching a C++ file, emits the entire file before the commit and the entire file after as two documents. That is it. Raw flat files have no temporal signal — the model never sees a piece of code as something that used to look different — and file-level pairs are the cheapest possible way to get *change* into the corpus without inventing a structured format.
 
-Raw `v2` archives total roughly a couple of TB of compressed JSONL across 27.6 M documents. The public data-status note calls it ready. It tokenizes into `uint16` binaries because, at the time, our tokenizer fit in 16 bits (a fact that later changed; see the `v6` section).
+Raw `v2` archives total roughly a couple of TB of compressed JSONL across 27.6 M documents. It tokenizes into `uint16` binaries because, at the time, the tokenizer fit in 16 bits. That later changed; see the `v6` section.
 
 Every later version inherits from the same commit walk; only the *representation* of each commit changes.
 
@@ -33,7 +33,7 @@ The win over `v2` is that the model sees the diff as code with a comment, in-pla
 
 `v4` had an embarrassing first month: an empty-file bug from a JSON schema deserialization mismatch in the Rust binary was producing zero-byte outputs for a non-trivial fraction of repos. Once fixed and recompiled, the pipeline saturated 40 cores; hundreds of repos finished cleanly. `v4` is *approximate* by design — tree-sitter does not resolve names across files, does not see overloads, does not know which `foo()` a particular call resolves to under namespaces or templates. For 16K/64K curriculum windows that is fine, and the point of `v4` is throughput: commodity CPU, no build system, no compile database, no per-project setup.
 
-The platform-detection upgrade in the public platform-scanner notes (~1640 lines, Aho–Corasick over 190+ patterns) hangs off the `v4` enrichment work. It auto-detects 30+ OS, 12 RTOS, 16 GPU/accelerator targets, 25+ architectures, 14 compilers, and a C++-standard hint. Those land in the `platform_info` field downstream lanes either preserve or refine.
+The platform-detection upgrade that landed with `v4` enrichment uses an Aho-Corasick matcher over 190+ patterns. It auto-detects 30+ OS, 12 RTOS, 16 GPU/accelerator targets, 25+ architectures, 14 compilers, and a C++-standard hint. Those land in the `platform_info` field downstream lanes either preserve or refine.
 
 ## v5: clang semantic graph
 
@@ -47,7 +47,7 @@ The platform-detection upgrade in the public platform-scanner notes (~1640 lines
 
 `v6` is the version where the dataset stops being just text. Same commit walk underneath. Same `v5`-quality semantic edges where available, `v4` tree-sitter edges as fallback. The change is the *schema*: each parquet record now carries dense structural metadata as additional columns.
 
-The full enriched contract is documented in the public data pipeline notes, but the columns that matter are:
+The full enriched contract is larger than this summary, but the columns that matter are:
 
 - `text` — unchanged. Backwards-compatible.
 - `structure_ids` — `list<u8>` of length `len(text)`. Per-character category, one of nine: `other`, `preamble`, `func_sig`, `func_body`, `class_decl`, `class_member`, `comment`, `typedef`, `namespace`.
@@ -108,7 +108,5 @@ Coexisting object-store layout:
 
 ## References
 
-- the public data pipeline notes
-- the public changelog
-- the public data-preparation notes
-- the public data-preparation notes
+- [MegaCpp site_samples articles directory](https://github.com/DatasunriseOU/site_samples/tree/main/articles)
+- [MegaCpp site_samples docs directory](https://github.com/DatasunriseOU/site_samples/tree/main/docs)

@@ -11,7 +11,7 @@ The tokenizer story is usually told at the summary level: we grew from 32K to 48
 
 A bad tokenizer is the cheapest way to degrade a code model. It wastes context, shatters high-frequency patterns into multi-token sequences, confuses the attention map, and silently inflates loss on the identifiers the model should be best at. For specialists training at 4K, 16K, and 64K, every percentage point of expansion ratio costs real compute at 64K and real answer quality at 4K. The other reason: our model family is a set of specialists sharing one 131K vocabulary. Their practical working sets differ enough that "per-specialist sub-vocab" is a useful abstraction even when no separate artifact exists on disk.
 
-## What we built in the POC
+## What we built in MegaCpp
 
 The tokenizer is a hybrid. Half of the vocabulary is hand-curated fixed tokens; half is learned BPE. The tokenizer implementation wraps the HuggingFace `tokenizers` backend with BERT-style whitespace handling and a custom decoder that knows the difference between a standalone added token and a BPE suffix fragment.
 
@@ -115,6 +115,6 @@ logits = logits + mask  # applied before softmax
 - `TOKENIZER_V2_PROPOSAL.md`
 - `VOCAB_FREQUENCY_ANALYSIS.md`
 - the fixed-token configuration artifact
-- `data_preparation.md`
+- [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega/tree/main)
 - [Scaling Laws with Vocabulary: Larger Models Deserve Larger Vocabularies — Tao et al., NeurIPS 2024]
 - [Byte-Pair Encoding — Sennrich, Haddow, Birch, ACL 2016]

@@ -78,7 +78,7 @@ An explicit validation shard is preferred when present — that is the contract 
 
 ## The streaming writer
 
-Two implementations live in `data_prep_parquet_to_megatron.py`. The preferred path uses `megatron.core.datasets.indexed_dataset.IndexedDatasetBuilder`: given an output prefix and a dtype, it accepts documents via `add_document(np.ndarray)` and writes `.bin` and `.idx` together at `finalize()`. We iterate over parquet row groups, then rows within a row group, calling `add_document` per row. Memory pressure is bounded to one row group plus the builder's internal buffers — important on the larger producers.
+Two implementations live in the parquet-to-Megatron conversion script. The preferred path uses `megatron.core.datasets.indexed_dataset.IndexedDatasetBuilder`: given an output prefix and a dtype, it accepts documents via `add_document(np.ndarray)` and writes `.bin` and `.idx` together at `finalize()`. We iterate over parquet row groups, then rows within a row group, calling `add_document` per row. Memory pressure is bounded to one row group plus the builder's internal buffers, which matters on larger conversion jobs.
 
 The fallback runs when megatron-core is not importable (typical on a dev laptop). It gathers documents into a list, then writes `.bin` and `.idx` directly:
 
@@ -167,15 +167,6 @@ The summary is that stages 3 and 4 are intentionally small. Most of the engineer
 
 ## References
 
-- the public format-preparation sample
-- the public cache-preparation sample
-- the public dataset-verification sample
-- the public Parquet-to-Megatron conversion sample
-- the public data preparation workflow
-- the public data-preparation notes
-- a Megatron restoration note
-- the public data pipeline notes
-- the JSONL-to-Parquet ingestion stage
-- internal dataset-generation change notes
-- internal rollout status notes
-- a remote accelerator smoke workflow
+- [Megatron-LM indexed dataset implementation](https://github.com/NVIDIA/Megatron-LM/tree/main/megatron/core/datasets)
+- [MegaCpp site_samples articles directory](https://github.com/DatasunriseOU/site_samples/tree/main/articles)
+- [MegaCpp site_samples docs directory](https://github.com/DatasunriseOU/site_samples/tree/main/docs)

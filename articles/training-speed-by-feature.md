@@ -7,7 +7,7 @@ tags: ["performance", "kernels", "mamba3", "moe", "mla", "transformer-engine"]
 
 # Training speed by feature: which parts of the stack really move step time
 
-**TL;DR:** Not every interesting feature moves training speed in the same way. The biggest durable wins usually come from removing repeated hot-path work: fused Mamba/SSM updates, fused residual math, narrow MLA ingress fusion, and especially MoE dispatch-plus-compute cleanup. Some features are speed enablers because they route work to a better backend. Others are quality or architecture features that should be treated as measured taxes, not presumed accelerators. The practical job is to separate hot-path wins from feature costs and to keep exact measurements for both.
+Not every interesting feature moves training speed in the same way. The biggest durable wins usually come from removing repeated hot-path work: fused Mamba or state-space updates, fused residual math, narrow MLA ingress fusion, and especially MoE dispatch-plus-compute cleanup. Some features are speed enablers because they route work to a better backend. Others are quality or architecture features that should be treated as measured taxes, not presumed accelerators. The practical job is to separate hot-path wins from feature costs and to keep exact measurements for both.
 
 The easy way to talk about speed is to say everything matters. The useful way is to ask a narrower question: which code paths are executed often enough, over tensors large enough, that cleaning them up changes the wall-clock reality of training? A serious training stack answers that question in a grounded way. It exposes throughput and goodput reporting, preserves feature flags in launch surfaces, and keeps a reproducible record of which optimizations are worth keeping versus which ones are still experiments.
 
@@ -126,8 +126,7 @@ That is why the local measurement layer matters as much as the kernels. Without 
 
 ## References
 
-- A fused MoE path that reduces route, pad, and scatter overhead
-- Narrow MLA-ingress fusion and residual-path fusion
-- Goodput, throughput, and structured result reporting
-- Public NAM56R recipe notes and status summaries
-- Shape-aware DSA indexing and streamlined MTP-layer implementations
+- https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md
+- https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/api-guide/moe.html
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/api-guide/tensor_parallel.html

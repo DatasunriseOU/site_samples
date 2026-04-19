@@ -1,6 +1,6 @@
 ---
 title: "OOM Debugging Playbook for H200 Training Runs"
-description: "A public-safe playbook for triaging H200 out-of-memory failures: distinguish fragmentation from true exhaustion, isolate the largest activation surfaces, and apply the cheapest fix first."
+description: "A practical playbook for triaging H200 out-of-memory failures: distinguish fragmentation from true exhaustion, isolate the largest activation surfaces, and apply the cheapest fix first."
 date: "2026-04-18"
 tags: ["oom", "h200", "memory", "debugging", "training"]
 ---

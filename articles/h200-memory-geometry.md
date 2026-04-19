@@ -5,7 +5,7 @@ date: "2026-04-18"
 tags: ["h200", "memory", "muon", "moe", "mamba3", "activations", "training"]
 ---
 
-TL;DR: on H200, memory fit in a hybrid stack is decided by geometry, not by a single parameter-count number. A useful capacity model splits the budget into replicated weights, tensor-parallel shards, expert-parallel shards, gradients, optimizer state, activations, routing scratch, runtime reserve, and allocator overhead, and that split is the only reliable way to predict whether a launch actually clears the HBM limit.
+On H200, memory fit in a hybrid stack is decided by geometry, not by a single parameter-count number. A useful capacity model splits the budget into replicated weights, tensor-parallel shards, expert-parallel shards, gradients, optimizer state, activations, routing scratch, runtime reserve, and allocator overhead, and that split is the only reliable way to predict whether a launch actually clears the HBM limit.
 
 ## Why MegaCPP cares
 
@@ -23,7 +23,7 @@ That point is easy to miss in practice because hybrid models encourage people to
 
 The second split is optimizer geometry. A stack does not pay one flat optimizer tax. Large matrix paths, embeddings, norms, routers, and other special-case tensors often carry different optimizer state. That matters because one change in parameter grouping can swing the optimizer column even when the raw parameter count does not move much.
 
-The third split is the activation surface. In the estimator, ordinary activations, MoE routing state, and feature activations are distinct fields. In the runtime, that matches reality. The dense-model path carries residual and normalization state through attention blocks; the MoE dispatch path builds dispatch counts, rank-local receives, and combine buffers for the MoE route; and the feature side adds smaller but still real activation surfaces for optional structure-aware paths. Public changelogs show why this category ended up being managed explicitly: sequence parallelism was adopted to reduce activation memory proportional to TP degree, and selective activation recomputation replaced blunter full checkpointing because it was the better way to shrink the activation column.
+The third split is the activation surface. In the estimator, ordinary activations, MoE routing state, and feature activations are distinct fields. In the runtime, that matches reality. The dense-model path carries residual and normalization state through attention blocks; the MoE dispatch path builds dispatch counts, rank-local receives, and combine buffers for the MoE route; and the feature side adds smaller but still real activation surfaces for optional structure-aware paths. That is why this category has to be managed explicitly: sequence parallelism reduces activation memory roughly with tensor-parallel degree, and selective activation recomputation is often a better lever than blunt full checkpointing when the goal is to shrink the activation column without overpaying in extra compute.
 
 This is also where hybrid depth matters more than people expect. A stack with more attention-heavy layers pays for a different activation mix than a stack with more Mamba or expert-heavy layers, even when total parameter count is similar. Dense attention-side residuals dominate one profile, routed-expert metadata and dispatch scratch dominate another, and sequence-state work dominates a third. The estimator's category split is valuable precisely because it lets us change architecture without losing the ability to reason about where memory is going.
 
@@ -31,7 +31,7 @@ The fourth split is routing scratch. Expert parallelism is not just expert param
 
 The fifth split is the runtime tail. Any realistic estimate includes allocator overhead and runtime reserve, and it should warn when headroom gets too small. That is the estimator admitting that launch-time behavior is not purely steady-state math. Compile peaks, collectives, allocator scars, and scratch buffers create a real tail, which is exactly why the runtime tail stays visible in the model.
 
-The allocator and collective tail is also where "safe on average" becomes unsafe in production. A launch can look fine if you only inspect final resident state after the step settles. But startup has to pass process-group construction, scratch allocation, compile-time graph work, and the first real backward. The prototype treats those as part of memory geometry rather than as unrelated incidents. That is a more honest model of how H200 jobs fail.
+The allocator and collective tail is also where "safe on average" becomes unsafe in production. A launch can look fine if you only inspect final resident state after the step settles. But startup has to pass process-group construction, scratch allocation, compile-time graph work, and the first real backward. MegaCpp treats those as part of memory geometry rather than as unrelated incidents. That is a more honest model of how H200 jobs fail.
 
 Serving adds one more dimension that training often does not pay: KV cache. The engine and serving stack distinguish contiguous cache and paged cache substrates, and only attention layers consume them. In a hybrid model that interleaves non-attention layers, that matters a lot. Mamba blocks do not contribute to KV residency the way attention blocks do, so the serving geometry of a hybrid stack is better than a pure-attention stack of equal depth.
 
@@ -73,15 +73,15 @@ Estimate(
 
 The production lift is to preserve the same memory geometry in launch planning and recipe review.
 
-That means keeping replicated tensors explicit, keeping Muon and AdamW state separate, budgeting MoE routing scratch as its own term, and refusing to spend the full nominal HBM number as if runtime reserve did not exist. It also means respecting the same axis-specific ownership rules the prototype uses. Expert banks can be EP-sharded, but routers and embeddings do not disappear just because EP is enabled. Attention and Mamba projections can be TP-sharded, but the routing subsystem is a separate cost center.
+That means keeping replicated tensors explicit, keeping Muon and AdamW state separate, budgeting MoE routing scratch as its own term, and refusing to spend the full nominal HBM number as if runtime reserve did not exist. It also means respecting axis-specific ownership rules. Expert banks can be EP-sharded, but routers and embeddings do not disappear just because EP is enabled. Attention and Mamba projections can be TP-sharded, but the routing subsystem is a separate cost center.
 
 It also means teaching the launch surface to answer the right questions. If a proposed recipe change increases expert count, the first follow-up should not be “what is the new parameter count?” It should be “which bucket grows: EP-sharded expert banks, routed-token scratch, or both?” If a precision change is proposed, the question is not just what happens to weights; it is what happens to gradients, optimizer state, communication buffers, and whether the runtime tail now dominates instead.
 
-## Ablations and what we kept
+## Design choices that held up
 
-Public change notes give the short list of memory decisions that survived.
+Public code and documentation samples give the short list of memory decisions that held up.
 
-We kept the fused recurrent-convolution path because it cut peak memory meaningfully compared with a naive grouped implementation. We kept sequence parallelism because it reduces activation memory roughly with tensor-parallel degree. We kept selective activation recomputation because it beat a blunt full-checkpoint strategy. And we kept explicit routing accounting because expert parallelism is not just “expert weights somewhere else”; the dispatch and combine path is part of the budget.
+The fused recurrent-convolution path stayed because it cut peak memory meaningfully compared with a naive grouped implementation. Sequence parallelism stayed because it reduces activation memory roughly with tensor-parallel degree. Selective activation recomputation stayed because it beat a blunt full-checkpoint strategy. Explicit routing accounting stayed because expert parallelism is not just “expert weights somewhere else”; the dispatch and combine path is part of the budget.
 
 What we did not keep is the habit of talking about fit as if only parameters mattered. On H200, the winner is the configuration where weights, gradients, optimizer state, activations, routing scratch, KV cache, and reserve all fit together with real headroom.
 
@@ -99,8 +99,8 @@ That is the real meaning of memory geometry. It is not an aesthetic way to prese
 
 ## References
 
-- capacity modeling and runtime memory-debug notes from the MegaCPP training stack
-- distributed-parallelism notes
-- expert-dispatch and dense-model runtime notes
-- public notes on fused recurrent-kernel memory behavior
-- public changelogs for memory-policy changes
+- [NVIDIA H200 Tensor Core GPU](https://www.nvidia.com/en-us/data-center/h200/)
+- [PyTorch `torch.utils.checkpoint`](https://pytorch.org/docs/stable/checkpoint.html)
+- [Megatron Core developer guide](https://docs.nvidia.com/megatron-core/developer-guide/latest/)
+- [Distributed debugging notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md)
+- [H200 training status summary sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/cppmega/training/training-on-h200-eight-gpu__production_status_summary__v1.md)

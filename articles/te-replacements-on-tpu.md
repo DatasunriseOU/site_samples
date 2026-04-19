@@ -7,19 +7,19 @@ tags: ["tpu", "v6e", "xla", "transformer-engine", "layer-spec", "fp8"]
 
 Transformer Engine is the load-bearing fast path on the GPU path: fused norm+linear, FP8 autocast for the QKV matmul, cuDNN flash attention, fused MoE permute. None of it ports to TPU v6e. The TPU path has a different stack (XLA, Pallas, JAX kernels), a different precision story (no FP8 in deployment today), and a different sharding model. The interesting engineering question is not "how do we get TE on TPU"; it is "how do we keep one model definition that sees TE on the GPU path and a clean XLA-traceable substitute on the TPU path, without forking any block code." This post is about that abstraction and the substitutes we ended up with.
 
-## Why MegaCpp cares about this
+## Why This Matters
 
-Two paths ship the same MegaCpp specialists: H200 / Blackwell-class hosts and TPU v6e slices. The training loop, the attention modules, the MoE router, the long-context curriculum, the data pipeline, the tokenizer — all single-source. The only places allowed to diverge are kernel implementations and the precision plan. If the model definition forks, every feature lands twice and the ablations stop being comparable.
+Two paths ship the same specialists: CUDA hosts and TPU v6e slices. The training loop, the attention modules, the MoE router, the long-context curriculum, the data pipeline, the tokenizer — all single-source. The only places allowed to diverge are kernel implementations and the precision plan. If the model definition forks, every feature lands twice and the ablations stop being comparable.
 
 The hardest piece of that constraint is the Transformer Engine surface. On the GPU path, TE owns the highest-throughput path for at least four primitives: pre-norm fused into the next matmul, the QKV/MLP column-parallel linears, FP8 attention via `fp8_autocast`, and the fused MoE permute kernel. On the TPU path, none of those exist as TE modules. The substitute has to be (a) numerically equivalent at bf16, (b) traceable by XLA without dynamic shapes, (c) shardable under SPMD without surprise propagation, and (d) selectable at construction time so the same block code lives in both worlds.
 
-## What we built in the POC
+## The Shared Layer-Spec Approach
 
-The pivot is the public TE layer-spec sample. It is the prototype's port of Megatron-Core's `ModuleSpec` pattern into a smaller surface: a plain `dict[str, type | None]` that maps seven block component names — `norm`, `linear_qkv`, `linear_proj`, `linear_fc1`, `linear_fc2`, `attention`, `layernorm_mlp` — to TE classes when TE is importable and to `None` otherwise. The mapping mirrors Megatron's TE submodule selection: `linear_qkv` and `linear_fc1` both resolve to `LayerNormLinear` (pre-norm folded into the next GEMM), `linear_proj` and `linear_fc2` are `Linear`, `attention` is `DotProductAttention`, and `layernorm_mlp` is the full-block `LayerNormMLP` fusion.
+The pivot is the public TE layer-spec sample. It is a smaller adaptation of Megatron-Core's `ModuleSpec` pattern: a plain `dict[str, type | None]` that maps seven block component names — `norm`, `linear_qkv`, `linear_proj`, `linear_fc1`, `linear_fc2`, `attention`, `layernorm_mlp` — to TE classes when TE is importable and to `None` otherwise. The mapping mirrors Megatron's TE submodule selection: `linear_qkv` and `linear_fc1` both resolve to `LayerNormLinear` (pre-norm folded into the next GEMM), `linear_proj` and `linear_fc2` are `Linear`, `attention` is `DotProductAttention`, and `layernorm_mlp` is the full-block `LayerNormMLP` fusion.
 
 The contract that makes this useful on TPU is import safety. The module-level `_TE_AVAILABLE` flag is set inside a `try/except` that swallows every failure: missing package, ABI mismatch, broken transitive dependency. When TE is unavailable, calling `te_layer_spec(use_te=True)` returns a dict of `None` values; the caller substitutes natively and never sees an exception. The same import line lives at the top of a block file regardless of platform.
 
-We deliberately did not copy Megatron's full `ModuleSpec` machinery: the prototype blocks (`Block`, `ABlock`, `MBlock`, `EBlock` in the main model runtime module) take module references at `__init__`, not spec objects with `params`/`submodules` fields. A dict is the minimal shim that matches the existing surface and composes with both paths.
+We deliberately did not copy Megatron's full `ModuleSpec` machinery: the blocks (`Block`, `ABlock`, `MBlock`, `EBlock` in the main model runtime module) take module references at `__init__`, not spec objects with `params`/`submodules` fields. A dict is the minimal shim that matches the existing surface and composes with both paths.
 
 On the GPU path, `te_layer_spec(use_te=True)` returns the seven TE classes and `_TEAttentionBlock` assembles them into a fused QKV -> DPA -> output-proj block: pre-norm folded into `LayerNormLinear`, GQA via `num_gqa_groups=num_kv_heads`, `bshd` layout, residual sum at the end.
 
@@ -35,8 +35,8 @@ The lift-as-is parts: the seven-key dict surface in the public TE layer-spec sam
 
 Rewritten on the way in:
 
-1. The native fallback is consolidated. The POC has a dozen places in the main model runtime module where the block code reads `spec[key] is None` and assembles the substitute inline. Production centralizes that into a `NativeLayerSpec` factory with the same key set. The block code calls one factory regardless of platform; the factory returns either TE classes or the XLA-friendly substitutes.
-2. The TPU-path substitutes get explicit SPMD partition specs at construction time. The POC relies on XLA sharding propagation to figure out the spec from the surrounding graph; that has bitten us repeatedly (the Engram bottleneck case in `_apply_tensor_parallel_sharding` is documented in the engineering changelog). Production pins every substitute parameter with `mark_sharding` at the same call site that constructs it.
+1. The native fallback is consolidated. MegaCpp has a dozen places in the main model runtime module where the block code reads `spec[key] is None` and assembles the substitute inline. Production centralizes that into a `NativeLayerSpec` factory with the same key set. The block code calls one factory regardless of platform; the factory returns either TE classes or the XLA-friendly substitutes.
+2. The TPU-path substitutes get explicit SPMD partition specs at construction time. Relying on XLA sharding propagation to infer the spec from the surrounding graph has bitten this code repeatedly. Production pins every substitute parameter with `mark_sharding` at the same call site that constructs it.
 3. The FP8 plan becomes a precision-plan object rather than a constructor flag. On the GPU path it wraps the relevant linears with `fp8_autocast`; on the TPU path it is bf16 everywhere with a clear log line saying so.
 4. the public TE linear-replacement sample's post-hoc rewrite of every `nn.Linear` with `te.Linear` becomes the GPU-path initialization step that runs after model construction and before FSDP wrapping. The exclusion list (`wte`, `wpe`, `lm_head`, `router`, `shared_expert_gate`, `engram`, `mhc`, `ngram_hash`, `structure_emb`, `platform_emb`, `temporal_`, `lora_`) lifts as-is. On the TPU path the rewrite is a no-op.
 
@@ -60,13 +60,13 @@ The seven-key spec, summarised across paths:
 | MoE permute | the public TE permutation sample fused | bf16 equal-split path | Same `(idx, gates)` surface |
 | FP8 plan | FP8 attn + FP8 experts + bf16 rest | bf16 everywhere | Logged on startup |
 
-The ablation history on this path is mostly about what failed silently. A few items from the engineering changelog that shaped the current shape:
+The ablation history on this path is mostly about what failed silently. A few items shaped the current form:
 
 The TE in_proj fusion for the Mamba mixer (the public TE input projection sample work) was the cleanest "TE win on GPU, no-op on TPU" win we have. Replacing the Mamba `nn.Linear` in_proj with `TELayerNormColumnParallelLinear` folds the LN into the column-parallel projection, drops one kernel launch, and matches the surrounding TE block precision plan. On the TPU path the same module is a plain `F.rms_norm` + `F.linear`; the XLA fuser does the right thing and the loss curves overlay. Sentinel values inside the wrapper let the block code stay agnostic.
 
 `tp_comm_overlap=True` did not survive contact. The the public Megatron block sample config builder removed it after an audit of the TE extension layer: setting the flag requires a matching `te.initialize_ub(...)` call before model construction, which our GPU-path bring-up path does not do. Leaving the flag on would have produced a latent crash the moment someone ran `--use_megatron_block --megatron_tp --tensor_parallel=2 --sequence_parallel`. We kept the five real fusions (`masked_softmax_fusion`, `persist_layer_norm`, `attention_softmax_in_fp32=False`, `apply_rope_fusion`, `gradient_accumulation_fusion`) which do not depend on user-buffer overlap.
 
-The `LayerNormMLP` full-block fuse is exposed but not the default. Megatron does not use it by default because it makes fc1/fc2 sharding harder for TP; for single-GPU and FSDP-only the POC runs it is the fastest path on the GPU path. On the TPU path the substitute is the SwiGLU MLP we already had. The block code reads `spec["layernorm_mlp"]`; if non-`None` it uses the full-block fuse, otherwise it uses the substitute.
+The `LayerNormMLP` full-block fuse is exposed but not the default. Megatron does not use it by default because it makes fc1/fc2 sharding harder for TP; for single-GPU and FSDP-only runs it is the fastest path on the CUDA side. On the TPU path the substitute is the SwiGLU MLP we already had. The block code reads `spec["layernorm_mlp"]`; if non-`None` it uses the full-block fuse, otherwise it uses the substitute.
 
 The "use TE everywhere via post-hoc replacement" path (the public TE linear-replacement sample) survived contact but only with the exclusion list. Replacing embeddings with `te.Linear` clobbers the tied lm_head weight; replacing LoRA adapters wraps an existing Linear and breaks the rank-decomposition; replacing the MoE router silently FP8-quantizes a 1024-wide projection that needs full bf16 precision to keep routing decisions stable. The exclusion list is a load-bearing piece of the contract.
 
@@ -99,15 +99,15 @@ ln_mlp   = spec["layernorm_mlp"] or SwiGLUMLP
 
 ## References
 
-- the public TE layer-spec sample (POC)
-- the public TE attention sample (POC, GPU-path DPA adapter)
-- the public TE block sample (POC, GPU-path TE-native A-block)
-- the public TE permutation sample (POC, GPU-path MoE permute)
-- the public TE linear-replacement sample (POC, post-hoc Linear rewrite)
-- the public TE bridge sample (POC, TE import bridge)
-- the public Megatron block sample (POC, Megatron TransformerLayer adapter)
-- the TPU attention dispatch layer (POC, dense attention with TPU Pallas/Splash backends)
-- the MoE dispatch runtime module (POC, XLA-friendly MoE dispatch)
+- the public TE layer-spec sample
+- the public TE attention sample (GPU-path DPA adapter)
+- the public TE block sample (GPU-path TE-native A-block)
+- the public TE permutation sample (GPU-path MoE permute)
+- the public TE linear-replacement sample (post-hoc Linear rewrite)
+- the public TE bridge sample (TE import bridge)
+- the public Megatron block sample (Megatron TransformerLayer adapter)
+- the TPU attention dispatch layer (dense attention with TPU Pallas/Splash backends)
+- the MoE dispatch runtime module (XLA-friendly MoE dispatch)
 - the public TE input projection sample (Mamba TE in_proj fusion)
 - [Transformer Engine documentation - NVIDIA]
 - [Megatron-Core gpt_layer_specs - NVIDIA Megatron-LM]

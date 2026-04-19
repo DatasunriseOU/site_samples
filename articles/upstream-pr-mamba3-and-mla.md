@@ -102,11 +102,9 @@ None of these eight packs is filed yet. The Mamba bundle (04, 05, 07) is the nex
 
 ## References
 
-- Public Mamba backward-kernel examples in `state-spaces/mamba`.
-- Public SparseMLA forward and backward kernels in `tile-ai/tilelang`, plus the dispatcher entry points around the fused MLA path.
-- TileLang `LowerBulkCopy` semantics (PR #746) and the `LayoutInference` arithmetic stack referenced in pack 13.
-- Megatron-LM DSA, mixed-precision wrapper, and linear-cross-entropy components relevant to the fixes.
-- Liger-Kernel fused linear cross-entropy module, issue #968 (closed), PR #1126 (open draft), PR #1182 (open).
-- TransformerEngine `Float8Tensor` / `QuantizedTensor` wrapper semantics for `.dtype`, `.data_ptr()`, `.contiguous()`, and `.dequantize()`.
-- Open Megatron PRs in the same area: #3674 (DSA absorbed MLA + TileLang fused), #4039 (Fused Indexer Loss Kernel).
-- Mamba-3 paper for the SISO/MIMO backward kernel structure (Gu et al., state-spaces).
+- [Mamba repository](https://github.com/state-spaces/mamba)
+- [TileLang repository](https://github.com/tile-ai/tilelang)
+- [Transformer Engine repository](https://github.com/NVIDIA/TransformerEngine)
+- [Liger-Kernel repository](https://github.com/linkedin/Liger-Kernel)
+- [Megatron-LM repository](https://github.com/NVIDIA/Megatron-LM)
+- [Mamba-2 paper](https://arxiv.org/abs/2405.21060)

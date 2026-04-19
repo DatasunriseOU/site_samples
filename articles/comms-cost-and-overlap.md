@@ -5,7 +5,7 @@ date: "2026-04-18"
 tags: ["nccl", "xla", "fsdp", "performance", "h200", "tpu-v6e"]
 ---
 
-Distributed training on a hybrid CUDA and TPU stack is a communication problem first and a compute problem second. Dense and MoE configurations live well inside the regime where a careless bucket boundary can erase a large share of step throughput, and where one mis-tuned communication setting on a multi-host H200 lane decides whether a reduce-scatter overlaps the backward pass or stalls it. This post focuses on what the communication cost looks like on the two backends, how bucket sizing and launch coalescing affect overlap, what alignment buys in practice, and which ideas survive the move from prototype to production.
+Distributed training on a hybrid CUDA and TPU stack is a communication problem first and a compute problem second. Dense and MoE configurations live well inside the regime where a careless bucket boundary can erase a large share of step throughput, and where one mis-tuned communication setting on a multi-host H200 lane decides whether a reduce-scatter overlaps the backward pass or stalls it. This post focuses on what the communication cost looks like on the two backends, how bucket sizing and launch coalescing affect overlap, what alignment buys in practice, and which ideas survive the move from research-stack to production.
 
 ## Why MegaCPP cares about this
 
@@ -13,7 +13,7 @@ Our hybrid stack runs on two very different fabrics. On NVIDIA we target H200:8 
 
 The brief is simple: every microsecond of compute that is not also a microsecond of communication is wasted, and every collective that we cannot hide behind compute is a tax on every step for the rest of the run. The implementation is less simple, because it splits across PyTorch's NCCL bindings, the FSDP2 wrapping logic, our Megatron-style overlapped reducer, and the XLA SPMD lowering on the TPU side.
 
-## What the prototype taught us
+## What MegaCpp kept after repeated overlap tuning
 
 On the CUDA path, the central idea is a Megatron-style distributed optimizer with explicit gradient buckets, an overlapped reducer, and a per-bucket all-gather ladder that keeps the next parameter shard in flight by the time the previous wait returns. The chain is built once at initialization and then walked from model hooks so communication is launched from one place instead of racing between multiple call sites.
 
@@ -31,7 +31,7 @@ On the TPU path the picture is different because we do not call collectives by h
 
 ## How it lands in production
 
-The lift into production is a careful subset. The Megatron-style overlap discipline carries over directly: the production trainer drives a distributed optimizer that already knows the bucket-chain semantics, the reset points, and the alignment rules. What remains at the recipe level is discipline: pin the overlap flags, keep the normalization runtime settings compatible with collective scheduling, and export the small set of NCCL defaults that consistently help on H200.
+The lift into production is a careful subset. The Megatron-style overlap discipline carries over directly: the full training runtime drives a distributed optimizer that already knows the bucket-chain semantics, the reset points, and the alignment rules. What remains at the recipe level is discipline: pin the overlap flags, keep the normalization runtime settings compatible with collective scheduling, and export the small set of NCCL defaults that consistently help on H200.
 
 Three things are being rewritten on the way in. First, a hand-rolled coalescing wrapper retires in favor of an upstream coalesced reduce-scatter path. Second, the bucket-alignment flag becomes a recipe default rather than a per-run knob, because we have not found a workload that benefits from turning it off. Third, the FP32 gradient-reduction choice becomes part of the precision recipe rather than a standalone performance knob, so it composes cleanly with mixed-precision settings.
 
@@ -48,7 +48,7 @@ What survived contact with real hardware:
 - Bucket size formula `max(40M, 1M * dp_size)` parameters times dtype bytes — kept on every CUDA preset.
 - 64K-element shard alignment — kept by default; the startup log should confirm it.
 - `NCCL_P2P_NET_CHUNKSIZE=524288` and `TORCH_NCCL_HIGH_PRIORITY=1` — kept; both were ported from Megatron-Bridge's `PERF_ENV_VARS`.
-- Launch coalescing around per-bucket reduce-scatter launches — kept in the prototype, later retired in later in favor of the upstream path.
+- Launch coalescing around per-bucket reduce-scatter launches remained useful until the upstream path covered the same overlap window.
 - `reshard_after_forward=False` + prefetch limit 2 on FSDP2 — kept on H200:8 with these preset shapes; we did not push the limit higher because memory headroom for the dense+MoE config is tight.
 
 What did not survive:
@@ -73,9 +73,8 @@ The multi-host story is the most painful one to characterize cleanly. Allreduce 
 
 ## References
 
-- Public distributed-optimizer, FSDP, tensor-parallel, MoE dispatch, precision-bridge, recurrent-block, and model-wiring documentation in the MegaCPP codebase
-- public recipe notes for the public training configuration
-- public change notes covering bucket alignment, bucket-size formulas, FSDP2 prefetch wiring, and NCCL defaults
-- [Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism — Shoeybi et al., arXiv:1909.08053]
-- [PyTorch FSDP: Experiences on Scaling Fully Sharded Data Parallel — Zhao et al., VLDB 2023]
-- [GSPMD: General and Scalable Parallelization for ML Computation Graphs — Xu et al., arXiv:2105.04663]
+- https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/api-guide/distributed.html
+- https://docs.pytorch.org/docs/stable/fsdp.html
+- https://arxiv.org/abs/1909.08053
+- https://arxiv.org/abs/2105.04663

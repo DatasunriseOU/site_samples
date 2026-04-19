@@ -11,16 +11,16 @@ summary: >
   justifies.
 description: >
   A grounded guide to profiler-led optimization using the reports, code
-  comments, and configuration surfaces in the POC and MegaCpp repos.
+  comments, and configuration surfaces in the MegaCpp repos.
 ---
 
 # Profiler-Guided Optimization: Start With the Runtime Story, Not the Theory
 
-**TL;DR:** the fastest way to waste engineering time is to optimize the thing that merely sounds expensive. The POC and MegaCpp repos are valuable because they keep producing concrete receipts: compile warmup stalls, elementwise-add overhead, MoE-specific regressions, and family-specific recompute costs. The winning workflow is to profile the real lane, identify the dominating cost center, and then make the narrowest possible change that matches the measured story.
+The fastest way to waste engineering time is to optimize the thing that merely sounds expensive. The useful workflow is to profile the real lane, identify the dominating cost center, and then make the narrowest possible change that matches the measured story.
 
 Performance engineering gets worse when it becomes ideological. One team decides fused kernels are always the answer. Another decides topology dominates everything. A third blames the compiler by default. Real systems are not that tidy. The same stack can be limited by attention kernels in one lane, compile warmup in another, and expert dispatch semantics in a third.
 
-The POC’s reports and comments are useful because they refuse to compress those cases into one narrative. Instead of declaring a universal bottleneck, they preserve a trail of receipts tied to exact runtime conditions. That is what makes profiler-guided optimization practical rather than ornamental.
+MegaCpp's reports and comments are useful because they refuse to compress those cases into one narrative. Instead of declaring a universal bottleneck, they preserve a trail of receipts tied to exact runtime conditions. That is what makes profiler-guided optimization practical rather than ornamental.
 
 ## What the code already tells you to measure
 
@@ -51,7 +51,7 @@ This phase-first view prevents a common failure mode: spending days shaving a fe
 
 ## Hybrid models demand family-aware profiling
 
-The POC is not a homogeneous transformer stack. It separates `ABlock`, `MBlock`, `EBlock`, and `RBlock`, and it uses pattern strings such as NAM52 or `AEMEAEMEAEMR` to define mixed schedules. That means the profiler story is rarely “the model is slow.” It is more often “one family inside the model is dominating under this topology and this configuration.”
+MegaCpp is not a homogeneous transformer stack. It separates `ABlock`, `MBlock`, `EBlock`, and `RBlock`, and it uses pattern strings such as NAM52 or `AEMEAEMEAEMR` to define mixed schedules. That means the profiler story is rarely “the model is slow.” It is more often “one family inside the model is dominating under this topology and this configuration.”
 
 That distinction matters because the optimization levers differ.
 
@@ -70,7 +70,7 @@ That pattern should guide performance work:
 3. Change the smallest surface that could plausibly fix that cost.
 4. Re-profile the same lane.
 
-This approach matters even more in a fast-moving research stack. Broad rewrites produce too many moving parts at once. If throughput changes, you no longer know why. Narrow changes preserve causality.
+This approach matters even more in a fast-moving training stack. Broad rewrites produce too many moving parts at once. If throughput changes, you no longer know why. Narrow changes preserve causality.
 
 The same principle applies to layout work. If a trace points to elementwise overhead near block boundaries, the right next step may be fusion or boundary simplification in that exact path, not a repo-wide rewrite of all normalization behavior.
 
@@ -95,7 +95,7 @@ If the answer is no on multiple lines, the speedup claim needs careful qualifica
 
 ## Profiling MoE lanes means profiling the whole contract
 
-MoE performance is a good example of why “profile the kernel” is not enough. In the POC, MoE carries routing mode, score function, top-k, shared experts, grouped routing, optional FP8 experts, and fused execution choices. Any of those can change the exchange and compute profile.
+MoE performance is a good example of why “profile the kernel” is not enough. In MegaCpp, MoE carries routing mode, score function, top-k, shared experts, grouped routing, optional FP8 experts, and fused execution choices. Any of those can change the exchange and compute profile.
 
 That is why a serious MoE optimization pass should treat the following as part of one system:
 
@@ -110,7 +110,7 @@ The warmup report again shows how easy it is to misdiagnose this. A MoE lane tha
 
 ## When topology outranks kernel work
 
-Not every performance result points to code-level optimization. Sometimes the measured bottleneck is a topology or workload-shape issue. The TPU and phase-planning docs in the POC repeatedly emphasize memory-feasible topology, validated context limits, and the importance of enough per-chip work. That is an important complement to GPU-focused profiling.
+Not every performance result points to code-level optimization. Sometimes the measured bottleneck is a topology or workload-shape issue. TPU bring-up notes repeatedly emphasize memory-feasible topology, validated context limits, and the importance of enough per-chip work. That is an important complement to GPU-focused profiling.
 
 Profiler-guided optimization therefore includes the discipline to say “this is not a kernel problem.” If communication shape, pipeline imbalance, or compile amortization dominates, then topology changes or schedule changes may be the highest-value optimization. That answer can feel less glamorous than a fused kernel, but it is often more honest.
 
@@ -141,7 +141,7 @@ That is what profiler-guided optimization means in practice. It means letting th
 
 ## Receipts beat intuition when compile and runtime interact
 
-One reason this workflow matters so much in the POC is that compile policy and runtime behavior are entangled. A lane may appear to have a kernel problem when the real issue is that the compiler was asked to warm up a toxic path, or that a supposedly steady-state trace is still dominated by compile-time side effects. The warmup regression report is valuable precisely because it separates those cases instead of treating them as one generic slowdown.
+One reason this workflow matters so much in MegaCpp is that compile policy and runtime behavior are entangled. A lane may appear to have a kernel problem when the real issue is that the compiler was asked to warm up a toxic path, or that a supposedly steady-state trace is still dominated by compile-time side effects. That is why compile-warmup receipts need to be separated from steady-state throughput receipts.
 
 This is also why keeping a historical trail matters. If a system previously needed an escape hatch such as no-warmup policy for a specific class of runs, then any later re-enable should be treated as a new hypothesis, not as a permanent truth. The report shows what happens when that caution is ignored: the runtime regresses back into warmup trouble and the profiler story becomes distorted until the policy is narrowed again.
 

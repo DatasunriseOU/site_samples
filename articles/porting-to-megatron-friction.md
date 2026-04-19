@@ -13,7 +13,7 @@ Transformer Engine is where the best kernels live on Hopper and Blackwell today:
 
 So the question was never "should we use Megatron?" - it was "how much of our architecture survives intact when we do?". The hybrid stack is the hard part: dense attention blocks, MLA blocks, DSA blocks, Mamba/M2RNN blocks, and MoE blocks, composed with a mHC residual stream and MTP heads on top. Megatron's `TransformerConfig` was designed around one reasonably regular layer shape repeated `num_layers` times with optional MoE and optional Mamba. Our layer pattern is irregular on purpose. Everything downstream of that mismatch is friction.
 
-## What we built in the POC
+## What we built in MegaCpp
 
 The integration lives in a family of adapter modules in the experimentation stack. They are independent on purpose: each one adapts exactly one Megatron surface so features can be turned on and off without rewriting the rest of the model.
 
@@ -83,7 +83,7 @@ the Megatron MoE integration module is a much thinner adapter. It is a compatibi
 
 ## How it lands in production
 
-In the production codebase the shape is inverted. There, Megatron is the framework and the custom pieces slot into Megatron-native specs. The public tensor-parallel Mamba mixer sample, the public recurrent spec sample, the public authored Mamba spec sample, and the public DSA-absorbed attention spec are all `ModuleSpec`-shaped objects that Megatron's `build_module` instantiates directly. The public linear-CE shim and indexer-fusion shim are module-level monkey-patches that swap Megatron primitives for fused variants. The production recurrent path runs through fused chunk and Triton kernels rather than the pure-PyTorch recurrence the proof-of-concept adapter wraps.
+In the current MegaCpp architecture the shape is inverted. Megatron is the framework and the custom pieces slot into Megatron-native specs. The public tensor-parallel Mamba mixer sample, recurrent spec sample, authored Mamba spec sample, and DSA-aware attention spec are all `ModuleSpec`-shaped objects that Megatron's `build_module` instantiates directly. The public linear-CE shim and indexer-fusion shim are module-level monkey-patches that swap Megatron primitives for fused variants. The recurrent path runs through fused chunk and Triton kernels rather than the pure-PyTorch recurrence the early adapter wrapped.
 
 The lift-as-is set is small and boring: the bridge itself (config mapping, parallel-state lifecycle), the MoE primitive wrappers, and the distributed optimizer's bucket sizing and coalescing rules. Rewrites: the block wrapper is replaced by production `ModuleSpec` objects that are fully TE-native from end to end. Drops: the pure Python recurrent mixer becomes the Triton fused chunk kernel; the PyTorch AdamW path gives way to TE's fused optimizers when FP8 is on. Feature flags such as Megatron-block, Megatron-recurrent, Megatron-DDP, and the MoE dispatcher switch (`alltoall` vs `allgather`) survive into production as operator-visible toggles.
 
@@ -108,7 +108,7 @@ The integration change notes record the messy middle. Our first iteration of the
 
 The SP norm-grad all-reduce fix in the tensor-parallel adapter was another silent-correctness bug: under `--sequence_parallel --megatron_tp`, norm parameters see only a shard of the sequence on each rank, and without an explicit all-reduce of their grads the training diverges. We now install a hook that mirrors Megatron's own final gradient-reduction path. The loss-free LB global-sync patch in the MoE path was the same kind of bug in a different location.
 
-Things that survived: the bridge itself as a thin CUDA-only module, the Mamba mixer adapter pattern (wrap the mixer, not the layer), the distributed optimizer's bucket math, and the process-group lifecycle. Things we dropped: our first attempt at mapping `null_rho` onto Megatron's capacity-factor fields (wrong semantics, removed), and the idea that `TransformerConfig` could carry all of our routing fields directly.
+Things that survived: the bridge itself as a thin CUDA-only module, the Mamba mixer adapter pattern (wrap the mixer, not the layer), the distributed optimizer's bucket math, and the process-group lifecycle. Things we dropped: our first attempt at mapping `null_rho` onto Megatron's capacity-factor fields, because the semantics did not match, and the idea that `TransformerConfig` could carry all of our routing fields directly.
 
 ## Production checklist
 
@@ -124,9 +124,9 @@ Things that survived: the bridge itself as a thin CUDA-only module, the Mamba mi
 
 ## References
 
-- the public Megatron bridge, wrapper, optimizer, and TP adapter samples (proof of concept)
-- the public tensor-parallel Mamba mixer sample, recurrent spec sample, authored Mamba spec sample, and production shim notes
-- integration change notes covering the Megatron integration waves from April 3-9, 2026
-- [Megatron-LM - NVIDIA]
-- [Transformer Engine - NVIDIA]
-- [NeMotron-H / Mamba hybrid recipes - NVIDIA]
+- https://github.com/NVIDIA/Megatron-LM
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html
+- https://github.com/NVIDIA/TransformerEngine
+- https://github.com/state-spaces/mamba
+- https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/cppmega/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py
+- https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md

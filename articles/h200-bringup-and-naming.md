@@ -4,7 +4,7 @@ date: 2026-04-18
 author: MegaCpp Engineering
 tags: [h200, bringup, distributed-training, naming, infrastructure]
 summary: >
-  The grounded H200 story from the POC and MegaCpp is not just faster hardware.
+  The grounded H200 story from the MegaCpp is not just faster hardware.
   It is a naming and contract story: model patterns, launcher modes, storage
   discipline, and runtime switches had to become explicit before results were
   repeatable.
@@ -16,7 +16,7 @@ description: >
 
 # H200 Bringup and Naming: What Had to Be Made Explicit
 
-**TL;DR:** The H200 bringup succeeded when the project stopped speaking in vague labels like “the full model,” “the MoE path,” or “the fast recipe,” and instead encoded real contracts in filenames, patterns, recipe modes, and launcher arguments. The POC docs and MegaCpp recipe layer show the same lesson from different angles: repeatability came from naming the exact layout, exact runtime mode, exact storage rules, and exact feature bundle, then refusing to blur those boundaries.
+The H200 bringup succeeded when the project stopped speaking in vague labels like “the full model,” “the MoE path,” or “the fast recipe,” and instead encoded real contracts in filenames, patterns, recipe modes, and launcher arguments. MegaCpp docs and MegaCpp recipe layer show the same lesson from different angles: repeatability came from naming the exact layout, exact runtime mode, exact storage rules, and exact feature bundle, then refusing to blur those boundaries.
 
 Hardware bringup stories often get flattened into procurement and benchmarks. A new accelerator arrives, a few kernels get faster, and eventually there is a throughput number. The engineering evidence for the H200 lane tells a more disciplined story. Before the team could trust performance or stability, it had to make the model itself more explicit: what exactly the flagship hybrid recipe meant, how its alternating pattern was interpreted, which launcher mode used native runtime components, which mode kept author-defined ones, and which infrastructure assumptions were unacceptable on the target boxes.
 
@@ -30,7 +30,7 @@ Those declarations matter because they close the gap between a nickname and a re
 
 The same file also defines how pattern symbols are mapped into runtime layer categories: `A` to transformer attention blocks, `E` to MoE layers when enabled, and `M` and `R` into Mamba-family runtime lanes. That mapping is the difference between a mnemonic and an executable contract.
 
-Once that mapping exists, the local glossary stops being confusing shorthand. `ablock` means the attention-owned block family. `eblock` means the routed-expert family. `mblock` means the Mamba or state-space family. `rblock` means the recurrent or persistence-oriented family. In some design notes there is also `cblock`, which is useful as a composite or control-facing wrapper name when a launcher, planner, or checkpointing policy needs to talk about a coarse block region without pretending every sublayer is identical. The point of the glossary is not branding. It is that the launch stack can discuss heterogeneous cost centers without collapsing them into one word like “layer.”
+Once that mapping exists, the local glossary stops being confusing shorthand. `ablock` means the attention-owned block family. `eblock` means the routed-expert family. `mblock` means the Mamba or state-space family. `rblock` means the recurrent or persistence-oriented family. In some public notes there is also `cblock`, which is useful as a composite or control-facing wrapper name when a launcher, planner, or checkpointing policy needs to talk about a coarse block region without pretending every sublayer is identical. The point of the glossary is not branding. It is that the launch stack can discuss heterogeneous cost centers without collapsing them into one word like “layer.”
 
 | Declared item | Grounded value | Why it mattered |
 | --- | --- | --- |
@@ -68,7 +68,7 @@ The point of this block is not only the values. It is that the lane identity is 
 
 ## Infrastructure naming had to become policy, not habit
 
-The POC instructions for GPU runtime and H200 operation are unusually specific, and that specificity is the real bringup lesson. The repo guidance explicitly warns operators not to use the root volume for runtime state on H200 boxes. Checkpoints, datasets, logs, compiler caches, Triton caches, and temporary artifacts must go to a mounted data volume or object storage instead.
+MegaCpp instructions for GPU runtime and H200 operation are unusually specific, and that specificity is the real bringup lesson. The repo guidance explicitly warns operators not to use the root volume for runtime state on H200 boxes. Checkpoints, datasets, logs, compiler caches, Triton caches, and temporary artifacts must go to a mounted data volume or object storage instead.
 
 That may sound like ordinary ops advice, but in practice it is the difference between a valid benchmark lane and a misleading one. If a run spills caches and artifacts into the wrong place, “H200 performance” becomes partly a filesystem accident. The bringup docs therefore turned an informal expectation into a named rule.
 
@@ -89,7 +89,7 @@ The naming discipline also reduced wasted debugging loops around memory and comp
 
 ## Naming the feature bundle avoided false comparisons
 
-The POC grew beyond a plain transformer. The main model runtime advertises rotary embeddings, QK norm, untied embeddings, relu-squared MLPs, grouped-query attention, Flash Attention integration, and a separated block architecture. The recipe layer adds MLA, MoE, MTP, and optional DSA-related features. The launch helpers in MegaCpp explicitly build argument bundles so that custom features remain separate from grounded built-in runtime flags unless a narrow runtime seam is truly implemented.
+MegaCpp grew beyond a plain transformer. The main model runtime advertises rotary embeddings, QK norm, untied embeddings, relu-squared MLPs, grouped-query attention, Flash Attention integration, and a separated block architecture. The recipe layer adds MLA, MoE, MTP, and optional DSA-related features. The launch helpers in MegaCpp explicitly build argument bundles so that custom features remain separate from grounded built-in runtime flags unless a narrow runtime seam is truly implemented.
 
 That separation also improved review quality. When a run drifted, the team could ask a specific question: did the recipe change, did the launch mode change, or did the runtime feature bundle change? Those are much better debugging questions than “why is H200 inconsistent?” because each one points at a bounded layer of the system. Recipe drift belongs near the pattern and emitted args. Mode drift belongs near the launcher and parallelism settings. Feature drift belongs near the runtime modules and their enable flags. Clear naming narrowed the search space before anyone touched a profiler.
 
@@ -101,9 +101,9 @@ For NAM56R this mattered even more because the symbol vocabulary was already doi
 
 ## Why H200 bringup was also a documentation problem
 
-The repo evidence shows a pattern: as the system matured, more of the implicit assumptions got promoted into recipe files, tests, and design notes. That is why files like `nam56r_layout.py` matter. They load the declared pattern and derive layer indices for custom symbols or selected attention ranks. In other words, the model layout is not reconstructed ad hoc at runtime. It is derived from named source-of-truth inputs.
+The repo evidence shows a pattern: as the system matured, more of the implicit assumptions got promoted into recipe files, tests, and public documentation. That is why files like `nam56r_layout.py` matter. They load the declared pattern and derive layer indices for custom symbols or selected attention ranks. In other words, the model layout is not reconstructed ad hoc at runtime. It is derived from named source-of-truth inputs.
 
-That is also why tests such as sanitized NAM56R recipe tests, sanitized NAM56R Megatron tests, and sanitized NAM56R launch tests are part of the bringup story. They are not generic unit tests; they defend the mapping between names and emitted runtime structure. A naming scheme only helps if the project verifies that the names still mean the same thing next week.
+That is also why public NAM56R recipe checks, public NAM56R Megatron checks, and public NAM56R launch checks are part of the bringup story. They are not generic unit tests; they defend the mapping between names and emitted runtime structure. A naming scheme only helps if the project verifies that the names still mean the same thing next week.
 
 This is especially important for hybrid families because the emitted structure is not uniform. A test that only checks total depth can miss a broken symbol-to-block translation. A test that only checks one launcher preset can miss a drift in how `AEMEAEMEAEMR` expands into concrete runtime slices. The H200 lane benefited from making those checks boring and mechanical. If the recipe says there are expert-bearing regions, the launch surface should still emit expert-aware arguments. If the recipe says the native path gives up some author-specific behavior, the report should not later speak as though every specialized block was preserved. Naming without regression coverage quickly turns back into folklore.
 
@@ -127,10 +127,8 @@ The repo avoided that trap by forcing the names to carry real structure.
 
 ## References
 
-- a public flagship hybrid recipe sample
-- a public flagship hybrid launch sample
-- a public flagship hybrid layout sample
-- recipe regression tests for the flagship hybrid lane
-- launch tests for the flagship hybrid lane
-- repo operating notes
-- the main model runtime module
+- https://www.nvidia.com/en-us/data-center/technologies/hopper-architecture/
+- https://www.nvidia.com/en-us/data-center/gpu-cloud-computing/hgx/
+- https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/examples/fp8_primer.html
+- https://github.com/NVIDIA/Megatron-LM
+- https://docs.pytorch.org/docs/stable/notes/cuda.html

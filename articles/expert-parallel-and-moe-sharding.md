@@ -15,7 +15,7 @@ description: >
 
 # Expert Parallel and MoE Sharding: Capacity Is Cheap, Routing Is Not
 
-**TL;DR:** expert parallelism is the right primitive for scaling MoE capacity, but it is only one part of a working training lane. The hard engineering work lives in router behavior, dispatch backend selection, per-layer contracts, auxiliary and z-loss accounting, and the difference between CUDA process-group EP and XLA sharding. The code in the POC and the companion MegaCpp recipes is useful precisely because it does not flatten those distinctions.
+Expert parallelism is the right primitive for scaling MoE capacity, but it is only one part of a working training lane. The hard engineering work lives in router behavior, dispatch backend selection, per-layer contracts, auxiliary and z-loss accounting, and the difference between CUDA process-group EP and XLA sharding.
 
 When people first hear “expert parallel,” the mental model is usually simple: place different experts on different ranks, dispatch tokens to the right owner, and enjoy large parameter counts with modest active compute. That story is directionally correct, but it is incomplete in the same way that “tensor parallel splits matrices” is incomplete. The production cost is hidden in the contracts around the split.
 
@@ -23,7 +23,7 @@ The code makes those contracts explicit. In the main model runtime module, `EBlo
 
 ## Where expert ownership actually begins
 
-The cleanest place to start is the configuration surface. The POC’s `GPTConfig` separates layer families by responsibility: `ABlock` handles attention only, `MBlock` handles Mamba sequence mixing, `EBlock` handles expert FFNs, and `RBlock` handles recurrent or M2RNN-style sequence mixing. That separation matters because expert parallelism is meaningful only for one of those families.
+The cleanest place to start is the configuration surface. MegaCpp's `GPTConfig` separates layer families by responsibility: `ABlock` handles attention only, `MBlock` handles Mamba sequence mixing, `EBlock` handles expert FFNs, and `RBlock` handles recurrent or M2RNN-style sequence mixing. That separation matters because expert parallelism is meaningful only for one of those families.
 
 The NAM56R recipe in MegaCpp preserves the same idea. `build_nemo_hybrid_pattern()` converts architecture symbols into Megatron-facing pattern markers, with `A -> *`, `M -> M`, `R -> M`, and `E -> E` when MoE is enabled. The recipe therefore tells the runtime, in a machine-checkable way, where expert ownership boundaries exist. That is a stronger contract than a prose architecture note, because the scheduler and launcher can use it directly.
 
@@ -39,13 +39,13 @@ This is the first corrective to over-simplified EP discussions: partitioning wei
 
 ## Why routing semantics dominate the real cost
 
-`EBlock` in the POC exposes a surprisingly rich router surface. Routed experts can be scored with `softmax` or decoupled `sigmoid`. The routing mode can be `token_choice`, with older soft and expert-choice paths retained but clearly treated as legacy or discouraged. The config also includes group routing, loss-free load balancing, router z-loss, optional FP32 router math, input jitter, shared expert gates, and a fused-MoE path. None of those fields exists by accident.
+`EBlock` exposes a surprisingly rich router surface. Routed experts can be scored with `softmax` or decoupled `sigmoid`. The routing mode can be `token_choice`, with older soft and expert-choice paths retained but clearly treated as legacy or discouraged. The config also includes group routing, loss-free load balancing, router z-loss, optional FP32 router math, input jitter, shared expert gates, and a fused-MoE path. None of those fields exists by accident.
 
 They exist because the runtime cost of MoE is driven by more than how many experts there are. It is driven by what the router asks the system to do. Two configurations can both say “16 experts, top-k 4” and still stress the cluster very differently if one uses normalized token-choice routing with grouped selection while the other relies on a softer path that expands more compute or creates noisier exchange patterns.
 
-The POC’s tests reinforce that point. sanitized MoE tests checks gradient flow through the router, checks linear experts, and checks selected-token execution. Those tests are not glamour pieces; they are acknowledgments that routing is part of correctness, not just a throughput concern. If the router contract is wrong, you do not merely lose a few percent of speed. You change which experts learn and whether the active path is even differentiating as intended.
+The public sample set reinforces that point. The router-facing examples and notes cover gradient flow, linear expert execution, and selected-token behavior. Those tests are not glamour pieces; they are acknowledgments that routing is part of correctness, not just a throughput concern. If the router contract is wrong, you do not merely lose a few percent of speed. You change which experts learn and whether the active path is even differentiating as intended.
 
-That same idea appears in the historical reports. The live-bugs review notes that MoE-specific losses and resume semantics deserve explicit treatment, and the warmup regression report treats `regional_compile + MoE` as a separate risk class instead of pretending every compile lane is equivalent. Again, the codebase is telling you that an EP run is not just a dense run with a different sharding flag.
+That same idea appears in the public reports and examples. MoE-specific losses, resume semantics, and compile behavior need to be treated as MoE concerns rather than as generic dense-training details. Again, the codebase is telling you that an EP run is not just a dense run with a different sharding flag.
 
 ## EP in a hybrid A/M/E/R model is narrower than people expect
 
@@ -53,7 +53,7 @@ NAM52 and NAM56R notation helps because it keeps architecture reasoning honest. 
 
 That means EP does not relieve every memory bottleneck in a NAM56R lane. In `AEMEAEMEAEMR`, only the `E` slots are direct expert-ownership opportunities. Attention projections, latent caches, recurrent state, and Mamba-specific buffers remain separate concerns. If a run is tight on MLA cache pressure or recurrent-state residency, EP may still be valuable, but it will not solve that class of pressure.
 
-The MegaCpp scheduler code makes this sharper. the public hybrid schedule sample explicitly distinguishes MoE transformer layers from opaque non-MoE layers. The planner wraps non-MoE families as opaque nodes so an interleaved scheduler can still operate without lying about per-layer capabilities. It also contains special handling for NAM56R MoE-only layers where attention is effectively an identity path and the layer is mostly about expert execution. That is a concrete sign that the schedule must know not only that EP exists, but exactly where it exists.
+The MegaCpp scheduler code makes this sharper. The public hybrid schedule sample explicitly distinguishes MoE transformer layers from opaque non-MoE layers. The planner wraps non-MoE families as opaque nodes so an interleaved scheduler can still operate without lying about per-layer capabilities. It also contains special handling for NAM56R MoE-only layers where attention is effectively an identity path and the layer is mostly about expert execution. That is a concrete sign that the schedule must know not only that EP exists, but exactly where it exists.
 
 A useful way to think about the architecture is this:
 
@@ -77,7 +77,7 @@ One of the most useful details in the main model runtime module is easy to miss:
 
 That distinction matters for two reasons. First, it changes what “supported EP” means operationally. A CUDA lane may be bottlenecked by expert exchange, overlap policy, or backend choice between native and Megatron-like paths. An XLA lane may instead be constrained by sharding annotations, compile stability, or how cleanly the optimizer and reductions stay shape-stable. Second, it prevents incorrect apples-to-apples comparisons between GPU and TPU MoE behavior.
 
-The reports in the POC show exactly why this nuance matters. The TPU bug pass calls out silent fallback risks and XLA-specific reduction behavior. The compile warmup note isolates `regional_compile + MoE` as its own regression category on H200. These are not the same failure modes, even though both lanes can honestly claim to “run MoE.”
+Public bring-up notes show exactly why this nuance matters. TPU-oriented notes call out silent fallback risks and XLA-specific reduction behavior. Compile-warmup notes isolate `regional_compile + MoE` as its own regression category on H200. These are not the same failure modes, even though both lanes can honestly claim to run MoE.
 
 That is why high-quality writeups should say which substrate they mean:
 
@@ -88,9 +88,15 @@ That is why high-quality writeups should say which substrate they mean:
 
 Without that distinction, performance and correctness reports become too vague to act on.
 
+There is a second taxonomy correction that matters just as much: EP is not
+another name for TP, PP, SP, or CP. TP still owns dense matrix factorization.
+PP still owns stage boundaries. SP still owns activation layout on the TP axis.
+CP still owns long-sequence placement. EP only owns expert banks and routed-token
+transport.
+
 ## Shared experts, aux loss, and the limits of a sharding-only story
 
-The POC also exposes two concepts that are often hand-waved away in high-level MoE explainers: shared experts and router-side losses. `moe_n_shared_experts`, `moe_shared_expert_gate`, and `moe_shared_expert_overlap` are all first-class config fields. That means the runtime recognizes the always-on shared path as a material part of execution, not a tiny embellishment.
+MegaCpp also exposes two concepts that are often hand-waved away in high-level MoE explainers: shared experts and router-side losses. `moe_n_shared_experts`, `moe_shared_expert_gate`, and `moe_shared_expert_overlap` are all first-class config fields. That means the runtime recognizes the always-on shared path as a material part of execution, not a tiny embellishment.
 
 This matters because shared experts complicate the clean “send tokens to one owner” picture. Some computation stays global or always active. Some can overlap with routed dispatch on CUDA, but the code comments clearly say that XLA, CPU, and compiled lanes may fall back to a sequential path. So even before you discuss aux loss, you already have a richer execution graph than the toy EP mental model suggests.
 
@@ -126,9 +132,10 @@ If you preserve those five points, you avoid most of the common misunderstanding
 
 ## References
 
-- the main model runtime module
-- sanitized MoE tests
-- `hybrid_schedule_plan.py`
-- `nam56r_nemo_recipe.py`
-- `current_live_bugs_2026-03-07_strict_pass3.md`
-- `h200_compile_warmup_regression_2026-03-28.md`
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/features/moe.html
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/features/context_parallel.html
+- https://pytorch.org/blog/training-moes/
+- https://arxiv.org/abs/1701.06538
+- https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/hybrid/hybrid_pattern_sample.py

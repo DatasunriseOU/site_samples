@@ -88,11 +88,9 @@ Recording these fields is cheap. Investigating a regression without them is expe
 
 ## References
 
-- the tokenizer sample
-- cpp_the tokenizer sample
-- the platform-vocabulary sample
-- the public dataloader sample
-- the public dataset sample
-- the TPU model runtime
-- the TPU training launcher
-- the engineering changelog
+- https://github.com/DatasunriseOU/site_samples/blob/main/articles/cpp-tokenizer-deep.md
+- https://github.com/DatasunriseOU/site_samples/blob/main/articles/tokenizer-v2-v3.md
+- https://github.com/DatasunriseOU/site_samples/blob/main/articles/slm-data.md
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/masking_pipeline_sample.py
+- https://docs.pytorch.org/xla/master/runtime.html
+- https://docs.pytorch.org/xla/master/learn/pjrt.html

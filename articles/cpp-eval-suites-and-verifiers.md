@@ -132,8 +132,7 @@ The eval ablations worth keeping:
 
 ## References
 
-- HumanEval-style C++ benchmark design notes
-- compile-then-test verifier design
-- sanitized executable-eval test suites
-- [Evaluating Large Language Models Trained on Code — Chen et al., 2021]
-- [HumanEval benchmark dataset — OpenAI, 2021]
+- [Verifier-first C++ evals](https://github.com/DatasunriseOU/site_samples/blob/main/articles/verifier-first-cpp-evals.md)
+- [LiveCodeBench](https://livecodebench.github.io/)
+- [Evaluating Large Language Models Trained on Code](https://arxiv.org/abs/2107.03374)
+- [HumanEval benchmark dataset](https://github.com/openai/human-eval)

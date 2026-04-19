@@ -1,9 +1,8 @@
-"""Sanitized public excerpt.
+"""Public excerpt.
 
-Source repo: MegaCpp codebase
-Source file: Mamba3 tensor-parallel projection tests
+Source: MegaCpp tensor-parallel sizing excerpt
 Purpose: show explicit TP partition sizing instead of hand-wavy sharding claims
-Edited for public clarity.
+Edited for clarity.
 """
 
 def compute_mamba3_tp_partition_sizes(total_sizes, tp_size):

@@ -26,7 +26,7 @@ The rest of the post is what actually happened in those two tracks.
 
 ## 2. What the learning curve actually costs
 
-Everyone says CuTe DSL has a learning curve. It does, and that curve is steeper than people who have already internalised CUTLASS concepts tend to notice. For an engineer who is competent in Triton, comfortable in CUDA, and has never written CUTLASS kernels, the ramp looks roughly like this:
+Everyone says CuTe DSL has a learning curve. It does, and that curve is steeper than people who have already absorbed CUTLASS concepts tend to notice. For an engineer who is competent in Triton, comfortable in CUDA, and has never written CUTLASS kernels, the ramp looks roughly like this:
 
 - Week 1: getting a trivial smem-tiled GEMM to compile and run, with correct results at one shape. Most of the time is spent reading CUTLASS documentation to translate "tensor of shape" into a CuTe layout with the right strides and swizzles, and understanding which atoms your architecture exposes (for H200 sm_90a that means `warpgroup.MmaF16BF16Op` for WGMMA).
 - Week 2: getting the same kernel to run at a second and third shape without regressing, which forces you to understand stage/pipeline parameters and smem lifetime. We got `warpgroup.MmaF16BF16Op` correctly emitting WGMMA on H200 with a single-GEMM result in the low single-digit microseconds before we were confident we understood what we had written.
@@ -37,8 +37,8 @@ Concretely: the 3-GEMM fused CuTe DSL kernel on H200 matched cuBLAS on the same 
 
 ## 3. What we kept
 
-1. The FA4 CuTe DSL kernel lane itself, as a first-class backend in the training stack. `docker/modal-base/build.sh` pulls `flash-attn-4==4.0.0b4` and the matching `nvidia-cutlass-dsl` wheels from our private wheel registry, and the Modal images ship with the full dependency chain (`apache-tvm-ffi`, `torch-c-dlpack-ext`, `quack-kernels`, `cuda-python`, `cuda-bindings`, `cuda-pathfinder`). The kernels JIT-compile on first call, which adds a one-time warmup we account for in our throughput measurements.
-2. The specific FlexAttention + FA4 wiring, where the backend is selected via `flex_attention(kernel_options={"BACKEND": "FLASH"})` and wrapped in `torch.compiler.disable()` at the call site. That single wrap, recorded in the CuTe DSL compile-fix entry in `CHANGELOG.md`, is what made the preset lanes compile and run end-to-end without inductor trying to lower a CuTe DSL kernel into its outer compile graph.
+1. The FA4 CuTe DSL kernel lane itself, as a first-class backend in the training stack. `docker/modal-base/build.sh` pulls `flash-attn-4==4.0.0b4` and the matching `nvidia-cutlass-dsl` wheels from pinned package sources, and the Modal images ship with the full dependency chain (`apache-tvm-ffi`, `torch-c-dlpack-ext`, `quack-kernels`, `cuda-python`, `cuda-bindings`, `cuda-pathfinder`). The kernels JIT-compile on first call, which adds a one-time warmup we account for in our throughput measurements.
+2. The specific FlexAttention + FA4 wiring, where the backend is selected via `flex_attention(kernel_options={"BACKEND": "FLASH"})` and wrapped in `torch.compiler.disable()` at the call site. That single wrap is what made the preset lanes compile and run end-to-end without Inductor trying to lower a CuTe DSL kernel into its outer compile graph.
 3. The empirical GB10 / sm_121a capability matrix. When we went in, the working assumption was that CuTe DSL was "fully blocked" on sm_121a. Our agents' actual probes found that the bf16 path works; fp16 and fp8 paths have sharper restrictions that we documented rather than guessed at. That pivot kept us from burning weeks on the wrong assumption.
 4. The 3-GEMM fused WGMMA proof on H200. We do not ship that particular fused GEMM in training, but the code stayed around in `experiments/` as a reference for anyone who needs to cut a specific shape that cuBLAS does not serve well. It is the cleanest example in our tree of a hand-written WGMMA kernel that is correct at bf16 and inside the ballpark of cuBLAS on a real shape.
 
@@ -103,7 +103,7 @@ def attn(q, k, v, block_mask):
 
 ## References
 
-- CHANGELOG.md
+- Public benchmark notes and code receipts in `site_samples`
 - build.sh
 - Dockerfile
 - modal_train.py

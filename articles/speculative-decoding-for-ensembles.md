@@ -66,7 +66,7 @@ The unattractive property: a single-block draft on a multi-billion-parameter spe
 
 ## 3. Acceptance rates we actually see
 
-Measured on our internal eval harness at 2K prompt / 512 decode, typical acceptance at tau=0.1 unless noted, on a modern accelerator hardware. Numbers are rounded to the nearest five hundredths to discourage over-reading the second digit.
+Measured on our evaluation harness at 2K prompt / 512 decode, typical acceptance at tau=0.1 unless noted, on current NVIDIA serving hardware. Numbers are rounded to the nearest five hundredths to discourage over-reading the second digit.
 
 | Specialist | Task shape | Acceptance | End-to-end speedup |
 |---|---|---|---|
@@ -135,4 +135,5 @@ The through-line, as elsewhere in the stack, is that ensembles resist shared com
 ## Public references
 
 - [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
-- [Sanitized public sample pack](https://github.com/DatasunriseOU/site_samples)
+- [Speculative Decoding](https://arxiv.org/abs/2211.17192)
+- [vLLM documentation](https://docs.vllm.ai/)

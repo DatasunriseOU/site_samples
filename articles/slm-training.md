@@ -5,9 +5,9 @@ date: "2026-04-18"
 tags: ["training", "slm", "mamba", "moe", "runtime", "megatron"]
 ---
 
-Small language model training is often described as if it were merely “big-model training with fewer parameters.” The code in MegaCpp and the research repo argues for a different view. The small-model lane here is not defined by size alone. It is defined by a set of engineering choices: explicit model specs, hybrid layer patterns, aggressive memory accounting, selective auxiliary losses, and a willingness to patch hot paths when the baseline runtime wastes memory or breaks compile assumptions.
+Small language model training is often described as if it were merely “big-model training with fewer parameters.” MegaCpp argues for a different view. The small-model lane here is not defined by size alone. It is defined by a set of engineering choices: explicit model specs, hybrid layer patterns, aggressive memory accounting, selective auxiliary losses, and a willingness to patch hot paths when the baseline runtime wastes memory or breaks compile assumptions.
 
-**TL;DR:** the current SLM training story is not “use one generic dense recipe and hope scaling laws save you.” It is a deliberately explicit stack. Builders require a concrete spec, hybrid patterns are part of the constructor contract, memory-heavy paths such as MTP logits and DSA score materialization are patched when necessary, and auxiliary losses like STP stay runtime-gated. The result is a training lane that is more operationally honest than generic.
+The current SLM training story is not “use one generic dense recipe and hope scaling laws save you.” It is a deliberately explicit stack. Builders require a concrete spec, hybrid patterns are part of the constructor contract, memory-heavy paths such as MTP logits and DSA score materialization are patched when necessary, and auxiliary losses like STP stay runtime-gated. The result is a training lane that is more operationally honest than generic.
 
 ## The stack starts with explicit composition
 
@@ -29,7 +29,7 @@ That requirement matters especially for SLM work. Small models are where experim
 | `pg_collection` / stage flags | keeps distributed layout in the open |
 | `position_embedding_type`, rotary settings | exposes choices that materially change small-model behavior |
 
-This posture lines up with the rest of the stack. `mamba_local_spec.py` builds a local Mamba stack spec from explicit submodules, while the public authored Mamba spec sample swaps in a more specialized authored mixer path but leaves the remaining submodules on upstream TE-optimized layers. Both files say the same thing in different ways: architecture is assembled, not assumed.
+This posture lines up with the rest of the stack. The public [Mamba3 hybrid article](https://github.com/DatasunriseOU/site_samples/blob/main/articles/mamba3-hybrid.md) and [hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md) both describe the same principle from different angles: architecture is assembled from explicit block choices, not assumed from a single recipe name.
 
 ## Hybrid blocks are not a side experiment
 
@@ -66,11 +66,11 @@ This is the right posture for SLM training. Smaller parameter counts do not exem
 
 ## Auxiliary losses stay under runtime control
 
-One of the cleanest parts of the training stack is how auxiliary objectives are handled. The research repo’s the main training entrypoint treats things like `stp_lambda`, `mtp_lambda`, MoE losses, temporal auxiliaries, and distillation weights as explicit runtime surfaces. The dashboard templates do the same by exposing those values in structured run metadata.
+One of the cleanest parts of the training stack is how auxiliary objectives are handled. MegaCpp's main training entrypoint treats things like `stp_lambda`, `mtp_lambda`, MoE losses, temporal auxiliaries, and distillation weights as explicit runtime surfaces. The dashboard templates do the same by exposing those values in structured run metadata.
 
 That is healthier than burying auxiliaries inside architecture labels.
 
-The STP implementation is a good example. the public STP module sample defines the geodesic objective, but `base_train.py` decides when it is active and logs `_last_stp_loss` when present. It also warns that pipeline-parallel training drops STP and some other auxiliary losses. So the system already distinguishes between:
+The STP implementation is a good example. The public [STP geodesic regularizer](https://github.com/DatasunriseOU/site_samples/blob/main/articles/stp-geodesic-regularizer.md) and [STP after ten thousand steps](https://github.com/DatasunriseOU/site_samples/blob/main/articles/stp-after-ten-thousand-steps.md) notes define the objective and the delayed rollout discipline. The training stack then decides when it is active and when it must be disabled under a more restrictive parallel layout. So the system already distinguishes between:
 
 1. the math of an objective, and
 2. the conditions under which that objective participates in training.
@@ -86,7 +86,7 @@ That line is not from prose; it is encoded into the dashboard template surfaces.
 
 ## Compile and backend constraints shape the training recipe
 
-The project does not pretend the backend is irrelevant. On the TPU side, the public TPU setup note is explicit about stack pinning, `PJRT_DEVICE=TPU`, compile boundaries, static-graph discipline, and the fact that model `torch.compile(...)` is disabled there. On the authored Mamba side, the public authored Mamba spec sample states that the authored path requires `--cuda-graph-impl local` for CUDA-graph compatibility and notes additional requirements for the MIMO route.
+The project does not pretend the backend is irrelevant. On the TPU side, the public [TPU bring-up notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/tpu-bringup-notes.md) and [torch-xla PJRT reality](https://github.com/DatasunriseOU/site_samples/blob/main/articles/torch-xla-pjrt-reality.md) notes are explicit about stack pinning, `PJRT_DEVICE=TPU`, compile boundaries, and static-graph discipline. On the authored Mamba side, the public [Mamba3 hybrid article](https://github.com/DatasunriseOU/site_samples/blob/main/articles/mamba3-hybrid.md) and [hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md) explain the authored path requirements and the extra MIMO-related constraints.
 
 That matters because SLM training is often the lane where teams try new architecture ideas first. If the recipe hides backend assumptions, the results stop being comparable.
 
@@ -99,7 +99,7 @@ That matters because SLM training is often the lane where teams try new architec
 
 The project’s current approach is therefore more conservative than generic “small model experimentation” culture. That conservatism is good. It means when a result is reported on `NAM52` or `NAM56R`, there is at least a chance the underlying runtime was actually controlled.
 
-Another useful detail is that the project keeps a visible separation between “local builder authority” and “upstream-optimized submodules.” the public authored Mamba spec sample imports the upstream `mamba_stack_spec`, then selectively replaces only the mixer with `CppMegaMamba3TE` while passing through upstream `attention_layer`, `mlp_layer`, `moe_layer`, and `mtp_block_spec`. That is a strong training design choice. It means architecture experiments can target the block family that is being evaluated without forcing a full fork of every surrounding layer. For SLM work this is valuable because it keeps the comparison surface smaller: a new mixer path does not automatically become a new everything-path.
+Another useful detail is that the project keeps a visible separation between local builder authority and upstream-optimized submodules. The public [Mamba3 hybrid article](https://github.com/DatasunriseOU/site_samples/blob/main/articles/mamba3-hybrid.md) and [hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md) describe that selective replacement strategy directly. That is a strong training design choice. It means architecture experiments can target the block family being evaluated without forcing a full fork of every surrounding layer. For SLM work this keeps the comparison surface smaller: a new mixer path does not automatically become a new everything-path.
 
 The same discipline shows up in the local stack spec. `mamba_local_spec.py` wires `WrappedTorchNorm`, `ColumnParallelLinear`, `RowParallelLinear`, and a local MoE choice into the stack in a readable way. That is exactly the kind of explicitness a small-model lane needs. When the model is small enough that many runs are feasible, it becomes more important, not less important, to know which submodule family changed between runs.
 
@@ -115,7 +115,7 @@ Under that definition, the project already has a coherent training story.
 | --- | --- |
 | explicit architecture | the authored Mamba spec surfaces and hybrid-pattern notes |
 | memory-first pragmatism | the fused MTP loss path and indexer-memory patches |
-| runtime-visible aux losses | dashboard templates, the base training loop, and the public STP module sample |
+| runtime-visible aux losses | dashboard templates plus the public STP writeups and rollout notes |
 | backend honesty | TPU docs and authored-kernel requirements |
 
 The remaining work is not to invent a training philosophy from scratch. It is to keep the receipts attached when turning project-specific knowledge into stable docs, presets, and launch recipes.
@@ -135,6 +135,10 @@ That is the real advantage of this training stack. It is not that it found one m
 ## References
 
 - [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
-- [Sanitized public sample pack](https://github.com/DatasunriseOU/site_samples)
-- the public STP module sample
-- the public authored Mamba spec sample
+- [MegaCpp public sample pack](https://github.com/DatasunriseOU/site_samples/tree/main)
+- [STP after ten thousand steps](https://github.com/DatasunriseOU/site_samples/blob/main/articles/stp-after-ten-thousand-steps.md)
+- [STP geodesic regularizer](https://github.com/DatasunriseOU/site_samples/blob/main/articles/stp-geodesic-regularizer.md)
+- [Mamba/Transformer hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md)
+- [Mamba3 hybrid article](https://github.com/DatasunriseOU/site_samples/blob/main/articles/mamba3-hybrid.md)
+- [Training on H200 eight-GPU machines](https://github.com/DatasunriseOU/site_samples/blob/main/articles/training-on-h200-eight-gpu.md)
+- [Precision recipe: FP16, BF16, FP8, NVFP4](https://github.com/DatasunriseOU/site_samples/blob/main/articles/precision-recipe-fp16-bf16-fp8-nvfp4.md)

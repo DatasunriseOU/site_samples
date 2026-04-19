@@ -1,21 +1,21 @@
 ---
 title: "TPU v6e Performance Deep Dive: Real MFU, Sharding Topology, and the Things That Pretended to Help"
-description: "How the prototype’s TPU v6e lane actually spent time, why topology and compile amortization mattered so much, and which optimizations did not survive measurement."
+description: "How a TPU v6e lane actually spent time, why topology and compile amortization mattered so much, and which optimizations did not survive measurement."
 date: "2026-04-18"
-tags: ["tpu", "v6e", "performance", "mfu", "xla", "the POC"]
+tags: ["tpu", "v6e", "performance", "mfu", "xla"]
 ---
 
 # TPU v6e Performance Deep Dive: Real MFU, Sharding Topology, and the Things That Pretended to Help
 
-**TL;DR:** the important TPU v6e lesson in this stack was not a single heroic kernel win. The durable story was that topology, compile amortization, and workload shape determined whether the lane had enough useful work per chip. The docs and bug reports repeatedly show the same pattern: honest TPU performance depends on stable sharding, feasible context length, and clear separation between genuine throughput gains and “wins” caused by changed workload or broken runtime paths.
+The important TPU v6e lesson here was not a single heroic kernel win. The durable story was that topology, compile amortization, and workload shape determined whether the lane had enough useful work per chip. The public TPU and PyTorch/XLA docs point to the same pattern: honest TPU performance depends on stable sharding, feasible context length, and clear separation between genuine throughput gains and “wins” caused by changed workload or broken runtime paths.
 
-TPU performance is easy to romanticize because a good steady-state number can look dramatic. It is also easy to misread because TPU lanes make compile and sharding behavior part of end-to-end runtime in a way many GPU writeups understate. The POC’s TPU documents are valuable because they keep both truths visible.
+TPU performance is easy to romanticize because a good steady-state number can look dramatic. It is also easy to misread because TPU lanes make compile and sharding behavior part of end-to-end runtime in a way many GPU writeups understate. The TPU documents behind this batch are valuable because they keep both truths visible.
 
-The repo does not offer one clean headline like “v6e is fast” or “v6e is bad for hybrids.” Instead, it shows a set of constraints that interact: context length, tensor-parallel topology, compile reuse, sparse or dense attention backend choice, and whether the exact run stayed on the intended XLA path. That is a messier story, but it is the one operators can actually use.
+There is no single clean headline like “v6e is fast” or “v6e is bad for hybrids.” What matters is the interacting set of constraints: context length, tensor-parallel topology, compile reuse, sparse or dense attention backend choice, and whether the exact run stayed on the intended XLA path. That is a messier story, but it is the one operators can actually use.
 
 ## Topology set the ceiling before micro-optimizations did
 
-`PHASE5_ABLATION_PLAN.md` is unusually direct about this. It records validated context ceilings on v6e hardware, notes when 256K context would require sequence parallelism or larger HBM, and ties throughput expectations to explicit TP layouts. That is exactly the right framing. Before asking whether some local optimization helped, you need to know whether the topology left enough real work per chip.
+The right framing starts with validated context ceilings and explicit TP layouts. Before asking whether some local optimization helped, you need to know whether the topology left enough real work per chip. That is especially important on TPU, where long context and sharding geometry directly affect how much useful batch and sequence work each chip actually carries.
 
 A topology that technically fits but starves each chip of useful batch or sequence work will always look worse than a cleaner layout with fewer coordination costs. That is not a moral failure of the accelerator. It is the expected result of asking the topology to carry a workload it does not host efficiently.
 
@@ -30,23 +30,23 @@ That table sounds obvious, but it is the part many postmortems skip. They jump f
 
 ## Compile amortization is part of TPU performance, not an afterthought
 
-The TPU-specific docs and bug reviews repeatedly reinforce this point. A lane that recompiles too often, invalidates caches, or falls onto unstable shapes is not operationally fast even if one hot loop is efficient after compilation. On TPU, compile behavior is part of performance.
+The TPU-specific docs repeatedly reinforce this point. A lane that recompiles too often, invalidates caches, or falls onto unstable shapes is not operationally fast even if one hot loop is efficient after compilation. On TPU, compile behavior is part of performance.
 
-This is one reason the XLA-focused bugs matter so much to performance interpretation. The strict bug pass includes failures around reduction paths, static-grad materialization, and fallback behavior. Those may read like correctness or robustness notes, but they are also performance notes. If a lane silently changes execution strategy or loses shape guarantees, any measured throughput becomes harder to trust.
+This is one reason runtime debugging matters so much to performance interpretation. Failures around reduction paths, static-grad materialization, fallback behavior, or sharding drift may read like correctness notes, but they are also performance notes. If a lane silently changes execution strategy or loses shape guarantees, any measured throughput becomes harder to trust.
 
 The lesson is straightforward: before celebrating MFU, verify that the lane is on a stable compiled path and that cache reuse is doing what you think it is doing. Otherwise you are benchmarking a moving target.
 
 ## Workload shape matters more than slogan-level comparisons
 
-The TPU lane in this project spans dense, sparse, and hybrid experiments. `SOTA_COMPARISON.md` mentions TPU-native and XLA-safe variants for several ideas, including sparse attention, threshold-based depth routing, and XLA-safe implementations of techniques that originated elsewhere. That is useful context because it explains why not all TPU results should be collapsed into one “the TPU lane.”
+The TPU lane in this project spans dense, sparse, and hybrid experiments. That matters because not all TPU results should be collapsed into one “the TPU lane.” A dense baseline, a hybrid attention-state-space lane, and a sparse-attention experiment can all be valid TPU workloads while stressing completely different parts of the stack.
 
-A shallow dense run, a hybrid NAM-style run, and a sparse-attention experiment can all be perfectly valid TPU workloads while stressing completely different parts of the system. Comparing their tokens-per-second as if they were interchangeable workloads is a category error.
+Comparing those workloads by tokens per second as if they were interchangeable is a category error.
 
 The hybrid pattern notation helps here just as it does on GPU. If a run uses more `E` positions, more recurrent behavior, or a different long-context plan, that changes the meaning of the performance result. Pattern-aware reporting is therefore more honest than generic throughput bragging.
 
 ## Long context was a first-order systems constraint
 
-`PHASE5_ABLATION_PLAN.md` is also strong on long-context limits. It notes that TP=8 validated 128K context on the target hardware, while 256K would require sequence parallelism or larger hardware. That single note explains a lot about the lane’s real boundaries.
+Long-context limits deserve to be stated explicitly. Once sequence length pushes the layout into a communication-heavy or memory-fragile regime, the practical boundary is no longer set by one kernel. It is set by topology, context partitioning, and how much stable work remains per chip.
 
 Long-context ambition on TPU is not just a kernel problem. It is a memory-shape and topology problem. If the sequence length forces a layout that cuts effective work per chip too aggressively, utilization drops even if the math kernels themselves are competent. That is why long-context planning belongs in the same conversation as MFU.
 
@@ -54,9 +54,9 @@ It also explains why some optimizations “pretended to help.” A tweak that im
 
 ## Sparse and XLA-safe paths changed what was measurable
 
-The prototype TPU work is notable for trying XLA-safe or TPU-native implementations rather than assuming CUDA-first logic will port cleanly. `SOTA_COMPARISON.md` calls out threshold-based depth routing on TPU, clustered sparse attention as experimental, and XLA-safe substitutions where the original method depended on GPU-only behavior.
+MegaCpp TPU work is notable for trying XLA-safe or TPU-native implementations rather than assuming CUDA-first logic will port cleanly. That approach matters because TPU performance should not be narrated as “the same algorithm, different hardware” when the runtime path is genuinely different.
 
-That matters because TPU performance should not be narrated as “the same algorithm, different hardware” when the runtime path is genuinely different. If a TPU-safe path avoids gather/scatter or uses a different masking strategy, the performance result is describing a different systems contract, not just a different device.
+If a TPU-safe path avoids gather/scatter or uses a different masking strategy, the performance result is describing a different systems contract, not just a different device.
 
 This is not a problem. It is normal engineering. But it means the report should say so clearly. Otherwise the reader cannot tell whether the gain came from hardware, topology, algorithmic substitution, or all three.
 
@@ -70,7 +70,7 @@ This is the part that “pretended to help.” A local speedup can look exciting
 
 ## A grounded TPU launch shape
 
-The ablation-plan examples show a recurring TPU launch style: explicit tensor-parallel choice, explicit sequence length, explicit total batch target, and TPU-safe backend flags. A representative shape looks like this:
+The recurring TPU launch style is straightforward: explicit tensor-parallel choice, explicit sequence length, explicit total batch target, and TPU-safe backend flags. A representative shape looks like this:
 
 ```text
 A representative TPU benchmark launch pinned total batch size, tensor parallel degree, the current kernel path, compile mode, and the XLA flash-attention switch in one reproducible command.
@@ -98,11 +98,11 @@ That is a better standard than chasing one flattering MFU screenshot. It is also
 
 ## Why validated ceilings are more valuable than isolated peaks
 
-One of the strongest habits in the TPU planning documents is the emphasis on validated ceilings. Knowing that a particular context length or topology is repeatably feasible is often more operationally valuable than a single faster run at a friendlier shape. That may sound conservative, but it is the right bias for a lane where compile and sharding behavior can shift the regime so easily.
+One of the strongest habits in TPU planning is the emphasis on validated ceilings. Knowing that a particular context length or topology is repeatably feasible is often more operationally valuable than a single faster run at a friendlier shape. That may sound conservative, but it is the right bias for a lane where compile and sharding behavior can shift the regime so easily.
 
 A validated ceiling answers a planning question: what is the largest shape we can rely on? An isolated peak often answers only a marketing question: what is the nicest number we saw once? For TPU work, the planning question is usually the more important one because downstream recipe choices depend on it. Context expansion, sparse-attention experiments, and hybrid schedules all need a believable operating envelope.
 
-This is why the context-limit notes in `PHASE5_ABLATION_PLAN.md` are more important than they might first appear. They turn TPU performance from an anecdote into a scheduling input.
+This is why explicit context-limit notes are more important than they might first appear. They turn TPU performance from an anecdote into a scheduling input.
 
 ## The honest TPU report is specific about what changed
 
@@ -114,8 +114,8 @@ In that sense, the TPU deep dive is not merely about performance. It is about ev
 
 ## References
 
-- `PHASE5_ABLATION_PLAN.md`
-- `SOTA_COMPARISON.md`
-- `current_live_bugs_2026-03-07_strict_pass3.md`
-- the main model runtime module
-- `eval_doc.ru.md`
+- https://cloud.google.com/tpu/docs/v6e
+- https://cloud.google.com/tpu/docs/v6e-training
+- https://docs.pytorch.org/xla/master/learn/pjrt.html
+- https://docs.pytorch.org/xla/master/learn/trace-vs-execution-time.html
+- https://docs.jax.dev/en/latest/pallas/tpu/

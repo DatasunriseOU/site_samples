@@ -2,7 +2,7 @@
 title: "The Triton Kernels We Actually Maintain In-Tree"
 description: "Which custom Triton kernels we keep in the training stack, how we autotune them without getting burned, and the numerical tests that keep us honest."
 date: "2026-04-18"
-tags: ["triton", "kernels", "gpu", "the POC"]
+tags: ["triton", "kernels", "gpu", "MegaCpp training stack"]
 ---
 
 This codebase has gone through several waves of "let's just write a Triton kernel for that." Most of those kernels are gone. A small set stayed, because they either saved measurable wall-clock on real training runs or removed a graph break that `torch.compile` could not otherwise close. This post is the honest list of what is currently in-tree, why each one earns its keep, and how we keep the numerics from silently drifting underneath us. The references throughout are to public modules and notes tied to the same code paths.
@@ -57,7 +57,7 @@ The autotune cache also has to live somewhere stable. We pin it to the per-run s
 
 ## Numerical tests that keep us honest
 
-Every surviving kernel has a sanitized kernel regression tests that does the same three things in some order: build a known input distribution, run the Triton kernel and a recomputed pure-PyTorch reference at fp32, and assert max-absolute and max-relative error against tolerances written next to the math, not next to the current output.
+Every surviving kernel has a public kernel regression test that does the same three things in some order: build a known input distribution, run the Triton kernel and a recomputed pure-PyTorch reference at fp32, and assert max-absolute and max-relative error against tolerances written next to the math, not next to the current output.
 
 ```python
 def test_fused_qk_rope_matches_reference():

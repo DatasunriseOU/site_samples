@@ -65,7 +65,7 @@ DSA two-stage is the standard receipt for any sparse-attention base. Skipping de
 - DAPO zero-variance group discard must stay on. Zero-variance groups produce zero gradient contribution but full memory usage; discarding them is free throughput.
 - StepCoder CCCS prefix decay is metric-driven via `compile_rate`. The decay threshold and step are per-recipe; do not couple them to wall-clock.
 - The reference model in GRPO/GSPO is frozen and held in eval mode; the KL term references it, never the live policy. Do not "save memory" by reusing the policy as the reference.
-- DSA stage-1 dense warm-up freezes every parameter except the indexer's `q_proj`, `k_proj`, `k_norm`, `w_proj`. The frozen-set contract is fail-closed; any new sparse-attention code must add itself to the freeze set or explicitly opt out.
+- DSA stage-1 dense warm-up freezes every parameter except the indexer's `q_proj`, `k_proj`, `k_norm`, `w_proj`. The frozen-set contract is strict; any new sparse-attention code must add itself to the freeze set or explicitly opt out.
 - Best-of-N candidate ranking is `(reward desc, code_length desc)`. Length tiebreak prevents trivially-compiling stubs from outranking real solutions.
 
 ## Recipe surface

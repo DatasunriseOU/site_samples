@@ -1,3 +1,3 @@
 def apply_fire_sample(model, targets):
-    \"\"\"Sanitized sample only.\"\"\"
+    \"\"\"Public sample only.\"\"\"
     return len(targets)

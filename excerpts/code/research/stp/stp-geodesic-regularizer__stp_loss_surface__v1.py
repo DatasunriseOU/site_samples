@@ -1,16 +1,16 @@
-"""Sanitized public excerpt.
+"""Public excerpt.
 
-Source repo: MegaCpp research repo
-Source file: stp module
-Purpose: show the minimal STP loss surface used by the article
-Edited for public clarity.
+Source repo: MegaCpp public samples
+Source material: https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/research/stp/stp-geodesic-regularizer__stp_loss_surface__v1.py
+Purpose: show a minimal trajectory-straightness auxiliary loss sample used by the article
+Edited for clarity.
 """
 
 import torch
 import torch.nn.functional as F
 
 
-def compute_stp_loss(hidden_states: torch.Tensor, n_spans: int = 1) -> torch.Tensor:
+def _stp_loss_single(hidden_states: torch.Tensor, n_spans: int = 1) -> torch.Tensor:
     if hidden_states.size(1) < 3:
         return hidden_states.new_zeros(())
 
@@ -31,3 +31,13 @@ def compute_stp_loss(hidden_states: torch.Tensor, n_spans: int = 1) -> torch.Ten
         total = total + (1.0 - F.cosine_similarity(d1, d2, dim=-1).mean())
 
     return total / n_spans
+
+
+def compute_stp_loss(hidden_states, n_spans: int = 1) -> torch.Tensor:
+    if isinstance(hidden_states, (list, tuple)):
+        if not hidden_states:
+            return torch.zeros(())
+        losses = [_stp_loss_single(layer, n_spans=n_spans) for layer in hidden_states]
+        return torch.stack(losses).mean()
+
+    return _stp_loss_single(hidden_states, n_spans=n_spans)

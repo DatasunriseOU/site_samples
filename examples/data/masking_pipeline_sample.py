@@ -1,4 +1,4 @@
-"""Public-safe data masking example for article references."""
+"""Public data masking example for article references."""
 
 
 def mask_document_sections(tokens: list[str], mask_token: str = "<mask>") -> list[str]:

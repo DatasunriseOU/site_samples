@@ -115,9 +115,9 @@ kernel_wheel_pins:
 
 For anyone using the same surfaces, the routing is:
 
-- `modal_matrix.py` for whole-model benchmark intent.
-- `modal_bench_dsa_backend_detach.py` (paired with the collect script) for exact-token sparse acceptance.
-- `modal_sparse_validation_detach.py` for sparse and FA4 promotion waves.
+- the benchmark matrix for whole-model benchmark intent.
+- the detached sparse benchmark launcher, paired with the collector, for exact-token sparse acceptance.
+- the sparse-validation launcher for sparse and FA4 promotion waves.
 
 The convenience harness is fine for one-off curiosity runs. It is not the source of truth for distributed H200 claims, and we do not let it become one.
 
@@ -135,9 +135,7 @@ We will not claim that older checked-in training outputs prove the current train
 
 ## References
 
-- benchmark planning notes
-- multi-GPU status notes
-- H200 setup notes
-- H200 bring-up writeup
-- `modal_b200_cutile_status.md`
-- `modal_b200_cutile_variant_sweep_2026-04-11.md`
+- MegaCpp benchmark planning notes
+- MegaCpp multi-GPU status notes
+- Modal documentation on containers, volumes, and GPUs
+- PyTorch documentation for FSDP2 and `torch.compile`

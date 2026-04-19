@@ -1,15 +1,15 @@
 ---
 title: "STP after ten thousand steps: what changed, what signal we watched, and what stayed"
-description: "What Semantic Tube Prediction actually changes once a run is no longer cold-start: the hidden-state straightness signal we monitor, why the main loss still dominates, and which parts of the baseline training recipe remain intentionally unchanged."
+description: "What the STP-style auxiliary loss can change once a run is past the early warmup window: the hidden-state straightness signal we monitor, why the main loss still dominates, and which parts of the baseline training recipe remain intentionally unchanged."
 date: "2026-04-18"
-tags: ["training", "stp", "geodesic", "auxiliary-loss", "representation-learning"]
+tags: ["training", "stp", "trajectory-straightness", "auxiliary-loss", "representation-learning"]
 ---
 
 # STP after ten thousand steps: what changed, what signal we watched, and what stayed
 
-STP becomes interesting only after the run has stopped being mostly warmup noise. After roughly ten thousand steps, the useful interpretation is not that a new training regime has taken over, but that a bounded auxiliary geometry term may now be shaping hidden trajectories while the main next-token loss remains dominant. The public-safe note for that activation boundary is in [the STP gate note](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/nanochat/stp/stp-after-ten-thousand-steps__activation_gate_note__v1.md).
+In this training policy, STP is evaluated after the early warmup window rather than at startup. Around the 10K-step gate, the useful interpretation is not that a new training regime has taken over, but that a bounded auxiliary geometry term may now be shaping hidden trajectories while the main next-token loss remains dominant. The activation-boundary note is in [the STP gate note](../excerpts/docs/research/stp/stp-after-ten-thousand-steps__activation_gate_note__v1.md).
 
-Auxiliary objectives are easy to oversell because their motivation often sounds cleaner than their deployment reality. STP, short for Semantic Tube Prediction in this naming scheme, is a good example. The idea is elegant: hidden states along a sequence should evolve along locally coherent paths rather than wobbling arbitrarily from token to token. That is a meaningful idea for code models, which are constantly asked to preserve structural intent across long spans while still responding to local syntax and semantics.
+Auxiliary objectives are easy to oversell because their motivation often sounds cleaner than their deployment reality. STP, in this naming scheme, refers to a trajectory-straightness auxiliary loss. The idea is straightforward: hidden states along a sequence should evolve along locally coherent paths rather than wobbling arbitrarily from token to token. That is a meaningful idea for code models, which are constantly asked to preserve structural intent across long spans while still responding to local syntax and semantics.
 
 But “meaningful idea” is not the same thing as “production recipe.” The honest status is narrower. The feature exists, has tests, has runtime wiring surfaces, and is worth studying after the run is no longer dominated by cold-start effects. That is why the ten-thousand-step mark matters. It is late enough that representation geometry starts to become interpretable and early enough that the team can still compare shaped versus unshaped trajectories without waiting for a full production-scale campaign.
 
@@ -26,7 +26,7 @@ That boundedness also keeps collaboration saner. Infra engineers can ask whether
 | Training phase | What STP might legitimately do | What it should not be expected to do |
 | --- | --- | --- |
 | Very early run | Add weak, mostly noisy geometric pressure | Produce stable conclusions about representation quality |
-| Around 10k steps | Start affecting sampled hidden-state straightness in a measurable way | Rewrite the base loss story |
+| Around the configured 10K-step gate | Start affecting sampled hidden-state straightness in a measurable way | Rewrite the base loss story |
 | Mature run | Continue acting as a mild representation regularizer | Deliver quality wins without careful scheduling or ablation |
 
 That table is the practical reason the article is about ten thousand steps rather than step zero. Before then, optimization transients dominate. After then, you can at least ask whether the hidden-state geometry is moving in the intended direction.
@@ -84,7 +84,7 @@ The wrong signal to obsess over is the STP scalar by itself. Auxiliary losses ca
 | Peak memory | Auxiliary sampling and bookkeeping can add real cost |
 | Receipt stability | If the experiment is not recorded structurally, the result will not survive handoff |
 
-The prototype already has enough observability surfaces to support that bundle. Training telemetry can distinguish useful optimization time from compile or idle time, track throughput and memory across steps, and turn run artifacts into stable summaries. That is exactly the environment where STP can be evaluated honestly.
+MegaCpp already has enough observability surfaces to support that bundle. Training telemetry can distinguish useful optimization time from compile or idle time, track throughput and memory across steps, and turn run artifacts into stable summaries. That is exactly the environment where STP can be evaluated honestly.
 
 It is also the environment that prevents cherry-picking. A nicer auxiliary curve is not persuasive if useful training throughput drops sharply. Likewise, a tiny runtime tax is not persuasive if the hidden-state geometry does not move in a meaningful way.
 
@@ -126,10 +126,10 @@ That is another reason the ten-thousand-step lens is useful. It keeps the discus
 
 ## Code and notes
 
-- [STP activation gate note](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/nanochat/stp/stp-after-ten-thousand-steps__activation_gate_note__v1.md)
-- [STP loss surface sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/nanochat/stp/stp-geodesic-regularizer__stp_loss_surface__v1.py)
+- [STP activation gate note](../excerpts/docs/research/stp/stp-after-ten-thousand-steps__activation_gate_note__v1.md)
+- [STP loss surface sample](../excerpts/code/research/stp/stp-geodesic-regularizer__stp_loss_surface__v1.py)
 
 ## Further reading
 
-- [MegaCpp public STP activation note](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/nanochat/stp/stp-after-ten-thousand-steps__activation_gate_note__v1.md)
-- [MegaCpp public STP loss sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/nanochat/stp/stp-geodesic-regularizer__stp_loss_surface__v1.py)
+- [MegaCpp STP activation note](../excerpts/docs/research/stp/stp-after-ten-thousand-steps__activation_gate_note__v1.md)
+- [MegaCpp STP loss sample](../excerpts/code/research/stp/stp-geodesic-regularizer__stp_loss_surface__v1.py)

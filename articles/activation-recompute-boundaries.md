@@ -5,7 +5,7 @@ date: "2026-04-18"
 tags: ["activation-recompute", "checkpointing", "memory", "distributed-training"]
 ---
 
-**TL;DR:** Activation recompute only looks like a generic memory lever until you place it inside a hybrid training stack. Recompute too high and you replay collectives or metadata paths that can diverge across ranks. Recompute too low and you save very little. The durable answer is selective recompute at module boundaries that are graph-safe, shard-safe, and topology-aware.
+Activation recompute only looks like a generic memory lever until you place it inside a hybrid training stack. Recompute too high and you replay collectives or metadata paths that can diverge across ranks. Recompute too low and you save very little. The durable answer is selective recompute at module boundaries that are graph-safe, shard-safe, and topology-aware.
 
 There is a strong temptation to describe activation recompute as a binary switch: on means lower memory, off means higher speed. That story is too shallow for hybrid models. Once attention, MoE, state-space, and recurrent blocks live in the same stack, the real question is where the recompute boundary sits.
 

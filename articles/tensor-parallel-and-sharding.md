@@ -5,18 +5,18 @@ author: MegaCpp Engineering
 tags: [tensor-parallel, sharding, distributed-training, sequence-parallel]
 summary: >
   Tensor parallelism is a precise matrix-partitioning contract, not a general
-  answer to every memory problem. In the MegaCpp stack it coexists with expert,
+  answer to every memory problem. It coexists with expert,
   sequence, context, and pipeline strategies, each solving a different resource
   constraint.
 description: >
-  A code- and doc-grounded walkthrough of tensor parallelism in MegaCpp
+  A code- and doc-grounded walkthrough of tensor parallelism in public hybrid
   recipes, including where TP helps, where it does not, and how it fits into
   hybrid NAM52 and NAM56R workloads.
 ---
 
 # Tensor Parallel and Sharding: What Actually Splits, What Still Stays Global
 
-Tensor parallelism works best when you treat it as a narrow contract around matrix dimensions and communication points. It reduces per-rank parameter and activation pressure for the surfaces it shards, but it does not automatically solve expert routing, latent-cache residency, recurrent-state costs, or pipeline imbalance. The public-safe contract is visible in [this Mamba3 TP partition-size sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/cppmega/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py).
+Tensor parallelism works best when you treat it as a narrow contract around matrix dimensions and communication points. It reduces per-rank parameter and activation pressure for the surfaces it shards, but it does not automatically solve expert routing, latent-cache residency, recurrent-state costs, or pipeline imbalance. The contract is visible in [this Mamba3 TP partition-size sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/cppmega/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py).
 
 ## Code and notes
 
@@ -26,13 +26,13 @@ Tensor parallelism works best when you treat it as a narrow contract around matr
 
 Distributed-training explanations often make TP sound broader than it is. The phrase “split the model across GPUs” is technically true but hides the operational detail that only certain tensors and computations are partitioned. The rest of the system still has to cooperate.
 
-The MegaCpp NAM56R recipe is a good corrective. It advertises two parallelism modes. In `nemo_native`, TP is enabled with sequence parallel support. In `author_dp`, TP is disabled in favor of a simpler data-parallel layout that preserves custom mixer features. That is a grounded sign that TP is not a universal default. It is a tradeoff tool whose value depends on the layer family, the backend, and the features you need to preserve.
+The public NAM56R-style notes in this repo are a good corrective. They keep TP claims tied to sequence length, expert ownership, and hybrid block families instead of presenting TP as a universal default. TP is a tradeoff tool whose value depends on the layer family, the backend, and the features you need to preserve.
 
 ## What TP actually promises
 
 At its core, tensor parallelism splits compatible linear-algebra surfaces across ranks. In practice that means large projections, feed-forward layers, and other tensor-heavy operations can be partitioned so no single rank owns the full weight or full intermediate activation for that surface. The payoff is lower per-rank memory and, sometimes, better aggregate throughput when the communication pattern is healthy.
 
-The POC’s config comments make this concrete. `tp_degree` is tracked separately from expert tensor degree. On CUDA, the runtime sets TP from the CLI. On XLA, the story is different because mesh sharding expresses the layout rather than explicit process groups. That separation already tells you TP is substrate-specific in implementation even when the conceptual goal is the same.
+The public code excerpts make this concrete. Dense tensor partition size is one contract; expert ownership is another. On CUDA, TP usually maps to explicit process-group collectives. On XLA, the same idea is expressed through mesh sharding. That separation already tells you TP is substrate-specific in implementation even when the conceptual goal is the same.
 
 | Parallel mode | Primary target | What it does not automatically solve |
 | --- | --- | --- |
@@ -46,7 +46,7 @@ Keeping these roles separate prevents a lot of confusion. If you ask TP to solve
 
 ## Why TP matters in hybrid architectures
 
-The POC’s `nemotron_style` path makes hybrid architectures explicit with `ABlock`, `MBlock`, `EBlock`, and `RBlock`. That matters because TP interacts differently with different families.
+The hybrid layout notes make hybrid architectures explicit with `ABlock`, `MBlock`, `EBlock`, and `RBlock`. That matters because TP interacts differently with different families.
 
 For attention-bearing layers, TP often targets the large QKV and output projections. For dense FFN paths, it targets the usual expansion and contraction matrices. But for `EBlock`, which may be MoE-based, there is a second sharding story: expert ownership and expert tensor degree. The runtime configuration explicitly distinguishes `tp_degree` from `expert_tp_degree` so the model can run configurations where dense math and expert math are partitioned differently.
 
@@ -56,7 +56,7 @@ NAM56R makes this concrete. The recipe uses `AEMEAEMEAEMR`, so the model alterna
 
 ## Sequence parallel is not optional hand-waving
 
-The docs under `PHASE5_ABLATION_PLAN.md` are particularly useful here because they show where TP runs out of room. The plan notes that certain long-context goals require sequence parallelism, and that larger context windows are constrained by HBM and topology even when TP is already active. That is exactly the kind of grounded caveat missing from shallow TP explanations.
+The related public notes in this repo are particularly useful here because they show where TP runs out of room. Long-context goals still require sequence parallelism or context parallelism, and larger context windows are still constrained by HBM and topology even when TP is already active. That is exactly the kind of grounded caveat missing from shallow TP explanations.
 
 TP reduces pressure along one dimension. Long sequences can still explode activation residency along another. If your bottleneck is context length, then SP or CP may be the right next tool, not more TP.
 
@@ -72,7 +72,7 @@ The important part is not the list. The important part is admitting that each it
 
 ## TP is a feature tradeoff too
 
-MegaCpp’s recipe description does something many performance guides avoid: it ties parallel choice to feature availability. The `nemo_native` mode uses TP=2 and sequence parallel support, but it gives up custom author-side Mamba3 or M2RNN features. The `author_dp` mode uses simpler parallelism and keeps those custom mixer capabilities.
+The public writeups here do something many performance guides avoid: they tie parallel choice to feature availability. A layout that looks optimal for dense projections may still be wrong for MoE ownership, Mamba-style mixers, or recurrent memory blocks.
 
 This is an important operational truth. Parallelism choice is not only about memory and throughput. It can also constrain which kernels, mixers, or scheduling tricks are available. A theoretically better TP layout is not automatically the right choice if it forces you off the feature set you actually need.
 
@@ -80,7 +80,7 @@ This is especially relevant in hybrid models where `RBlock` and `MBlock` may rep
 
 ## The XLA and TPU wrinkle
 
-The POC also makes clear that TPU and XLA lanes should not be narrated as if they were CUDA with different silicon. The docs around TPU, long context, and sparse attention repeatedly talk in terms of XLA-safe paths, sharding, and validated topologies. That matters because the practical behavior of TP-like sharding on XLA depends heavily on compile stability and sharding annotations.
+MegaCpp also makes clear that TPU and XLA lanes should not be narrated as if they were CUDA with different silicon. The docs around TPU, long context, and sparse attention repeatedly talk in terms of XLA-safe paths, sharding, and validated topologies. That matters because the practical behavior of TP-like sharding on XLA depends heavily on compile stability and sharding annotations.
 
 In other words, a CUDA TP story often emphasizes collectives and overlap. An XLA sharding story often emphasizes whether the compiler preserves the intended partition and whether the run remains shape-stable enough to amortize compile cost. Those are related but not identical concerns.
 
@@ -110,7 +110,7 @@ It is worth being explicit about the limits because those limits are what motiva
 
 TP does not make router aux losses disappear. It does not fix MoE dispatch imbalance. It does not make pipeline-stage loss reconstruction automatic. It does not erase compile warmup problems. It does not eliminate the family-specific state costs of `MBlock` or `RBlock`. And it does not guarantee long-context feasibility by itself.
 
-That sounds obvious when stated plainly, but many distributed writeups smuggle those expectations in indirectly. They report one good TP result, then let the reader infer a broader cure. The POC’s docs and recipes are better because they keep naming the other axes.
+That sounds obvious when stated plainly, but many distributed writeups smuggle those expectations in indirectly. They report one good TP result, then let the reader infer a broader cure. MegaCpp's docs and recipes are better because they keep naming the other axes.
 
 ## The durable takeaway
 
@@ -138,6 +138,11 @@ That discipline is what turns TP from a folklore knob into an engineering tool. 
 
 ## References
 
-- the NAM56R training recipe and hybrid schedule notes
-- the dense-model runtime configuration
-- the public ablation and comparison notes
+- [Mamba3 TP partition-size sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/cppmega/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py)
+- [Hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md)
+- [Distributed debugging notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md)
+- [PyTorch DTensor docs](https://pytorch.org/docs/stable/distributed.tensor.html)
+- [PyTorch tensor-parallel docs](https://pytorch.org/docs/stable/distributed.tensor.parallel.html)
+- [Megatron Core parallelism guide](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html)
+- [Megatron Core context parallel guide](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/features/context_parallel.html)
+- [Megatron Core MoE guide](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/features/moe.html)

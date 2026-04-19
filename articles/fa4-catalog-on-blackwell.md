@@ -13,7 +13,7 @@ FA4 is two things at once. It is a CuTe DSL kernel family from the Flash Attenti
 
 The other reason this matters: our two deployment NVIDIA SKUs differ at the silicon level. Datacenter Blackwell (sm_100a, B200) has `tcgen05`, TMEM, and 2-SM UMMA. Consumer Blackwell (sm_121a, GB10 DGX Spark) does not — no `tcgen05`, no TMEM, no TMA multicast across cluster, ~128 KiB physical SMEM/SM versus 228 KiB on H100/H200. CUTLASS uses the `a` suffix (`sm_120a`, `sm_121a`) to gate block-scaled MMA paths; bare `sm_120` / `sm_121` does not have it. FA4 kernel variants land into different dispatch paths on each SKU, and the catalog has to know.
 
-## What we built in the POC
+## What we built in the MegaCpp training stack
 
 The implementation is split across three public surfaces: the catalog itself, the dense full-attention dispatcher, and a typed validity layer that both consume.
 
@@ -53,10 +53,10 @@ The dense dispatch layer is the file that gets the most rewriting in MegaCpp. It
 
 Compute-capability gates are tightened. The local FA3 build floor remains `sm in (90, 121)` for the FA3 path. Dense FA4 is allowed only on `sm in (90, 100, 121)` — Hopper, datacenter Blackwell, GB10 DGX Spark — with two carve-outs:
 
-- On sm_100a (B200) we also wire the `tcgen05` / TMEM-aware FA4 backward adapter; the cute_dsl_mimo backward kernels we have prototyped target this surface and graduate behind a separate flag.
+- On sm_100a (B200) we also wire the `tcgen05` / TMEM-aware FA4 backward adapter; the cute_dsl_mimo backward kernels we have tested against this surface graduate behind a separate flag.
 - On sm_121a (GB10) the FA4 path uses the BF16/FP16 CuTe DSL kernels that we have validated on consumer Blackwell. There is no `tcgen05` and no FP4 tensor-core path, and the catalog enforces this by rejecting the `dense_fa4_fp4` requested backend on this SKU.
 
-Several FA4 variants get rewritten at the kernel layer: the dense-full backward fused epilogue moves from the prototype CuTe DSL adapter to a proper CuTe build that lives in the MegaCpp Megatron extension. The forward dense path is whatever upstream `flash_attn.cute.interface` ships once we have a stable Tri Dao tag pinned.
+Several FA4 variants get rewritten at the kernel layer: the dense-full backward fused epilogue moves from an earlier CuTe DSL adapter to a proper CuTe build that lives in the MegaCpp Megatron extension. The forward dense path is whatever upstream `flash_attn.cute.interface` ships once we have a stable Tri Dao tag pinned.
 
 What we drop: the four old `fa4_*`-named presets that ran Triton FlexAttention rather than FA4 CuTe (because they did not set `moba_flex_backend="flash"`). They survive in the catalog as documented historical entries with the explicit note that they did not actually execute FA4. The real FA4 CuTe presets are the depth-52 variants pinned to `moba_flex_backend="flash"`. The mislabeled presets do not graduate.
 
@@ -70,7 +70,7 @@ The catalog itself is the ablation history compressed. Every entry exists becaus
 
 - Keeping `dense_full.decode` *separate* from `dense_full.prefill` was the difference between a clean serving rollout and a panic. Decode lives on a different runtime path with KV-cache contiguity guarantees, and "FA4 train works, so FA4 decode should too" is the kind of false symmetry that wastes weeks. The bounded contiguous-KV and bounded paged-KV decode receipts on H200 are real (March 2026); a general varlen dense decode is explicitly `blocked_reasons=("general_varlen_dense_decode_not_wired",)`.
 - The CuTe FA4 backward parity smoke against the dense FA3 baseline on the depth-52 preset showed loss and gnorm trajectories within noise across 8 steps; that was the gate to promote dense FA4 from shadow to opt-in. Without backward parity, no execute receipt counts.
-- The FA3 control-ppath regressions that killed early FA4 candidates were all on the eligibility side: a CuTe variant that swallowed a non-uniform `doc_ids` tensor and produced silently wrong outputs (caught by `dense_fa4_no_doc_ids_support`); a tuple-vs-tensor return-type mismatch (caught by `dense_full.df01_cpu_tuple_unwrap`); a sliding-window request that was masked correctly by FA3 and ignored by an early FA4 build (caught by `dense_fa4_no_sliding_window`). Each of those is now a contract test in sanitized dense FA4 tests and sanitized flash-attention tests.
+- The FA3 control-path regressions that killed early FA4 candidates were all on the eligibility side: a CuTe variant that swallowed a non-uniform `doc_ids` tensor and produced silently wrong outputs; a tuple-vs-tensor return-type mismatch; and a sliding-window request that was masked correctly by FA3 and ignored by an early FA4 build. Each of those is now covered by public sample tests and reference checks linked below.
 - The exact-token `fa4_gather` smoke on H200 ran clean once we unwrapped the CuTe tuple before dtype casting; that fix moved from a per-call workaround into the dispatch layer and the catalog now requires `actual_attention_path='fa4_gather'` plus an empty fallback reason for the proof to count.
 - The FlexAttention `BACKEND="FLASH"` path needed a stricter capability probe than the Inductor default; the shared `_probe_flex_flash_backend()` exists because Inductor was happy to import and then fail at codegen on unsupported devices. Failing earlier is the whole point.
 

@@ -22,7 +22,7 @@ We measure code generation on four axes because perplexity does not tell you whe
 3. Hallucination rate — references to non-existent symbols, headers, or overloads.
 4. Correctness, graded against a held-out test set of cross-file prompts.
 
-Only (1) and (4) require running generated code. (2) and (3) are static parses against a Tree-sitter symbol table extracted from the source TU. From a plumbing point of view that split is the whole design. Axes (2) and (3) are pure CPU, stateless, and trivially parallel. Axes (1) and (4) need g++, a filesystem, a process budget, and a way to survive model output that does not merely fail — it hangs, fork-bombs, or tries to open `/dev/zero`.
+Only (1) and (4) require running generated code. (2) and (3) are static parses against a symbol table extracted from the source translation unit. From a plumbing point of view that split is the whole design. Axes (2) and (3) are pure CPU, stateless, and trivially parallel. Axes (1) and (4) need g++, a filesystem, a process budget, and a way to survive model output that does not merely fail — it hangs, fork-bombs, or tries to consume unbounded resources.
 
 ## 2. The sandbox (such as it is)
 
@@ -84,7 +84,7 @@ normalized = os.path.abspath(checkpoint_dir).rstrip(os.sep)
 digest = hashlib.sha1(normalized.encode("utf-8")).hexdigest()[:10]
 ```
 
-That ten-character suffix is what prevents two watchers, pointed at different SFT runs whose paths share the same last component, from confusing each other's state. That bug shipped; the namespacing is the fix and sanitized checkpoint-isolation tests pins it.
+That ten-character suffix is what prevents two watchers, pointed at different fine-tuning runs whose paths share the same last component, from confusing each other's state. The namespacing is what keeps checkpoint isolation deterministic.
 
 ## 6. Flake isolation
 

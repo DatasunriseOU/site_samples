@@ -13,9 +13,9 @@ A representative hybrid stack runs across two very different toolchains: PyTorch
 
 We accept the tax because the alternative is worse. Eager-mode steady state on the same model leaves a low-double-digit percentage of step time on the table, mostly in elementwise glue around the SSM and attention paths and in the per-microbatch overhead of small Python dispatches. We have measured this on multiple presets and the answer has not changed: compiled is faster as long as the cache is warm, the guards are stable, and the recompile budget is bounded. The whole job of the rules below is to make those three preconditions hold.
 
-## What we built in the POC
+## What we built in the MegaCpp training stack
 
-The POC is where we discovered all the failure modes; production then encodes the survivors. Five surfaces matter.
+MegaCpp is where we discovered all the failure modes; production then encodes the survivors. Five surfaces matter.
 
 The first is `TORCHINDUCTOR_CACHE_DIR` plumbing. Every launch script we still ship sets it explicitly, alongside `TORCHINDUCTOR_FX_GRAPH_CACHE=1` and `TORCHINDUCTOR_AUTOGRAD_CACHE=1`, before Python starts. The runtime should pin the cache to a writable persistent volume, never to a small root disk where Inductor can silently fill the partition mid-run. We learned this the hard way in an early ablation pass when nine consecutive runs failed with "DISK FULL (inductor cache)" and were initially misclassified as model bugs. Public change notes show that the fix was operational, not algorithmic. The practical rule is: export `TORCHINDUCTOR_CACHE_DIR` to a per-run subdirectory on a large persistent volume, and refuse to start training if the directory is missing or unwritable. Inductor's persistent FX-graph cache then survives across runs and across processes, which is the thing that actually moves first-step wall clock from "tens of minutes" to "tens of seconds" on a warm host.
 
@@ -29,17 +29,17 @@ The fifth is XLA persistent cache discipline. The TPU side keeps its own JAX per
 
 ## How it lands in MegaCpp
 
-In the MegaCpp production codebase the rules become non-optional.
+In the deployed MegaCpp stack the rules become non-optional.
 
 We lift the cache plumbing as-is. Every preset launcher exports `TORCHINDUCTOR_CACHE_DIR`, `TORCHINDUCTOR_FX_GRAPH_CACHE`, `TORCHINDUCTOR_AUTOGRAD_CACHE` and the JAX/XLA cache directory before Python is allowed to start. The MegaCpp bring-up script verifies free space and write permission on the cache volume before allocating GPUs.
 
 We rewrite the autotune surface. On H200 SM90 we keep `TORCHINDUCTOR_DISTRIBUTED_MAX_AUTOTUNE_GEMM=0` because the distributed-autotune subprocess OOMs against a concurrent FSDP/EP layout; on B200 and on single-node H200 with `TORCHINDUCTOR_AUTOTUNE_IN_SUBPROC=1` we widen the autotune backends to `ATEN,TRITON` and accept the longer first-compile in exchange for better steady-state kernels. The `TORCHINDUCTOR_MAX_AUTOTUNE_SUBPROC_RESULT_TIMEOUT` is pinned to a value that survives our slowest kernel without false-failing.
 
-We drop the `NO_COMPILE` escape hatch. That switch existed only because of the regression that gave this post its operational rule; it is no longer needed and is not exposed in the MegaCpp production codebase.
+We drop the `NO_COMPILE` escape hatch. That switch existed only because of the regression that gave this post its operational rule; it is no longer needed and is not exposed in the deployed MegaCpp stack.
 
 We move the Mamba kernel wrappers under a feature flag. The `custom_op` wrappers are the production default; the eager fallback exists only for the SM<80 development boxes (where bf16 Triton codegen is broken and we fall back to fp16) and is gated behind a single env switch.
 
-We move the FIRE/DASH plasticity hooks out of the regional-compile region. The hyper-connections and FIRE-orthogonalisation passes have explicit "regional_compile" comments that mark them as eager-only; in the MegaCpp production codebase those comments are enforced by an import-time assertion that the wrapping module is not currently inside a compiled region.
+We move the FIRE/DASH plasticity hooks out of the regional-compile region. The hyper-connections and FIRE-orthogonalisation passes have explicit `regional_compile` boundaries that stay eager-only; in the deployed MegaCpp stack those boundaries are enforced by startup checks instead of comments alone.
 
 The whole set can be summarized as a compile contract enforced at startup; if any contract item is violated, the run should abort before touching an accelerator.
 
@@ -70,14 +70,9 @@ The other ablation worth keeping is the regional vs full-graph comparison. We re
 
 ## References
 
-- the main model runtime module — `regional_compile` config, block-boundary eager-Python comments
-- the main MoE runtime module — `_overflow_total` register_buffer fix, dynamo-guard avoidance comments
-- the public Mamba compile wrapper sample — `torch.library.custom_op` wrapper for the Mamba-3 SISO kernel
-- `mamba_compile_wrapper.py` — `custom_op` wrapper for the Mamba SSD kernel
-- the public FIRE module sample — eager-only orthogonalisation pass, DTensor-safe surgery notes
-- `path_utils.py` — persistent cache root selection
-- launcher scripts — `TORCHINDUCTOR_*` and JAX cache exports
-- Public throughput-investigation notes covering the `_overflow_total` post-mortem
-- [Inductor caching — PyTorch documentation]
-- [JAX persistent compilation cache — JAX documentation]
-- [Polar Express Sign Method — Amsel et al., arXiv:2505.16932]
+- [PyTorch `torch.compile` documentation](https://pytorch.org/docs/stable/generated/torch.compile.html)
+- [PyTorch compiler troubleshooting guide](https://pytorch.org/docs/stable/torch.compiler_troubleshooting.html)
+- [PyTorch custom operators landing page](https://pytorch.org/tutorials/advanced/custom_ops_landing_page.html)
+- [JAX persistent compilation cache](https://docs.jax.dev/en/latest/persistent_compilation_cache.html)
+- [PyTorch/XLA documentation](https://docs.pytorch.org/xla/)
+- [FIRE plasticity toolkit article](https://github.com/DatasunriseOU/site_samples/blob/main/articles/fire-plasticity-toolkit.md)

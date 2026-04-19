@@ -13,7 +13,7 @@ Code is a structured artifact pretending to be flat text. A function body is a s
 
 The alternative is to make the model rediscover this structure from raw bytes. Some of it does, eventually. The empirical observation in our ablation logs is that the structure-aware path consistently wins on val_bpb at fixed compute, and the throughput cost - once we engineer it correctly - is smaller than the win. The interesting engineering is in the qualifier "once we engineer it correctly." The naive implementation is several times slower than the model and a graph cache nightmare on TPU.
 
-## What we built in the POC
+## What we built in MegaCpp
 
 Five distinct enhancement layers, each with its own producer, consumer, and ablation history.
 
@@ -47,7 +47,7 @@ The R6 ablation matrix from March 2026 is the canonical receipt. Same model geom
 
 R6-F is the best quality at the worst throughput. R6-A is the practical sweet spot. R6-F minus R6-A (the marginal effect of enriched data plus structure features) is a small BPB improvement at 36% throughput cost. We kept the structure-aware path because the BPB win compounds across the curriculum and the throughput cost is recoverable through engineering. The pretokenized-vs-char-level fix recovered roughly 4x in the dataloader (4,172 to 17,297 tok/sec). The eager-segment-materialization fix recovered another 2.4x (562 to 1,324 tok/sec). The conv1d-vs-Python-loop fix recovered 22% on the Mamba doc-mask path. The structure_emb bottleneck dim 64 recovered 23% on the structure-emb-enabled runs.
 
-The accelerator-kernel breakdown told a more flattering story than R6 alone. The full-feature `profile_enriched` run (depth-52 hybrid preset, 4.1B, all features, 75.0s self CUDA) versus a `profile_minimal` run (972M, 8 experts, no enriched) came out at -0.6s difference between enriched and the closest mod-bypass variant - within noise. The conclusion in the changelog is explicit: enriched features (embeddings, tree_ffn) are invisible in the profile, lost in noise, not a bottleneck once the loader-side bottlenecks are fixed.
+The accelerator-kernel breakdown told a more flattering story than R6 alone. The full-feature `profile_enriched` run (depth-52 hybrid preset, 4.1B, all features, 75.0s self CUDA) versus a `profile_minimal` run (972M, 8 experts, no enriched) came out at -0.6s difference between enriched and the closest mod-bypass variant, which is effectively within noise. The practical reading is that enriched features such as stacked embeddings and TreeFFN were not the dominant bottleneck once the loader-side issues were fixed.
 
 The features that did not survive: `RelationBiasComputer` was removed because at scale it did not improve over the `structure_emb` + `tree_ffn` combination. The relation-bias experiments stayed promising in synthetic benchmarks but consistently failed to add meaningful BPB on real corpora once the other paths were enabled. Lesson recorded as a directive in the cleanup commit: do not re-add a learned per-head pair bias on top of TreeFFN without an ablation that shows it beats the cost.
 
@@ -88,11 +88,10 @@ enhancements:
 
 ## References
 
-- the offline tokenized-enrichment step
-- the public data-preparation notes
-- the public changelog
-- a structure-aware attention plan
-- a phase-five ablation plan
-- [Tree-sitter - GitHub Tree-sitter project]
-- [libclang Python bindings - LLVM project]
-- [Aho-Corasick string matching algorithm - Aho and Corasick, CACM 1975]
+- https://github.com/DatasunriseOU/site_samples/blob/main/articles/cpp-data-preparation-pipeline-deep.md
+- https://github.com/DatasunriseOU/site_samples/blob/main/docs/data-prep-notes.md
+- https://github.com/DatasunriseOU/site_samples/blob/main/articles/structure-embeddings-and-relation-bias.md
+- https://github.com/DatasunriseOU/site_samples/blob/main/articles/ablation-after-10k-steps.md
+- https://tree-sitter.github.io/tree-sitter/
+- https://clang.llvm.org/docs/LibClang.html
+- https://dl.acm.org/doi/10.1145/360825.360855

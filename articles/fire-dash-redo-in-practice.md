@@ -1,23 +1,21 @@
 ---
 title: "FIRE, DASH, ReDo in practice: cadences, shard safety, and when we turn them off"
-description: "How the prototype’s plasticity stack actually works in code: one-shot FIRE resets, periodic DASH and ReDo passes, DTensor-safe parameter surgery, and the training lanes where the whole toolkit is intentionally disabled."
+description: "How this plasticity stack works in code: one-shot FIRE resets, periodic DASH and ReDo passes, shard-aware parameter surgery, and the training lanes where the toolkit is best left off."
 date: "2026-04-18"
 tags: ["training", "plasticity", "fire", "dash", "redo", "fsdp2", "dtensor"]
 ---
 
-TL;DR: the plasticity stack is useful because it is operationally narrow. `FIRE` is a phase-boundary reset for selected 2D weights, `DASH` is a low-frequency row shrink pass guided by weight-gradient cosine, and `ReDo` is a dormant-neuron recycle pass driven by activation statistics. The implementation in the public FIRE module sample is more interesting than the paper names: it contains DTensor-local accessors, shard-bound math, optimizer-state reset hooks, and explicit XLA guards that tell you where parameter surgery is safe and where it is not.
-
 ## The real problem this stack is trying to solve
 
-The prototype does not treat every long-run degradation as a learning-rate problem. The design notes in a model architecture design note make a broader point: once you mix attention, Mamba, expert layers, and recurrent-style blocks, the model can enter a regime where some subspaces need fresh geometry while the rest of the run still needs continuity. That is especially visible when a run crosses phase boundaries, changes context assumptions, or carries old projection geometry into a new curriculum stage.
+Long runs do not degrade in just one way. Once a model crosses phase boundaries, changes context assumptions, or carries old projection geometry into a new curriculum stage, some subspaces may need fresh geometry while the rest of the system still needs continuity.
 
 This is why the plasticity tools are intentionally asymmetric. The code is not saying “reset everything more often.” It is saying that some weights should get a one-time geometric correction, some rows benefit from periodic shrinkage, and some dormant neurons should be recycled only after enough evidence accumulates. That split matters more in a sharded setup than it does in a single-GPU toy run. A mathematically clean intervention that breaks local shard ownership, leaves optimizer state stale, or mutates parameters in a compiled lane at the wrong time is not a stability tool. It is a new failure mode.
 
-The implementation reflects that reality. the public FIRE module sample spends a lot of effort on helper surfaces such as `_local_tensor_if_dtensor`, `_is_dtensor_like`, `_dist_rank_world_size`, `_shard0_bounds`, and `_match_grad_to_local_shard`. Those are not helper clutter. They are the code’s admission that any serious plasticity pass must operate on the local shard seen by the running process, not on an imagined full tensor.
+The implementation reflects that reality. The published sample spends a lot of effort on helper surfaces such as `_local_tensor_if_dtensor`, `_is_dtensor_like`, `_dist_rank_world_size`, `_shard0_bounds`, and `_match_grad_to_local_shard`. Those are not helper clutter. They are the code’s admission that any serious plasticity pass must operate on the local shard seen by the running process, not on an imagined full tensor.
 
 ## What each intervention actually does
 
-The three mechanisms live in one module because they share the same runtime constraints even though they do different jobs.
+The three mechanisms live in one module because they share the same sharding and optimizer-state constraints even though they do different jobs.
 
 | Tool | Trigger style | Main target | Code-level behavior | Practical purpose |
 | --- | --- | --- | --- | --- |
@@ -25,9 +23,9 @@ The three mechanisms live in one module because they share the same runtime cons
 | `DASH` | periodic during training | rows of 2D weights | shrink rows whose weight-gradient cosine exceeds a threshold | soften overcommitted directions without full reinit |
 | `ReDo` | periodic after enough activation history | dormant MLP neurons | resample incoming rows, perturb outgoing columns, zero biases | wake up neurons that effectively stopped participating |
 
-`FIRE` is the most opinionated. The module-level docstring states the intended cadence directly: “Applied ONCE between training phases.” The transform itself is built around `newton_schulz`, which projects weight matrices toward an orthogonal form using fp32 math. The public path applies only to 2D parameters. That is a meaningful restriction. It means embeddings, scalar parameters, state tensors, and anything else that is not structurally a matrix stays outside the reset.
+`FIRE` is the most opinionated. The module-level docstring states the intended cadence directly: “Applied ONCE between training phases.” The transform itself is built around `newton_schulz`, which projects weight matrices toward an orthogonal form using fp32 math. The sampled implementation path applies only to 2D parameters. That is a meaningful restriction. It means embeddings, scalar parameters, state tensors, and anything else that is not structurally a matrix stays outside the reset.
 
-The targeting logic matters too. `get_fire_targets` provides selective modes rather than a blanket rewrite. In practice that lets the code support a broad aggressive pass or a narrower context-extension-oriented pass focused on attention-style projections. The design notes around long-context evolution in `03-model-architecture.md` are exactly the kind of regime where that narrower targeting makes sense: the model is not globally broken, but the geometry of certain projections can lag the new objective.
+The targeting logic matters too. `get_fire_targets` provides selective modes rather than a blanket rewrite. In practice that lets the code support a broad aggressive pass or a narrower context-extension-oriented pass focused on attention-style projections. That narrower targeting is useful in the regimes where the model is not globally broken, but the geometry of certain projections can lag the new objective.
 
 `DASH` is lighter weight and intentionally online. `dash_step` computes cosine similarity between each row of a weight and the corresponding gradient row. If the cosine is too high, the row is shrunk by a bounded factor. The mechanism is conservative because it is supposed to coexist with the optimizer rather than replace it. The row is not reinitialized. It is nudged away from a state where the current gradient keeps reinforcing the same already-dominant direction.
 
@@ -43,9 +41,9 @@ The easiest mistake in writing about this module is to focus on the algorithm la
 
 `_match_grad_to_local_shard` closes the loop by ensuring that the gradient being used for the intervention matches the local parameter view. In other words, the module is not satisfied with “there is a gradient.” It wants the gradient in the same shard-local shape as the weight that is about to be rewritten.
 
-The test file sanitized FIRE tests exists for precisely this reason. The tests are not just paper-equation checks. They encode contracts like “local tensor access works on DTensor-like wrappers,” “shard bound calculations are correct,” and “the intervention behaves correctly on the local shard rather than a fictional full parameter.” Those tests are what turn the feature from an experiment into an operational subsystem.
+The sample test surface exists for precisely this reason. The tests are not just paper-equation checks. They encode contracts like “local tensor access works on DTensor-like wrappers,” “shard bound calculations are correct,” and “the intervention behaves correctly on the local shard rather than a fictional full parameter.” Those tests are what turn the feature from an experiment into an operational subsystem.
 
-A second safety layer is device gating. `_is_xla_tensor` makes it explicit that XLA devices are not first-class targets for this surgery path. That aligns with the broader TPU/XLA bug record in a live bug audit report, where compiled XLA paths still have fragile grad materialization and cleanup behavior for conditional parameter sets. If the optimizer path already needs explicit static-grad handling to remain sound, adding mid-run parameter rewriting on top of it is the wrong place to be adventurous.
+A second safety layer is device gating. `_is_xla_tensor` makes it explicit that XLA devices are not first-class targets for this surgery path. That matches the general caution public XLA guidance already implies: parameter surgery is much easier to reason about on eager or standard distributed paths than inside highly constrained compiled execution.
 
 ## When we run these tools, and when we do not
 
@@ -80,13 +78,13 @@ The one-shot nature of FIRE is not just a recommendation. It follows from the ro
 
 DASH and ReDo are periodic because they depend on online evidence. DASH needs a meaningful gradient direction. ReDo needs an activation history with enough signal to distinguish true dormancy from a temporary lull. That means the toolkit is usually off during unstable bring-up and early-run chaos, even if the command-line surface technically allows it.
 
-There is another practical skip rule: lanes with complicated compiler behavior. A compile-warmup regression note is a reminder that even without plasticity surgery, some `regional_compile + MoE` paths already need careful policy choices just to avoid bad warmup behavior. When a lane is still proving basic compile stability, adding in-place parameter interventions is the wrong trade.
+There is another practical skip rule: lanes with complicated compiler behavior. Even without plasticity surgery, compiled training paths often need careful policy choices just to stay stable. When a lane is still proving basic compile stability, adding in-place parameter interventions is the wrong trade.
 
 ## Where this fits in a NAM56R-style stack
 
-A useful way to read the module is through the architecture vocabulary used elsewhere in the project: `A` for attention, `M` for Mamba, `E` for expert, `R` for recurrent. In a hybrid pattern such as `AEMEAEMEAEMR`, not every block has the same failure mode and not every block benefits from the same intervention.
+A useful way to read the module is through a hybrid-model vocabulary: `A` for attention, `M` for state-space or sequence-mixer blocks, `E` for expert blocks, `R` for recurrent-style tails. In a hybrid pattern such as `AEMEAEMEAEMR`, not every block has the same failure mode and not every block benefits from the same intervention.
 
-That hybrid thinking shows up strongly in the restoration work on the Megatron-side port. the public NAM56R recipe sample and the public NAM56R Megatron recipe sample encode the pattern-aware model recipe. the public hybrid schedule sample goes further and makes the distinction runtime-visible: MoE-only layers are handled differently from Mamba or DSA-style opaque layers, and the schedule plan explicitly documents that NAM56R expert layers may have `IdentityOp` attention. That tells you something important for plasticity policy: a tool that is intuitively “for transformer attention blocks” is not automatically meaningful for every layer in a mixed pattern.
+That hybrid thinking is useful because MoE-heavy layers, attention-heavy layers, and sequence-mixer layers should not all inherit the same maintenance policy. A tool that is intuitively “for transformer attention blocks” is not automatically meaningful for every layer in a mixed pattern.
 
 The result is a sensible operational split.
 
@@ -118,15 +116,12 @@ It implicitly rejected several weaker ideas:
 - treating every low-activation neuron as immediately safe to resample;
 - using plasticity surgery in compiler-fragile bring-up lanes just because the feature exists.
 
-That is what makes the module practically useful. It does not promise magic. It gives you a bounded set of interventions with enough runtime discipline to be believable.
+That is what makes the module practically useful. It does not promise magic. It gives you a bounded set of interventions with enough engineering discipline to be believable.
 
 ## References
 
-- the public FIRE module sample
-- sanitized FIRE tests
-- a model architecture design note
-- a live bug audit report
-- a compile warmup regression report
-- the public NAM56R recipe sample
-- the public NAM56R Megatron recipe sample
-- the public hybrid schedule sample
+- [FIRE: Functional Interpolation for Relative Entropy Minimization](https://arxiv.org/abs/2602.08040)
+- [DASH: Dynamic Adaptation via Shrinkage of High-Alignment Directions](https://arxiv.org/abs/2410.23495)
+- [ReDo: Rethinking Dead Neurons in Neural Networks](https://arxiv.org/abs/2302.12902)
+- [PyTorch DTensor documentation](https://pytorch.org/docs/stable/distributed.tensor.html)
+- [PyTorch/XLA documentation](https://docs.pytorch.org/xla/)

@@ -1,4 +1,4 @@
-"""Public-safe TPU/XLA configuration sample used in article references."""
+"""Public TPU/XLA configuration sample used in article references."""
 
 XLA_PROFILE = {
     "precision": "bf16",

@@ -5,7 +5,7 @@ date: "2026-04-18"
 tags: ["evaluation", "cpp", "verifier", "benchmarking", "human-eval", "cppmega"]
 ---
 
-**TL;DR:** Executable evaluation only becomes honest when the verifier is the authority. The current C++ stack is valuable because it does not treat compilation as a cleanup step after generation. It treats deterministic extraction, declared sandboxing, compile/test outcomes, and failure bucketing as the source of truth, then computes summary metrics on top. That order matters more than any single leaderboard number.
+Executable evaluation only becomes honest when the verifier is the authority. The current C++ stack is valuable because it does not treat compilation as a cleanup step after generation. It treats deterministic extraction, declared sandboxing, compile/test outcomes, and failure bucketing as the source of truth, then computes summary metrics on top. That order matters more than any single leaderboard number.
 
 Evaluation systems for natural-language tasks can get away with fuzzy matching, grader models, or human preference signals. C++ cannot. There is no meaningful notion of "almost correct" once the deliverable is code that must compile and satisfy tests. For that reason the verifier is not auxiliary tooling. It is the measurement device.
 
@@ -88,7 +88,7 @@ Evaluation people often talk about models and datasets while quietly changing th
 
 The stack is strongest when those assumptions are explicit. A verifier should not just say "compile failed." It should know what compiler was used, which phase timed out, whether the failure happened before tests began, and whether the task was single-file or multi-file. That kind of reporting is not bureaucracy. It is what makes results comparable across weeks of research.
 
-The production checklist is not complicated, but it does need to be declared:
+The deployment checklist is short, but it does need to be explicit:
 
 | Requirement | Why it matters |
 | --- | --- |
@@ -127,12 +127,13 @@ That implies a concrete standard:
 - pass@k is computed only from verifier-backed labels;
 - reports include failure buckets, not only one top-line score.
 
-This is stricter than leaderboard culture, but it is also more useful. Research stacks need metrics that survive contact with debugging. If a score drops, the team should be able to tell whether the model regressed, the format changed, or the verifier moved. The only way to make that possible is to treat verification as the authority from the start.
+This is stricter than leaderboard culture, but it is also more useful. Training stacks need metrics that survive contact with debugging. If a score drops, the team should be able to tell whether the model regressed, the format changed, or the verifier moved. The only way to make that possible is to treat verification as the authority from the start.
 
 In other words, verifier-first is not a preference about style. It is the minimum architecture for honest C++ evaluation.
 
 ## References
 
-- verifier-first evaluation design
-- compile-then-test harness architecture
-- public evaluation contract documentation
+- [Compile commands and semantic graphs](https://github.com/DatasunriseOU/site_samples/blob/main/articles/compile-commands-and-semantic-graphs.md)
+- [HumanEval: Evaluating Large Language Models Trained on Code](https://arxiv.org/abs/2107.03374)
+- [LiveCodeBench](https://livecodebench.github.io/)
+- [tree-sitter](https://tree-sitter.github.io/tree-sitter/)

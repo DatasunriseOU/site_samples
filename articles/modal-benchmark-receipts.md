@@ -7,21 +7,22 @@ summary: >
   The useful benchmark story was not the headline number. It was the receipt:
   exact config, exact backend, exact compile posture, and a clear separation of stable lanes from unstable ones.
 description: >
-  A grounded guide to benchmark receipts using the project changelog, compile
-  notes, and bring-up reports rather than marketing-style throughput claims.
+  A grounded guide to benchmark receipts using compile posture, backend
+  identity, and narrow evidence records rather than headline throughput
+  claims.
 ---
 
 # Modal Benchmark Receipts: What Counted as Evidence and What Did Not
 
-**TL;DR:** a benchmark number is only trustworthy in this stack when it comes with a receipt: the exact model lane, exact operator family, compile posture, and known exclusions. The repo repeatedly shows why. The same nominal model can produce very different throughput depending on whether it used padded MoE or jagged MoE, stable dense compile or graph breaks, sparse recovery or a still-regressing backend.
+A benchmark number is only trustworthy when it comes with a receipt: the exact model lane, exact operator family, compile posture, and known exclusions. The same nominal model can produce very different throughput depending on whether it used padded MoE or jagged MoE, stable dense compile or graph breaks, sparse recovery or a still-regressing backend.
 
 Benchmark arguments get sloppy fast when infrastructure is moving. One run is quoted after a backend fix, another after a config change, another after a compile improvement, and suddenly the comparison sounds cleaner than it is. The project avoided that trap in its better artifacts by treating benchmark claims as evidence records rather than wins to advertise.
 
 That is what a receipt is here. A receipt is not just a log file. It is a bounded claim about one lane: what model mix it used, what backend family was active, what compile status was in play, and what nearby caveats still existed.
 
-## The Changelog Already Shows Why Headline Numbers Are Dangerous
+## Why Headline Numbers Are Dangerous
 
-The most direct evidence is in `CHANGELOG.md`. It records several moments where the apparent faster path was not actually the best benchmark lane once compile behavior was included. The MoE notes are especially important. A jagged grouped path could look better in local operator terms, but if it forced graph breaks or required `@torch.compiler.disable`, then the end-to-end training lane could lose to a padded alternative that preserved a more coherent compiled graph.
+The most direct evidence is in the run history itself. It records several moments where the apparent faster path was not actually the best benchmark lane once compile behavior was included. The MoE examples are especially important. A jagged grouped path could look better in local operator terms, but if it forced graph breaks or required `@torch.compiler.disable`, then the end-to-end training lane could lose to a padded alternative that preserved a more coherent compiled graph.
 
 That is not a small footnote. It changes what a throughput number means. If one lane is measuring arithmetic efficiency and another is measuring a compiled end-to-end system with fewer breaks, they are not substitutes. The receipt has to say which one it is.
 
@@ -38,7 +39,7 @@ That may sound severe, but the repo history earns the severity. Performance chan
 
 ## A Good Receipt Names the Structural Tradeoff
 
-The project's better notes do this explicitly. For example, the MoE compile entries in the changelog explain that the padded path could be faster overall because it remained compilable while the jagged fused path introduced graph breaks. That is not merely a "backend detail." It is the central interpretation key for the benchmark.
+The better benchmark notes do this explicitly. For example, the MoE compile writeups explain that the padded path could be faster overall because it remained compilable while the jagged fused path introduced graph breaks. That is not merely a "backend detail." It is the central interpretation key for the benchmark.
 
 A good benchmark receipt therefore has to identify the structural tradeoff in plain language. If a run used padded MoE, say it. If the fused path was disabled because compile could not tolerate it, say that too. If a sparse attention recovery restored correctness but did not fully recover the old throughput envelope, the receipt should separate those statements instead of compressing them into a single success narrative.
 
@@ -94,7 +95,7 @@ It also prevents benchmark laundering across adjacent lanes. Once a pattern name
 
 ## Sparse and Recovery Work Changed What Benchmarks Meant
 
-The DSA SDPA recovery bundle is another reminder that correctness, backend choice, and throughput should be logged separately. a DSA/SDPA recovery changelog exists precisely because one March 8 fix materially recovered throughput without pretending to erase all later regression analysis. The accompanying validation note also states the remaining gap plainly instead of overfitting the story to one recovered run.
+The DSA SDPA recovery bundle is another reminder that correctness, backend choice, and throughput should be logged separately. One March 8 fix materially recovered throughput without pretending to erase all later regression analysis. The accompanying validation note also states the remaining gap plainly instead of overfitting the story to one recovered run.
 
 That is the kind of evidence discipline benchmark reporting needs. A benchmark after a recovery should say whether it reflects restored correctness, restored backend selection, partial throughput recovery, or all three. Otherwise every later comparison inherits ambiguity from the earlier one.
 
@@ -111,7 +112,7 @@ A strong receipt in this stack should include:
 | Compile status | eager, partially compiled, or whole-model compiled |
 | Backend detail | padded MoE, jagged grouped MoE, sparse SDPA, dense attention |
 | Stability note | stable frontier or adjacent known blocker |
-| Artifact pointer | changelog entry, report, or preserved validation note |
+| Artifact pointer | report, receipt, or preserved validation note |
 
 That may feel like more ceremony than most benchmark dashboards want. But the alternative is worse: optimistic numbers nobody can align to code.
 
@@ -121,7 +122,7 @@ And code alignment is the only standard that survives fast-moving infrastructure
 
 ## The Main Rule: Report the Lane You Actually Measured
 
-The strongest through-line across the repo is this: report the exact lane you measured, not the family you wish you had measured. If compile was only stable on the padded MoE path, the receipt belongs to the padded MoE path. If the dense TP+SP+FSDP compile lane passed but the real MoE layer remained the next blocker, the benchmark belongs to the dense lane. If a sparse recovery restored one backend path but left a broader performance gap unexplained, say that too.
+The strongest through-line across the codebase is this: report the exact lane you measured, not the family you wish you had measured. If compile was only stable on the padded MoE path, the receipt belongs to the padded MoE path. If the dense TP+SP+FSDP compile lane passed but the real MoE layer remained the next blocker, the benchmark belongs to the dense lane. If a sparse recovery restored one backend path but left a broader performance gap unexplained, say that too.
 
 Hosted benchmark arguments usually go wrong when people merge nearby truths into one sentence. The receipts in this project are useful because they refuse to do that. They tell you what worked, what did not, and why one number should not be generalized across the whole stack.
 
@@ -131,9 +132,8 @@ That standard is stricter than typical benchmark culture, but it is the right on
 
 ## References
 
-- `CHANGELOG.md`
+- MegaCpp benchmark notes
 - an H200 bring-up receipt
-- a DSA/SDPA recovery changelog
+- a DSA/SDPA recovery note
 - a DSA/SDPA validation note
 - the main training entrypoint
-

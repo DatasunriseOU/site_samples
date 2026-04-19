@@ -1,9 +1,9 @@
-> Sanitized public note.
+> Public note.
 >
-> Source repo: MegaCpp research repo
-> Source file: SOTA comparison and FIRE review notes
+> Source repo: MegaCpp public samples
+> Source material: https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/research/fire/fire-dash-redo-in-practice__toolkit_notes__v1.md
 > Purpose: explain why FIRE, DASH, and ReDo were treated as separate tools rather than one vague plasticity claim
-> Edited for public clarity.
+> Edited for clarity.
 
 FIRE, DASH, and ReDo were kept separate because they act on different time scales and different failure modes.
 

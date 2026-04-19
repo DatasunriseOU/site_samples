@@ -11,7 +11,7 @@ The cross-path MLA story (which parts of DeepSeek-V3 we trained with, why weight
 
 At specialist scale the attention block is still the compute cost we optimise hardest, and MLA's compressed latent makes it a numerically clean place to fuse things. The training path is unambiguous: expand, Flash Attention, done. Where kernels start to matter is between the projection, the norm, the split into nope / rope, the rotary application, and the recombine. On H200 that sequence without fusion is five kernel launches per attention per layer per microbatch step; on a depth-56 hybrid preset that becomes the kind of cost we do not want to pay twice. The other question - whether MLA pays off for the *specialist* SLM sizes at all - is what the compressed KV cache answers: 4x smaller KV cache at 4-bit quantization relative to bf16 is a deployment unlock for our on-device inference targets.
 
-## What we built in the POC
+## What we built in the public MegaCpp MLA path
 
 `mla.py` is the reference training path. It takes `x`, does the down-projection (either separate `w_dq` + `w_dkv` or a fused `w_dqkv`), RMSNorm on the latent, up-projection through `w_uq` and `w_ukv`, reshape to `(B, T, H, qk_nope_head_dim + qk_rope_head_dim)` on the Q side, split the KV side into `low_rank_main` (`kv_lora_rank`) and `low_rank_rope` (`qk_rope_head_dim`), apply partial RoPE only to the rope portion, concatenate back, and hand the lot to Flash Attention. `recompute_kv_upproj=True` is the default training knob: backward recomputes the large `H * (d_nope + d_v)` tensor from the small `kv_lora_rank` latent. `recompute_q_upproj` is optional and wraps norm / up-project / split / RoPE / concat in one `cp.checkpoint` so inductor has the right adjacency to fuse RMSNorm and matmul into a single Triton kernel on the compile path. We explicitly do not use the weight-absorbed training path; the rationale is spelled out in the dedicated post, and the one-line summary is that the FLOP increase and the loss of Flash Attention compatibility dominate the KV-memory win that only applies at decode.
 
@@ -35,11 +35,11 @@ The attention layer spec is built by asking the current transformer implementati
 
 The hybrid MLA / DSA interleave is a MegaCpp-specific layout. The deep-hybrid full spec selects MLA for some attention ranks and DSA for others; MTP (multi-token-predict) layers always get MLA, never DSA, because the MTP head needs dense attention semantics the sparse path does not provide. Each branch builds its own attention spec through the same shared builder logic.
 
-Blackwell tensor-core path: H200 and GB10 both route MLA through TransformerEngine. H200 gets the full `FusedMLASelfAttention` bf16/fp8 path; GB10 (Blackwell consumer variant) pins `disable_rht=True` because the Random Hadamard Transform crashes on that silicon, which shifts the MLA QK numerics enough that we treat GB10 receipts as a separate cell.
+Blackwell tensor-core path: H200 and GB10 both route MLA through TransformerEngine. H200 gets the full `FusedMLASelfAttention` bf16/fp8 path; GB10 pins `disable_rht=True` because the Random Hadamard Transform is not stable on that target, which shifts MLA QK numerics enough that GB10 results are tracked separately from H200 results.
 
 What lands as-is: the MLA module, the fused MLA RoPE Triton kernels, the MLA KV-cache path, and the PolarQuant and TurboQuant wrappers. What gets lifted but guarded: the standalone fused down-norm-up path, still experimental. What moves to Megatron: the attention layer spec, the distributed-optimizer integration, TP/PP/SP wiring, and the FP8 communication layer. The weight-absorbed training path is intentionally dropped.
 
-## Ablations and what we kept
+## Design choices that survived validation
 
 The fused MLA RoPE kernels landed as part of a larger Megatron-optimization wave (alongside fused Mamba conv, PP with parameter-count-weighted stage partitioning, TP all-reduce overlap, sequence parallelism for norm/dropout, ZeRO-1 distributed optimizer, FP8 comm, and EP load balancing). MLA-specific bugs we fixed on the way: latent-dim mismatch when resuming from non-MLA checkpoints, TP all-reduce placement for MLA's asymmetric Q/KV projections, FlexAttention `score_mod` ignoring per-head RoPE frequencies, and gradient checkpointing interacting with the in-place fused MLA RoPE kernel. We also tried weight-absorbed training: it lost on FLOPs (attention dot products move from `qk_head_dim=192` to `kv_lora_rank=512`) and on Flash Attention compatibility (absorbed attention has to compute and sum nope/rope score components separately, which breaks every fused FA kernel we use). Autotune for `fused_mla_rope` lands at `BLOCK_H=16` or `32` on H200 depending on `emb_dim`; on GB10 the kernel is bandwidth-bound and autotune prefers a larger block to amortise loads.
 
@@ -83,11 +83,10 @@ class FusedDownNormUp(torch.autograd.Function):
 
 ## References
 
-- public MLA, fused-MLA projection, RoPE, KV-quantization, and generic Triton helper modules in the POC.
-- the public MLA shared-runtime sample, the public NAM56R full spec sample in MegaCpp.
-- [DeepSeek-V3 Technical Report - DeepSeek-AI].
-- [Megatron-Core fused MLA YaRN RoPE - NVIDIA, 2025].
-- [PolarQuant - Han et al., AISTATS 2026, arXiv:2502.02617].
-- [TurboQuant - Zandieh et al., ICLR 2026, arXiv:2504.19874].
-- [YaRN: Yet another RoPE extensioN - Peng et al., arXiv:2309.00071].
-- [RoFormer / RoPE - Su et al., arXiv:2104.09864].
+- [Megatron-LM — NVIDIA, GitHub](https://github.com/NVIDIA/Megatron-LM)
+- [DeepSeek-V3 Technical Report](https://arxiv.org/abs/2412.19437)
+- [YaRN: Efficient Context Window Extension of Large Language Models](https://arxiv.org/abs/2309.00071)
+- [RoFormer: Enhanced Transformer with Rotary Position Embedding](https://arxiv.org/abs/2104.09864)
+- [PolarQuant](https://arxiv.org/abs/2502.02617)
+- [TurboQuant](https://arxiv.org/abs/2504.19874)
+- [Hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md)

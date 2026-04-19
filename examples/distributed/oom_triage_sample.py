@@ -1,4 +1,4 @@
-"""Public-safe OOM triage helper for article references."""
+"""Public OOM triage helper for article references."""
 
 
 def estimate_memory_budget(params_gb: float, activations_gb: float, optimizer_gb: float) -> float:

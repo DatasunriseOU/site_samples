@@ -1,5 +1,5 @@
 ---
-title: "Determinism and Bit-Exact Runs: What We Ship, What We Guard, What We Gave Up"
+title: "Determinism and Bit-Exact Runs: What We Guard, and Where We Accept Drift"
 description: "A grounded account of GPU and TPU determinism on our stack: the fast path we run in production, the bitwise path we keep for regression testing, and the tests that fire when silent non-determinism creeps in."
 date: "2026-04-18"
 tags: ["determinism", "reproducibility", "training-infra", "testing"]
@@ -73,9 +73,9 @@ The production fast path therefore:
 The bitwise path is a different configuration we keep paved for regression
 tests and for the cases where drift would hide a real bug. It is not a mode
 a user flips at runtime; it is a specific set of feature flags set to their
-pre-feature values plus a few environment knobs. In CHANGELOG terms this is
-what "bit-exact to pre-iter-5" means, and the same phrase shows up three
-dozen times across the log because we kept needing to prove it.
+pre-feature values plus a few environment knobs. In practice this means a
+known baseline configuration whose outputs can be compared byte-for-byte when a
+new feature needs isolation.
 
 ## The Default-Path Invariant
 
@@ -136,7 +136,7 @@ On GPU, the honest breakdown is roughly:
   we want. We accept it.
 - cuDNN dSwiGLU `atomicAdd` backward: we hit this one head-on; it is the
   classic atomic-accumulate non-determinism. The workaround and the
-  vendor escalation are documented in a vendor receipt note and `-27-` follow-up.
+  vendor escalation are documented in a associated validation notes.
 - NCCL collectives: tree reductions with ring order fixed at init are
   deterministic for a given topology. The moment the topology changes —
   different node counts, different NIC ordering — the order changes and
@@ -192,7 +192,7 @@ otherwise would have lost.
   packed-doc batch to the equivalent single-doc batch and require exact
   equality on the payload rows. Any cross-document numerical leak shows
   up immediately.
-- `fail_closed_decode` invariants on H200 decode runs: the receipt
+- `fail_closed_decode` invariants on H200 decode runs: the validation sweep
   explicitly verifies determinism under decode (same inputs to the same
   model produce the same tokens), KV cache consistency, and finite
   logits. This is Tier 2 determinism and we run it on every serving
@@ -267,28 +267,17 @@ virtue.
 
 | Property | Status | Backed by |
 |---|---|---|
-| same code path, same seed, same hardware family -> same first-N-step loss | promised | sanitized distributed-CUDA tests |
+| same code path, same seed, same hardware family -> same first-N-step loss | promised | public distributed-CUDA sample tests |
 | bitwise weight equality across runs | not promised | numerical drift in BF16 reductions |
 | deterministic cuDNN | off in production | costs more than it pays |
 | MoE token order under EP | deterministic per rank | dispatcher contract |
-| randopt perturbation reproducibility | promised under explicit seed | sanitized randopt perturbation tests |
-| FA4 backward parity vs reference | guarded | a FA4 backward parity receipt |
+| randopt perturbation reproducibility | promised under explicit seed | public randopt sample tests |
+| FA4 backward parity vs reference | guarded | a dedicated FA4 backward parity validation |
 
 ## References
 
-- `common.py`
-- `checkpoint_manager.py`
-- the main model runtime module
-- the main MoE runtime module
-- `online_adapt.py`
-- sanitized randopt perturbation tests
-- sanitized FP8 context tests
-- sanitized doc-relative sink tests
-- sanitized Mamba document-boundary tests
-- sanitized distributed-CUDA tests
-- a FA4 backward parity receipt
-- a dense-contract H200 receipt
-- a post-training randopt note
-- a vendor receipt note
-- an upstream escalation note
-- `CHANGELOG.md`
+- [PyTorch randomness notes](https://docs.pytorch.org/docs/stable/notes/randomness.html)
+- [cuDNN reproducibility and determinism](https://docs.nvidia.com/deeplearning/cudnn/backend/latest/developer/misc.html#reproducibility-determinism)
+- [Distributed OOM Triage Sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/distributed/oom_triage_sample.py)
+- [Local shard contract sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/research/fire/fire-plasticity-tests__local_shard_contracts__v1.py)
+- [Gradient span contract sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/research/stp/stp-loss-tests__gradient_span_contracts__v1.py)

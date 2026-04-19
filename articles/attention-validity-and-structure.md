@@ -65,12 +65,12 @@ now stays slot-only, and `normalize_attention_validity()` sees
 actually supplied one.
 
 The fix landed with regression tests across the obvious surfaces:
-sanitized attention-validity tests, targeted coverage in
-sanitized training entrypoint regression tests for the CUDA and XLA
+attention-validity tests, targeted coverage in
+training entrypoint regression tests for the CUDA and XLA
 canonicalizers preserving absent token-validity fields while still
 injecting the missing required CUDA/XLA keys, the
-sanitized attention-validity integration tests integration tests, and a
-sanitized flash-attention tests run to confirm nothing downstream
+attention-validity integration tests, and a
+flash-attention test run to confirm nothing downstream
 regressed. The durable rule for future canonicalizers is now written
 down: missing validity fields must stay absent unless the runtime is
 intentionally deriving them from a stronger contract. Shape
@@ -113,7 +113,7 @@ explicit behavior: slot-prefix-only metadata, mismatched
 to `mode="none"`. The residual risk is honest and written into the
 report: this is now explicit, but it is still a product decision rather
 than a final semantic contract. A future follow-up may choose stricter
-fail-closed behavior, or preserve a coarse slot contract instead. The
+strict fallback behavior, or preserve a coarse slot contract instead. The
 value of the test is that whichever choice we make later, we will make
 it on purpose.
 

@@ -4,8 +4,8 @@ date: "2026-04-18"
 author: MegaCpp Engineering
 tags: [optimizer, muon, adamw, distributed, numerical-stability, tpu, h200]
 summary: >
-  What we learned stress-testing DistAdamW and DistMuon on the the POC
-  POC: numerical drift at grad-none asymmetry, the all-gather vs reduce-scatter
+  What we learned stress-testing DistAdamW and DistMuon on the MegaCpp trainer:
+  numerical drift at grad-none asymmetry, the all-gather vs reduce-scatter
   trade for sharded updates, and the Muon-specific traps that have nothing to
   do with the parameter math.
 ---
@@ -15,7 +15,7 @@ summary: >
 Optimizer bugs in a distributed trainer are the worst class of bug to
 own. They do not fail fast. They do not raise. They compound silently
 over thousands of steps and then surface as "the loss curve looks
-weird around step 3000" on a $50K run. For the MegaCpp POC
+weird around step 3000" on a long run. For the MegaCpp trainer
 we run a hybrid `DistAdamW` + `DistMuon` optimizer across CUDA and
 XLA backends, and we spent real time building a stress harness whose
 entire job is to catch drift before it compounds. This post is about
@@ -201,7 +201,7 @@ transition. On TPU v6e-8 that matters.
 
 ### 5. FSDP2-native Muon vs DistMuon
 
-The POC actually ships three Muon variants: single-device `Muon`,
+MegaCpp actually ships three Muon variants: single-device `Muon`,
 ZeRO-2-style `DistMuon`, and a `FSDP2Muon` that consumes
 FSDP2-sharded `DTensor` parameters directly. The last one is
 mathematically equivalent to `DistMuon`: each rank owns a chunk
@@ -264,7 +264,7 @@ the ones where the collective hangs. Hangs are loud. Drift is
 silent. The harness above is the handful of silent-drift sources
 we have actually hit.
 
-The MegaCpp POC, by David Gornshtein and Boris Tamarkin,
+MegaCpp, by David Gornshtein and Boris Tamarkin,
 treats the stress harness as a gate. If `max_adam_abs_diff` or any
 of the Muon diffs drifts above zero on the checked-in scenarios,
 the build does not ship. That is the kind of contract that is
@@ -290,14 +290,8 @@ master_fp32.add_(buf_bf16.to(torch.float32))
 
 ## References
 
-- dist_optimizer_stress_tpu_v6e_2026-03-22.md
-- TENSOR_PARALLELISM.md
-- BACKEND_STOPLIGHT_MATRIX.md
-- CURRENT_STATE.md
-- tp_sp_ep_fsdp_h200_bringup_2026-04-07.md
-- fa4_fsdp2_scaling_2026-03-22.json
-- 11-adaptive-sharding-auto-fit.md
-- TRAINING_PLAN.md
-- training_plan_en.md
-- training_review.md
-- CHANGELOG.md
+- https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/api-guide/distributed_optimizer.html
+- https://docs.pytorch.org/docs/stable/distributed.optim.html
+- https://docs.pytorch.org/xla/master/perf/spmd_advanced.html
+- https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md

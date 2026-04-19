@@ -1,6 +1,6 @@
 ---
 title: "Loss Curves and the Divergence Playbook: How We Catch It at Epoch 0"
-description: "The divergence playbook we run on every the POC training start: early-training spikes, NaN bisect, LR warmup shape, data-order suspects, and the monitors that catch it before step 100."
+description: "The divergence playbook used on every training start: early-training spikes, NaN bisect, LR warmup shape, data-order suspects, and the monitors that catch it before step 100."
 date: "2026-04-18"
 tags: ["training", "divergence", "loss-curves", "monitoring", "debugging"]
 ---
@@ -9,7 +9,7 @@ Most training runs do not fail at the model. They fail at step 1, or step 50, or
 
 ## Why this matters
 
-An overnight run that diverges at hour six wastes more than the hour-six dollars. It wastes the next morning's investigation, contaminates the changelog with a "we think it was the LR" guess, and quietly raises the bar for the next bug because nobody wants to reopen the same wound. A 100-step smoke that catches the problem before a long run starts is two orders of magnitude cheaper, and the playbook here exists to make that smoke load-bearing.
+An overnight run that diverges at hour six wastes more than the hour-six dollars. It wastes the next morning's investigation, invites a sloppy "we think it was the LR" postmortem, and quietly raises the bar for the next bug because nobody wants to reopen the same wound. A 100-step smoke that catches the problem before a long run starts is two orders of magnitude cheaper, and the playbook here exists to make that smoke load-bearing.
 
 The other reason: a modern training stack can mix Muon plus AdamW, FP8 islands, MoE routing, Mamba SSM kernels, and intra-document masking. Each subsystem has its own divergence signature, and trying to debug them in aggregate is hopeless. The bisect order in this playbook reflects how often each subsystem has actually been the culprit in practice, not how interesting it is in the abstract.
 
@@ -35,7 +35,7 @@ When step N produces a non-finite loss or gradient, we run a deterministic bisec
 
 1. **Disable Muon.** If the run goes finite, the issue is in Muon or its interaction with the precision policy. This caught the TPU Polar Express NaN above.
 2. **Force BF16 across all paths** (no FP16, no FP8). If the run goes finite, the issue is in a low-precision island. The most common case is FP8 e4m3 saturating on the first backward of a freshly-initialized model; the optimizer's finite-check-and-skip prevents weight pollution and subsequent steps stabilize as the FP8 amax history fills out. Making the strict `check_for_nan_in_grad=True` guard opt-in lets a run pass through the FP8 warmup transient without masking the root cause.
-3. **Bisect by rank.** The pre-collective sanitization in `the POC/megatron_optimizer.py` `nan_to_num`s the flattened gradient before the reduce-scatter; we temporarily disable it (`MEGACPP_SKIP_PRE_REDUCE_NAN_CHECK=1`) and log per-rank `is_finite(grad).all()` before the collective. A single rank producing a NaN points at MoE routing overflow, a Mamba conv edge case, or an experimental kernel firing on that rank's data.
+3. **Bisect by rank.** The pre-collective sanitization step `nan_to_num`s the flattened gradient before the reduce-scatter; we temporarily disable it (`MEGACPP_SKIP_PRE_REDUCE_NAN_CHECK=1`) and log per-rank `is_finite(grad).all()` before the collective. A single rank producing a NaN points at MoE routing overflow, a Mamba convolution edge case, or an experimental kernel firing on that rank's data.
 4. **Bisect by block.** Disable EBlocks (`--no_moe`), then RBlocks, then MBlocks, in that order. The order reflects historical likelihood: MoE has been the most common source of late-training spikes; M2RNN is rarely the cause; Mamba kernels are occasional contributors at specific seq_lens.
 5. **Re-enable with the simplest config that reproduces.** The reproducer is the asset; the fix is downstream.
 
@@ -115,16 +115,7 @@ Three honest gaps. The grad-norm EMA monitor is a heuristic; a real anomaly dete
 
 ## References
 
-- base_train.py
-- megatron_optimizer.py
-- muon.py
-- dataloader.py
-- DATA_PIPELINE.md
-- 04-training-pipeline.md
-- checkpoint_eval_report.md
-- TRAINING_EVAL_REPORT.md
-- fire_integration_log.md
-- session-2026-04-09-nemotron-parity.md
-- changelog-log-2026-03-08.md
-- h200_topology_receipts_2026-03-31.md
-- CHANGELOG.md
+- [Data preparation notes](../docs/data-prep-notes.md)
+- [Muon optimizer repository](https://github.com/KellerJordan/modded-nanogpt)
+- [PyTorch distributed documentation](https://pytorch.org/docs/stable/distributed.html)
+- [PyTorch/XLA documentation](https://docs.pytorch.org/xla/)

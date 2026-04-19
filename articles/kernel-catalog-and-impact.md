@@ -4,7 +4,7 @@ date: 2026-04-18
 author: MegaCpp Engineering
 tags: [kernels, h200, moe, attention, triton, systems]
 summary: >
-  The POC and MegaCpp codebases do not use one magical fast kernel. They use a
+  The MegaCpp codebases do not use one magical fast kernel. They use a
   growing catalog of kernels and backend seams, and performance only made sense
   once that catalog was treated as an explicit design surface.
 description: >
@@ -15,17 +15,17 @@ description: >
 
 # Kernel Catalog and Impact: Why the Runtime Needed a Real Map
 
-**TL;DR:** The important performance lesson in the POC was not “switch to a faster kernel.” It was that the project needed an explicit kernel catalog: which family handled attention, which family handled expert dispatch and combine, which family handled sparse MLA, and which family was only a donor or deferred substrate. Once those boundaries were named and documented, system-level decisions about memory, launchers, and model variants became much more trustworthy.
+The important performance lesson in MegaCpp was not “switch to a faster kernel.” It was that the project needed an explicit kernel catalog: which family handled attention, which family handled expert dispatch and combine, which family handled sparse MLA, and which family was only a donor or deferred substrate. Once those boundaries were named and documented, system-level decisions about memory, launchers, and model variants became much more trustworthy.
 
-When teams talk about kernel work, they often compress everything into a single heroic path: one fused kernel, one extension, one benchmark chart. The repo evidence here points in the opposite direction. The working system is a catalog, not a monolith. Different block families use different kernel backends, and the backend choice affects not only raw speed but also memory materialization, autograd structure, optimizer assumptions, and the comparability of benchmark receipts.
+When teams talk about kernel work, they often compress everything into a single heroic path: one fused kernel, one extension, one benchmark chart. The public evidence here points in the opposite direction. The working system is a catalog, not a monolith. Different block families use different kernel backends, and the backend choice affects not only raw speed but also memory materialization, autograd structure, optimizer assumptions, and the comparability of performance reports.
 
-That is why the design note on the MoEBlaze substrate matters so much. It states the target explicitly: not merely fewer saved tensors, but lower end-to-end runtime materialization and HBM traffic. That is the right lens for understanding kernel impact in a real training stack.
+That is why the public MoE substrate notes matter so much. They state the target explicitly: not merely fewer saved tensors, but lower end-to-end runtime materialization and HBM traffic. That is the right lens for understanding kernel impact in a real training stack.
 
 ## The catalog starts with model structure, not with CUDA code
 
 Before listing any backend, it helps to remember why a catalog exists at all. NAM56R is already a mixed architecture. In the recipe layer it is declared as `AEMEAEMEAEMR`, which means the runtime must support at least attention-style layers, expert layers, Mamba-family layers, and recurrent-style or selective layers. A single kernel family cannot carry all of that.
 
-The POC runtime reflects this directly.
+MegaCpp runtime reflects this directly.
 
 - the main model runtime module owns attention-side integration, precision plans, and block composition.
 - the main MoE runtime module and the MoE dispatch runtime module own router-adjacent, dispatch, and combine behavior.
@@ -48,7 +48,7 @@ It also pairs naturally with the MegaCpp block glossary. `ablock` questions usua
 
 The top-level model file makes this obvious. the main model runtime module imports the project’s flash-attention entry points and also references decode and cache-aware helpers. That means “attention kernel” already means more than one thing: training-time full attention, decode-time single-token paths, and backend-specific variants.
 
-The repo comments also reflect a practical split between what is patched in from outside and what is kept as the project’s own high-level contract. That separation matters because a training stack cannot tolerate every attention experiment rewriting the whole module surface.
+The public implementation also reflects a practical split between what is patched in from outside and what is kept as the project’s own high-level contract. That separation matters because a training stack cannot tolerate every attention experiment rewriting the whole module surface.
 
 The impact of a clean attention catalog is mostly defensive.
 
@@ -60,9 +60,9 @@ That same discipline shows up again in sparse MLA.
 
 ## Sparse MLA needed its own kernel family and layout contract
 
-The MegaCpp sparse MLA modules are unusually explicit. `sparse_mla.py` states that it wraps TileLang fused sparse MLA forward and backward kernels into a single interface. It also documents layout assumptions such as permuting query from `[sq, b, np, hn]` to `[b, sq, np, hn]`, narrowing KV for MLA, and reshaping the output back after the kernel call.
+The MegaCpp sparse MLA path is unusually explicit in public code. It wraps TileLang fused sparse MLA forward and backward kernels behind a single interface, and it makes the layout adaptation visible enough to reason about the integration cost.
 
-The FP8 variant goes further. `tilelang_sparse_mla_fwd_fp8.py` maintains an LRU-style kernel cache, builds a forward kernel keyed by launch parameters, and returns BF16 output even though the compute path is FP8. Those details are not trivia. They tell you exactly why sparse MLA belongs in its own catalog row.
+The FP8 variant goes further. Public MegaCpp code shows a cached kernel build keyed by launch parameters while still returning BF16 output from an FP8 compute path. Those details are not trivia. They tell you exactly why sparse MLA belongs in its own catalog row.
 
 It is not just a different implementation of dense attention. It has a different data contract, different scale metadata, and different caching behavior.
 
@@ -77,13 +77,13 @@ That schematic captures the key point: a sparse MLA kernel family imposes its ow
 
 ## The MoE catalog was about substrate, not just compute
 
-The design note `25-moeblaze-kernel-substrate-decision.md` is the clearest catalog document in the repo. It explicitly compares Triton, vLLM modular fused MoE, SGLang fused MoE Triton, Megatron-Core MoE, MegaBlocks, fusedswiglu, TensorRT-LLM, and CUTLASS or CuTe. More importantly, it labels each one by role: chosen first, donor, deferred donor, or deferred substrate.
+The public kernel-substrate decision record is the clearest catalog document in MegaCpp. It explicitly compares Triton, vLLM modular fused MoE, SGLang fused MoE Triton, Megatron-Core MoE, MegaBlocks, fusedswiglu, TensorRT-LLM, and CUTLASS or CuTe. More importantly, it labels each one by role: chosen first, donor, deferred donor, or deferred substrate.
 
 That is exactly what a kernel catalog should do. It should not only say what exists. It should say what each option is for.
 
 | Option | Role in the catalog | Reason |
 | --- | --- | --- |
-| Triton | Chosen first | Best fit with current repo and lowest integration cost |
+| Triton | Chosen first | Best fit with the current public stack and lowest integration cost |
 | vLLM modular fused MoE | Donor | Good decomposition for permute, unpermute, and weighted finalize |
 | SGLang fused MoE Triton | Donor | Useful Triton organization and top-k handling |
 | Megatron-Core MoE | Donor | Strong training-system boundaries for router, dispatch, experts, combine |
@@ -99,13 +99,13 @@ The donor labeling also prevented a lot of bad engineering behavior. Without it,
 
 ## Native Hopper-oriented kernels changed some ceilings
 
-The MegaCpp side also contains targeted Hopper-facing work outside the main MoE substrate conversation. `mtp_native_hopper_ce.py` exists specifically to route a multitoken prediction cross-entropy path through a native Hopper kernel so that logits do not need to be materialized in the usual way. The comments in that file are clear that masked positions are handled inside the kernel and that the path is meant to exploit a Hopper-native capability rather than a generic fallback.
+The MegaCpp side also contains targeted Hopper-facing work outside the main MoE substrate conversation. Public code exposes a multitoken prediction cross-entropy path that uses a native Hopper-oriented kernel so logits do not need to be materialized in the usual way. The public implementation also makes clear that masked positions are handled inside the kernel rather than in a generic fallback path.
 
 This is a good example of why a catalog can improve system design even before it improves every benchmark. Once a path is recognized as a separate kernel family with its own capability profile, the launcher and model stack can decide when to use it and when not to. Without that, a specialized kernel either gets overused or forgotten.
 
 The broader lesson is that some kernels are system-level enablers more than raw-throughput stars. Avoiding logits materialization can matter as much as a few percentage points of arithmetic speed, especially in large sequence or multitask training regimes.
 
-That same lesson appears in how the repo treats launch seams. Several modules are not “the kernel” in the narrow sense, but they matter just as much because they determine whether a good kernel is fed cleanly or surrounded by expensive copies, reshapes, and compatibility buffers. In practice, many performance wins come from moving a boundary so that a kernel family receives the layout it actually wants, rather than from rewriting the arithmetic body itself. A kernel catalog that ignores adapters and launch objects is incomplete.
+That same lesson appears in how MegaCpp treats launch seams. Several modules are not “the kernel” in the narrow sense, but they matter just as much because they determine whether a good kernel is fed cleanly or surrounded by expensive copies, reshapes, and compatibility buffers. In practice, many performance wins come from moving a boundary so that a kernel family receives the layout it actually wants, rather than from rewriting the arithmetic body itself. A kernel catalog that ignores adapters and launch objects is incomplete.
 
 ## Kernel impact was mostly about reducing ambiguity
 
@@ -127,11 +127,11 @@ The impact, in other words, was operational clarity.
 
 A project like this will keep gaining new kernels. Some will be direct implementations, some will remain donor references, and some will stay deferred because they require a new extension or ABI lane. The right response is not to hide that diversity. It is to keep the catalog explicit.
 
-The repo already shows what that looks like.
+MegaCpp already shows what that looks like.
 
 - Pattern notation identifies which model surfaces exist.
 - Runtime files keep family-specific adapters near their real call sites.
-- Design notes declare which backend is chosen, deferred, or donor-only.
+- Public notes declare which backend is chosen, deferred, or donor-only.
 - Specialized kernel modules document their layout and scale contracts.
 
 The next benefit is educational for maintainers. When someone says a benchmark moved after a kernel change, the catalog gives reviewers a checklist. Was it the dense attention family, the sparse MLA family, the MoE dispatch family, or a launch adapter around one of them? Did the change affect only an `ablock` region, or did it alter an `eblock` dispatch path that would never show up in a dense-only benchmark? Those questions sound simple, but they are exactly what keeps future optimization work grounded instead of turning every speedup into folklore.
@@ -142,11 +142,9 @@ For a mixed architecture like NAM56R, that is the only definition of a useful ke
 
 ## References
 
-- `25-moeblaze-kernel-substrate-decision.md`
-- the main model runtime module
-- the main MoE runtime module
-- the MoE dispatch runtime module
-- the public sparse MLA sample
-- the public TileLang FP8 sparse MLA sample
-- the public Hopper-native CE sample
-- the public NAM56R recipe sample
+- [Megatron-LM — NVIDIA, GitHub](https://github.com/NVIDIA/Megatron-LM)
+- [Triton language documentation](https://triton-lang.org/main/index.html)
+- [TileLang](https://github.com/tile-ai/tilelang)
+- [Hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md)
+- [Mamba trapezoid porting notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/mamba3-trapezoid-porting.md)
+- [Pallas kernel selection notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/pallas-kernel-selection.md)

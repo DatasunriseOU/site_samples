@@ -1,17 +1,17 @@
 ---
-title: "Geodesic loss design notes: span sampling, layer choices, and XLA-safe constraints"
-description: "How the STP geodesic auxiliary loss is implemented in the research stack, why it samples ordered triples instead of predicting future latents, and what the MegaCpp landing should preserve."
+title: "Trajectory-straightness loss: span sampling, layer choices, and XLA-safe constraints"
+description: "How the STP-style trajectory-straightness auxiliary loss is implemented in the public sample, why it samples ordered triples instead of predicting future latents, and what the runtime should preserve."
 date: "2026-04-18"
-tags: ["design", "stp", "geodesic", "xla", "representation-learning"]
+tags: ["design", "stp", "trajectory-straightness", "xla", "representation-learning"]
 ---
 
-The geodesic auxiliary objective in the research repo is small enough to be underestimated. It is not a big subsystem, not a new decoder head, and not a speculative latent-prediction tower. It is a narrow regularizer in the public STP loss sample that asks a more modest question: if hidden states form a trajectory through representation space, do short local segments stay roughly straight? That choice matters because it keeps the feature cheap, backend-friendly, and easy to gate from the training loop.
+The trajectory-straightness auxiliary objective in the public sample is small enough to be underestimated. It is not a big subsystem, not a new decoder head, and not a speculative latent-prediction tower. It is a narrow regularizer in the STP sample that asks a more modest question: if hidden states form a trajectory through representation space, do short local segments stay roughly straight? That choice matters because it keeps the feature cheap, backend-friendly, and easy to gate from the training loop.
 
-**TL;DR:** the implemented STP design samples ordered triples `(s, r, t)` from existing hidden states and penalizes curvature with `1 - cos(h[t] - h[r], h[r] - h[s])`. The design deliberately avoids predictor heads, data-dependent control flow, and shape polymorphism. The good part is that it stays easy to wire into the runtime contract already used by the prototype. The still-open part is policy: how many spans to sample, which layers to supervise, and when to turn the loss on during training.
+**Overview:** The implemented STP design samples ordered triples `(s, r, t)` from existing hidden states and penalizes curvature with `1 - cos(h[t] - h[r], h[r] - h[s])`. The design deliberately avoids predictor heads, data-dependent control flow, and shape polymorphism. The good part is that it stays easy to wire into the runtime contract already used by the public sample. The still-open part is policy: how many spans to sample, which layers to supervise, and when to turn the loss on during training.
 
 ## What the actual objective does
 
-the public STP loss sample in the research repo defines the geodesic loss directly. The module documentation describes the hypothesis in plain terms: hidden-state trajectories are assumed to be locally linear, so the loss should punish curvature rather than predict the next state explicitly. The implementation exposes one entry point, `compute_stp_loss`, which accepts either a single hidden-state tensor `(B, T, D)` or a list of such tensors for the multi-layer variant.
+The STP loss sample defines the trajectory-straightness loss directly. The module documentation describes the hypothesis in plain terms: hidden-state trajectories are assumed to be locally linear, so the loss should punish curvature rather than predict the next state explicitly. The implementation exposes one entry point, `compute_stp_loss`, which accepts either a single hidden-state tensor `(B, T, D)` or a list of such tensors for the multi-layer variant.
 
 The scalar objective is simple:
 
@@ -42,7 +42,7 @@ Second, it keeps the estimator local. The loss is not asking whether the first t
 
 Third, the cost scales with `n_spans`, not with vocabulary size, sequence-wide pairwise comparisons, or a separate prediction head. The docstring even calls the operation budget out as roughly three gathers, two subtractions, and one cosine per triple. The exact FLOP wording is informal, but the engineering intent is precise: this feature is supposed to be cheap enough to survive contact with real training.
 
-The tests in sanitized public test excerpts reinforce that design. They verify scalar output, the `[0, 2]` loss range implied by `1 - cos`, near-zero loss on a synthetic straight-line trajectory, positive loss on random trajectories, correct behavior for short sequences, and gradient flow. That is a solid unit-level contract for a regularizer. It means the code is not just mathematically plausible; its edge conditions are intentionally covered.
+The tests in the STP loss sample and its accompanying note reinforce that design. They verify scalar output, the `[0, 2]` loss range implied by `1 - cos`, near-zero loss on a synthetic straight-line trajectory, positive loss on random trajectories, correct behavior for short sequences, and gradient flow. That is a solid unit-level contract for a regularizer. It means the code is not just mathematically plausible; its edge conditions are intentionally covered.
 
 ## Layer selection is the real policy surface
 
@@ -50,20 +50,20 @@ The math kernel is simple. The real design question is where and when to apply i
 
 The STP implementation itself supports either a single hidden-state tensor or a list of tensors. In the multi-layer case, `compute_stp_loss` computes one scalar per layer, stacks them, sums them, and divides by the number of layers. That averaging rule matters because it rejects an implicit “all layers by default” story. The feature expects explicit layer selection.
 
-That aligns with the broader training contract in the prototype. Public training runtime notes show that the STP coefficient is logged explicitly, warn that pipeline-parallel training drops auxiliary losses including STP, and gate activation with a delayed start policy. So the system is already split into two pieces:
+That aligns with the broader training contract shown in the public sample. The TPU bringup note shows that the STP coefficient is logged explicitly, warns that pipeline-parallel training drops auxiliary losses including STP, and gates activation with a delayed start policy. So the system is already split into two pieces:
 
-1. the public STP loss sample answers how geodesic curvature is measured.
+1. the STP loss sample answers how trajectory-straightness curvature is measured.
 2. the training runtime answers when STP participates and how strongly it is weighted.
 
-That separation is the right one to preserve in MegaCpp. Auxiliary objectives become hard to maintain when training policy leaks into the math kernel. Here the current arrangement is healthier: `compute_stp_loss` stays reusable, while step gating and feature enablement remain runtime concerns.
+That separation is the right one to preserve. Auxiliary objectives become hard to maintain when training policy leaks into the math kernel. Here the current arrangement is healthier: `compute_stp_loss` stays reusable, while step gating and feature enablement remain runtime concerns.
 
-One practical implication is that any future default should stay explicit. If MegaCpp promotes this feature, a preset should state whether STP is applied to the last layer only, to a curated list of intermediate layers, or to some architecture-specific slice. It should not silently guess.
+One practical implication is that any future default should stay explicit. If this feature gets promoted into a broader preset, that preset should state whether STP is applied to the last layer only, to a curated list of intermediate layers, or to some architecture-specific slice. It should not silently guess.
 
 ## Why the XLA-safe claim is not just marketing
 
 The module documentation says “All operations are XLA-safe: static shapes, no data-dependent branching.” That line is easy to wave away unless you read it next to the TPU docs and the wider runtime code.
 
-the public TPU setup note is very explicit that the TPU lane values static compiled graphs, per-micro-step compilation boundaries, and predictable shape behavior. The current TPU contract is narrower than a generic “just use torch on TPU” story. The runtime disables model `torch.compile(...)` on TPU, uses `torch_xla.compile()` around forward and backward by micro-step, and treats changing shapes or host-driven scalar behavior as regressions. In that environment, a regularizer that introduces dynamic control flow or variable output structure would be expensive even if its math looked elegant.
+The TPU bringup note is very explicit that the TPU lane values static compiled graphs, per-micro-step compilation boundaries, and predictable shape behavior. The current TPU contract is narrower than a generic "just use torch on TPU" story. The runtime disables model `torch.compile(...)` on TPU, uses `torch_xla.compile()` around forward and backward by micro-step, and treats changing shapes or host-driven scalar behavior as regressions. In that environment, a regularizer that introduces dynamic control flow or variable output structure would be expensive even if its math looked elegant.
 
 STP avoids that trap.
 
@@ -74,13 +74,13 @@ STP avoids that trap.
 | host-driven conditionals in the kernel | none |
 | auxiliary outputs with irregular structure | none |
 
-That is the part worth carrying forward. A geodesic objective is only operationally useful if it respects the same graph-stability rules as the rest of the training stack. The current implementation does.
+That is the part worth carrying forward. A trajectory-straightness objective is only operationally useful if it respects the same graph-stability rules as the rest of the training stack. The current implementation does.
 
 There is one caveat: “XLA-safe” does not mean “free.” If the training loop has to collect multiple layer activations solely for STP, that collection cost is real. But that cost is visible and policy-controlled. It is not hidden inside a second prediction tower or a backend-hostile control path.
 
-## How this maps into MegaCpp
+## How this maps into the public sample
 
-MegaCpp already has the right habits for introducing narrowly scoped runtime features. You can see that style in multiple places: public Mamba spec samples make layer-stack composition explicit, and public run-detail surfaces expose auxiliary-loss weights such as the STP coefficient rather than hiding them in opaque presets. STP should land the same way.
+The current sample already has the right habits for introducing narrowly scoped runtime features. You can see that style in multiple places: the hybrid pattern sample makes layer-stack composition explicit, and the runtime surfaces in this article set expose auxiliary-loss weights such as the STP coefficient rather than hiding them in opaque presets. STP should land the same way.
 
 The likely stable shape is:
 
@@ -113,9 +113,9 @@ The current code is ready for disciplined ablations because the knobs are alread
 
 | Ablation | Files that support it | What it answers |
 | --- | --- | --- |
-| `n_spans=1` vs `n_spans>1` | public STP loss sample, sanitized public test excerpts | how noisy the estimator is at fixed layer choice |
-| final layer vs explicit list | public STP loss sample, runtime config surfaces | whether late semantic states or intermediate states benefit more |
-| early start vs delayed start | public training runtime gating | whether STP helps only after a base representation stabilizes |
+| `n_spans=1` vs `n_spans>1` | STP loss sample and its accompanying note | how noisy the estimator is at fixed layer choice |
+| final layer vs explicit list | STP loss sample, runtime config surfaces | whether late semantic states or intermediate states benefit more |
+| early start vs delayed start | the delayed-start runtime notes in this article set | whether STP helps only after a base representation stabilizes |
 | dense-only vs hybrid patterns | runtime presets and model pattern naming | whether the objective behaves differently across `A/M/E/R` mixtures |
 
 Two engineering facts should guide those ablations.
@@ -126,14 +126,15 @@ Second, the current tests are unit tests, not training-value proofs. They show t
 
 ## The right conclusion
 
-The strongest thing about the current geodesic-loss design is not novelty. It is restraint. The prototype did not try to solve trajectory learning with a large auxiliary subsystem. It chose a local curvature penalty that is mathematically legible, cheap to compute, and compatible with the backend constraints already enforced elsewhere in the stack.
+The strongest thing about the current trajectory-straightness-loss design is not novelty. It is restraint. The sample does not try to solve trajectory learning with a large auxiliary subsystem. It chooses a local curvature penalty that is mathematically legible, cheap to compute, and compatible with the backend constraints already enforced elsewhere in the stack.
 
-That is exactly why it is a plausible feature for MegaCpp. The landing should keep the kernel narrow, keep the layer list explicit, keep start-step policy in the runtime, and evaluate the feature as a configurable regularizer rather than a grand theory of representation geometry. If a future preset promotes it, the case should be made with architecture-specific receipts, not with generic claims.
+That is exactly why it is a plausible feature for a production training stack. The landing should keep the kernel narrow, keep the layer list explicit, keep start-step policy in the runtime, and evaluate the feature as a configurable regularizer rather than a grand theory of representation geometry. If a future preset promotes it, the case should be made with architecture-specific receipts, not with generic claims.
 
 ## References
 
-- sanitized public STP loss sample
-- sanitized public test excerpts
-- public runtime integration notes
-- public TPU bringup notes
-- sanitized public receipt excerpt
+- [STP loss sample](../excerpts/code/research/stp/stp-geodesic-regularizer__stp_loss_surface__v1.py)
+- [STP activation note](../excerpts/docs/research/stp/stp-after-ten-thousand-steps__activation_gate_note__v1.md)
+- [Semantic Tube Prediction paper](https://arxiv.org/abs/2602.22617)
+- [STP notes](../docs/stp-notes.md)
+- [TPU backend ownership note](../docs/tpu-backend-ownership.md)
+- [TPU bringup notes](../docs/tpu-bringup-notes.md)

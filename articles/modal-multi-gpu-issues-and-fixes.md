@@ -11,7 +11,7 @@ Single-GPU Modal is boring: pick an H100, H200, or B200, warm the inductor cache
 
 Modal is where we do ad-hoc benchmarking and multi-GPU smokes between long production runs on reserved H200 systems and TPU slices. "Does this new block compile cleanly under FSDP2 on 8 H200s" and "does this kernel change actually scale past 2 GPUs" are the questions we want Modal to answer quickly. A multi-GPU training surface that hangs on the first forward pass 30% of the time is not useful for that; it is actively misleading, because a hung job burns the same per-GPU-hour budget as a successful one. At roughly $36/hour for 8x H200 and $50/hour for 8x B200, a single wasted 2-hour hang costs real money, and two in a row turns the tool into a trust problem.
 
-## What we built in the POC
+## What MegaCpp uses today
 
 The multi-GPU surface is the same training function as the single-GPU one. GPU count is part of the Modal GPU spec (`H200:8`, `H100:4`, `B200:8`); the function body branches on `torch.cuda.device_count()` to set distributed-mode environment variables before importing torch. The distributed mode is computed from GPU count and parallelism settings and returns one of `single`, `ddp`, `tensor_parallel`, `ddp+tensor_parallel`, or `fsdp2`, and the choice is recorded in the benchmark record so we can later correlate failures by mode.
 
@@ -32,7 +32,7 @@ The sparse-attention and FA4-adjacent multi-GPU lanes are separate. There is a d
 
 The production version keeps the environment hardening as-is, but lifts it out of the training prologue into a small shared module so the nightly runner, the FA4 validation lane, and the sparse-validation lane get the same settings without copy-paste drift.
 
-The FSDP2 plus regional-compile hang on 8x H200 is the single blocker that is not fixed from userspace. The documented root cause in the multi-GPU status notes is cold-inductor-cache divergence: Triton JIT compilation takes different wall times on different ranks, one or more ranks enters a NCCL collective before the laggards, and the collective deadlocks. The same code works on reserved H200 systems because the inductor cache is already warm from previous runs. The production fix has three layers, only the first of which is userspace:
+The FSDP2 plus regional-compile hang on 8x H200 is the single blocker that is not fixed from userspace. The documented root cause is cold-inductor-cache divergence: Triton JIT compilation takes different wall times on different ranks, one or more ranks enters a NCCL collective before the laggards, and the collective deadlocks. The same code works on reserved H200 systems because the inductor cache is already warm from previous runs. The long-term fix has three layers, only the first of which is userspace:
 
 1. Force a warm inductor cache on the Modal volume before any 8-GPU launch. `_seed_inductor_cache` is already layered (checkpoint-volume tarball, cloud-bucket tarball, Docker-baked seed, per-blob API download). Production adds a gate: multi-GPU launches refuse to start if the cache is under a size threshold, and pre-seed automatically from a tarball captured on a successful 8-GPU run.
 2. Bake the last-known-good inductor cache into the Docker image itself (`/opt/inductor_cache_seed`). This turns "cold volume on a fresh deployment" from a guaranteed hang into a slow-but-successful first launch, and the volume gets populated from there.
@@ -124,7 +124,7 @@ def harden_multi_gpu_env(n_gpus: int) -> None:
 - FA4 scaling and parity helpers
 - detached benchmark and sparse-validation launchers
 - watchdog and benchmark-record reader utilities
-- multi-GPU status and benchmark planning notes
+- MegaCpp benchmark planning and multi-GPU status notes
 - [NCCL documentation — docs.nvidia.com/deeplearning/nccl]
-- [PyTorch FSDP2 design notes — pytorch.org/docs]
+- [PyTorch FSDP2 documentation — pytorch.org/docs]
 - [Modal Labs documentation — modal.com/docs]

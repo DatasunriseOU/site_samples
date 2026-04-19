@@ -1,25 +1,25 @@
 ---
 title: "The C/C++ Data Preparation Pipeline, End to End"
-description: "Every stage of the MegaCpp data prep pipeline as it actually runs: ingest, dedup, license filter, doc-mask, tokenize, packed-row shard. The bugs we hit, the perf numbers we have, the gates that catch us when we are wrong."
+description: "Every stage of the MegaCpp data preparation pipeline: ingest, dedup, license filtering, document masking, tokenization, packed rows, and the checks that keep dataset snapshots trustworthy."
 date: "2026-04-18"
 tags: ["data", "pipeline", "c++", "operations", "tokenizer"]
 ---
 
-This is the operations view of how raw C/C++ source becomes packed training rows for MegaCpp. It is the sibling post to the architecture-flavored data-pipeline-story; that one frames the design decisions, this one walks the stages a junior engineer would have to debug at an incident review. Same pipeline, different altitude. The headline: it is five stages on the user-facing surface, several coexisting producer paths underneath, and a stack of quality gates that exist because each one caught a real outage.
+This is the implementation-focused view of how raw C/C++ source becomes packed training rows for MegaCpp. It is the sibling post to [Building the C++ Training Data Pipeline: What Worked, What Broke](https://github.com/DatasunriseOU/site_samples/blob/main/articles/data-pipeline-story.md): that one frames the design decisions, this one walks through the stages and the checks that keep them stable.
 
 ## Why MegaCpp cares about this
 
 The model only ever sees what the pipeline emits. A duplicated repo doubles the training weight of someone's preferred coding style. A missed license header bakes copyleft into the weights. A broken document mask lets one file leak attention into the next, and at 64K context that is the difference between repository reasoning and confabulation. The pipeline is the gatekeeper, and its quality gates are the only thing standing between a clean training run and a model that has memorized a well-known systems library surface instead of learning to write it.
 
-Two operational facts shape every decision below. First, our hybrid C++ tokenizer is 131,072 entries, which means token IDs no longer fit in `uint16` and the on-disk format had to switch to `uint32`. Second, the consumer-side parquet contract is canonical; the producer story is still transitional in places. We design loaders to be tolerant and producers to be replaceable.
+Two engineering facts shape every decision below. First, MegaCpp's hybrid C++ tokenizer is 131,072 entries, which means token IDs no longer fit in `uint16` and the on-disk format must use `uint32`. Second, the columnar dataset contract is the stable interface, while producer implementations may evolve. Loaders should be tolerant and producers should be replaceable.
 
-## What we built in the POC
+## Public pipeline contract
 
-The user-facing entry point in production is the public data-preparation pipeline, with five numbered stages: download, tokenize, format, cache, verify. Underneath, the actual work spans a semantic chunker, dedup passes, enrichment jobs, and packing stages. Walked stage by stage:
+The public-facing data-preparation pipeline has five numbered stages: download, tokenize, format, cache, verify. Underneath, the actual work spans a semantic chunker, dedup passes, enrichment jobs, and packing stages. Stage by stage:
 
-**Stage 0 - acquisition.** Eight pinned C/C++ repositories cloned shallow at explicit refs (LLVM `llvmorg-19.1.0`, Boost `boost-1.86.0` with submodules, Linux `v6.10`, fmt `11.0.0`, googletest `v1.15.0`, abseil-cpp at tip, folly at tip, grpc `v1.67.0`). Roughly 15 GB on disk after shallow clone. A separate 142-repo catalog in 16 categories is tracked as metadata for future ingestion - the public corpus catalog notes carries the URLs, size buckets, and the awkward-source notes (SQLite on Fossil, Chromium on googlesource, Unreal needing an Epic-linked GitHub account). The split between working set and catalog is deliberate: trying to ingest 142 repos on day one means fighting infrastructure, not debugging the pipeline.
+**Stage 0 - acquisition.** Start from a pinned set of public C and C++ repositories at explicit revisions. A broader public source list can be tracked separately for future evaluation, but keeping the working set small makes it easier to debug data quality instead of spending early effort on ingestion overhead.
 
-**Stage 1 - ingest and chunking.** Two coexisting producers. The current mainline is a semantic chunker that walks files and splits at function boundaries with an AST-aware budget. The legacy path is an older chunking stage that still runs on some research lanes; it splits at top-level brace boundaries and budgets by approximate token count. Both write normalized text records. Performance reference points from benchmark logs: roughly 1000 files/sec on a single machine, 4.5M input files producing about 7M output documents at the 16K target bucket, total wall time around 75 minutes on a workstation-class machine. The number to internalize is the ratio: each input file becomes 1.5 documents on average.
+**Stage 1 - ingest and chunking.** Two coexisting producers are common during transitions. The mainline chunker can split at function boundaries with an AST-aware budget, while an older path may split at top-level brace boundaries and budget by approximate token count. Both write normalized text records. Bucket labels such as `4k`, `8k`, and `16k` should be treated as planning labels unless the producer enforces exact token budgets.
 
 There is one trap in this stage that will bite anyone who skips the docs. Bucket names like `4k`, `8k`, `16k`, `64k`, `128k` are *target* buckets, not exact-token guarantees. The legacy chunker budgets by a chars-per-token heuristic, which is wrong by 5-15% under our current tokenizer. A `4k_v7` shard often contains documents that tokenize to 4400-4800 tokens. The strict producer lanes are exact-token-budgeted; the older ones are not. The loader will silently crop if you trust the bucket name as a contract.
 
@@ -29,7 +29,7 @@ Operational gotcha: the MinHash-LSH index is single-process and memory-bound. On
 
 **Stage 3 - license and quality filter.** ScanCode-style license scan per file, accepting the permissive set plus weak copyleft, with Linux GPL-2.0 tagged so downstream mixes can opt in or out. Heuristic quality filters: max 1 MB per file, max line length 1000, min size 100 B, unique-lines ratio > 30%, comment-to-code ratio < 80%, strict extension whitelist. Auto-generated markers (`// Generated by`, `DO NOT EDIT`) are cheap regex wins. An entropy check above 4.5 bits/byte catches binary-in-ASCII dumps.
 
-PII and secret scrubbing run *before* tokenization, not after. Email addresses become the synthetic placeholder `<redacted-email>`, network addresses become `<redacted-network-address>`, high-entropy strings get replaced with `API_KEY_REDACTED`, and any user paths that survived in source comments are normalized to `<redacted-path>/`. The order matters: scrubbing after tokenization means you have to round-trip through detokenize, which is fragile, and you lose the ability to fail closed on an unredacted token leak.
+PII and secret scrubbing run *before* tokenization, not after. Email addresses become the synthetic marker `<redacted-email>`, network addresses become `<redacted-network-address>`, high-entropy strings get replaced with `API_KEY_REDACTED`, and any user paths that survived in source comments are normalized to `<redacted-path>/`. The order matters: scrubbing after tokenization means you have to round-trip through detokenize, which is fragile, and you lose the ability to fail closed on an unredacted token leak.
 
 **Stage 4 - doc-mask preparation.** Document masking is not a separate file format in our pipeline; it is an invariant the producer respects so the consumer can recover boundaries cheaply. Every document gets a leading BOS token. That is the contract. The training loader infers `doc_ids` at runtime via a cumulative sum over BOS positions, which is O(T) per batch and requires zero storage-format change. The reason this is a stage at all: producers that pre-pack documents into rows must guarantee that BOS-aligned best-fit packing never inserts a document without a BOS, or the inferred `doc_ids` will silently merge two documents into one. We have hit this. Fix: a producer-side assert that every packed row's BOS positions equal its `num_docs` value.
 
@@ -43,7 +43,7 @@ PII and secret scrubbing run *before* tokenization, not after. Email addresses b
 
 The lift is small because the contract is small. MegaCpp owns the public data-preparation pipeline plus the five numbered stage scripts plus the Megatron `.bin`/`.idx` writer. Everything below stage 2 - the semantic indexer, the tokenizer, the enrichment materializer - is dispatched into an upstream build at a pinned revision. Vendoring those pieces into MegaCpp would duplicate several thousand lines of actively maintained tokenizer and indexer code; the dependency is the smaller cost.
 
-What is being lifted as-is: the parquet schema, the tolerant loader contract, the BOS-based doc-mask inference, the offline packer, the verify gate. What is being rewritten: the legacy flat-text producer is sunset in MegaCpp; only the strict producer with exact-token budgeting and pretokenized columns ships. What is being dropped: the `uint16` binary dataset path. What is moving to a kernel path: nothing in data prep is on the kernel critical path; the structure-aware consumer side is the place where accelerator-friendly kernels matter. What becomes a feature flag: the chunk-level dedup whitelist, because some research lanes want it off to preserve more raw context.
+What is being lifted as-is: the parquet schema, the tolerant loader contract, the BOS-based doc-mask inference, the offline packer, and the verify gate. What is being rewritten: the legacy flat-text producer is sunset in MegaCpp; only the strict producer with exact-token budgeting and pretokenized columns ships. What is being dropped: the `uint16` binary dataset path. What is moving to a kernel path: nothing in data prep is on the kernel critical path; the structure-aware consumer side is where accelerator-friendly kernels matter. What remains a feature flag: the chunk-level dedup whitelist, because some public corpora benefit from preserving more raw context.
 
 The old multi-environment split that historically lived in separate launch paths is collapsed in MegaCpp to a single configurable data root. As long as the public data-preparation pipeline and the launcher agree on that root, no script edits are required to move data between environments.
 
@@ -51,13 +51,13 @@ The old multi-environment split that historically lived in separate launch paths
 
 The ablations that survived contact with real GPUs are not the headline ones. They are the boring ones.
 
-The pretokenized-vs-char-level choice. A March 2026 loader benchmarkmark with a char-level enriched lane measured 4,172 tok/sec; switching to a pretokenized semantic lane measured 17,297 tok/sec. The 4.1x came entirely from removing the per-batch char-to-token conversion in the hot loop. We kept the pretokenized path; the char-level path lives only as the offline materialization input.
+The pretokenized-vs-char-level choice. We keep the pretokenized path because moving char-to-token alignment out of the hot loop and into offline materialization scales more cleanly to long-context loaders. The char-level path remains useful as an offline materialization input, not as the runtime contract.
 
-The lazy-vs-eager segment materialization choice. A regression bisect found that lazy segment materialization inside the row-pack hot loop was 2.4x slower than eager precompute-once-per-doc. The fix was a one-line gate: disable lazy materialization when both TreeFFN and relation-bias style features are enabled. Steady-state throughput recovered from 562 tok/sec back to 1,324 tok/sec, matching the reference. Partial-enriched configs still use the lazy path because for them the eager precompute is wasted work.
+The lazy-vs-eager segment materialization choice. We kept eager precomputation for the fully enriched path because relation metadata is cheaper to validate once per document than to rebuild repeatedly inside the row-pack hot loop. Partial-enriched configurations can still justify lazier materialization when the extra metadata is absent.
 
-The conv1d-vs-Python-loop choice for Mamba document masking. A doc-mask compatibility branch was forcing CUDA into a 4-iteration Python loop for the depthwise causal conv whenever `doc_ids` was non-None - which is always, with enriched data. We measured the cross-document leakage at kernel size 4 (≤3 tokens at the boundary) and decided it was negligible compared to the cost. Reverting to plain `F.conv1d(pad(ct))` recovered roughly 22% throughput, 12,069 → 14,712 tok/sec.
+The document-mask implementation choice. We keep the vectorized masking path and avoid Python-loop handling in the hot path. The lesson is simple: document-boundary logic belongs in fixed-shape tensor operations, not in per-batch Python control flow.
 
-The bottleneck dimension on the structure embedding path. Adding `--structure_bottleneck_dim=64` recovered another ~23% on the structure-emb-enabled runs. Kept.
+The bottleneck dimension on the structure embedding path. The public contract keeps a narrow bottleneck because structure features must stay cheap enough to justify carrying them through the loader boundary.
 
 The shape of MinHash-LSH itself we did not ablate; we adopted the bigcode parameterization (`numPerm=128`, `threshold=0.7`, `shingleK=5`) for within-corpus and the MixMinMatch parameterization for cross-source. Both have published evidence behind them and our role here is data engineering, not novel similarity research.
 
@@ -98,8 +98,14 @@ Single-stage rerun example:
 
 ## References
 
-- the public curriculum-mapping notes
-- the public corpus catalog notes
-- the public data-preparation pipeline
-- [MixMinMatch - arXiv:2512.18834]
-- [The Stack: 3 TB of permissively licensed source code - BigCode]
+- [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega/tree/main)
+- [MegaCpp article samples](https://github.com/DatasunriseOU/site_samples/tree/main/articles)
+
+- [Data pipeline story](https://github.com/DatasunriseOU/site_samples/blob/main/articles/data-pipeline-story.md)
+- [The Stack v2 dataset](https://huggingface.co/datasets/bigcode/the-stack-v2)
+- [The Stack documentation](https://www.bigcode-project.org/docs/about/the-stack/)
+- [The Stack v2 paper](https://arxiv.org/abs/2402.19173)
+- [ScanCode Toolkit documentation](https://scancode-toolkit.readthedocs.io/)
+- [Software Heritage persistent identifiers](https://docs.softwareheritage.org/devel/swh-model/persistent-identifiers.html)
+- [MixMinMatch: Cross-Source Deduplication for Text Datasets](https://arxiv.org/abs/2505.09340)
+- [Sequence Packing for Transformer Pre-training](https://arxiv.org/abs/2107.02027)

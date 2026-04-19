@@ -1,11 +1,11 @@
 ---
 title: "NCCL and collective hangs: the H200 multi-host timeout playbook"
-description: "Allreduce stragglers, NCCL deadlocks, P2P env vars, ibverbs quirks, and the liveness/timeout playbook we run on the POC's H200 multi-host CUDA lanes."
+description: "Allreduce stragglers, NCCL deadlocks, P2P env vars, ibverbs quirks, and the liveness/timeout playbook we run on MegaCpp's H200 multi-host CUDA lanes."
 date: "2026-04-18"
-tags: ["nccl", "h200", "distributed", "the POC"]
+tags: ["nccl", "h200", "distributed", "megacpp"]
 ---
 
-Most of the genuinely expensive debugging on our POC H200 fleet was not about the model. It was about NCCL: allreduce stragglers, bootstrap failures, plugin regressions, watchdog timeouts firing in the wrong place, and recovery paths that replaced one failure mode with another. This post is the playbook we landed on: the env vars we set, the ones we unset, the retry logic in the main training entrypoint and `the POC/common.py`, and the liveness rules we enforce before declaring a run healthy.
+Most of the genuinely expensive debugging on our H200 fleet was not about the model. It was about NCCL: allreduce stragglers, bootstrap failures, plugin regressions, watchdog timeouts firing in the wrong place, and recovery paths that replaced one failure mode with another. This post is the playbook we landed on: the env vars we set, the ones we unset, the retry logic in the training entrypoint, and the liveness rules we enforce before declaring a run healthy.
 
 ## Why this matters
 
@@ -15,7 +15,7 @@ Compile warmup on our dense+MoE preset takes long enough that NCCL defaults assu
 
 ## 1. The operating environment
 
-The CUDA side of our POC runs on H200 hosts with 8 GPUs each. Training ranges from single-host `H200:8` (our most common configuration) to multi-host jobs of up to 4x`H200:8`. The fabric differs by bench host: some sit on plain IP with NCCL's default socket path; others have a vendor multi-node plugin present in `LD_LIBRARY_PATH`. Both had to work, and both had to fail gracefully when the plugin environment leaked into a single-host run.
+The CUDA side runs on H200 hosts with 8 GPUs each. Training ranges from single-host `H200:8` to multi-host jobs of up to 4x`H200:8`. The fabric differs by host: some sit on plain IP with NCCL's default socket path; others have a vendor multi-node plugin present in `LD_LIBRARY_PATH`. Both had to work, and both had to fail gracefully when the plugin environment leaked into a single-host run.
 
 PyTorch is 2.12 nightly (`2.12.0.dev20260304+cu130`), NCCL is whatever ships with that wheel, Triton 3.6, Python 3.13. DDP is the production path for most rungs; FSDP2 lanes and expert-parallel MoE lanes add their own collective patterns on top.
 
@@ -31,7 +31,7 @@ Everything we dealt with falls into one of these buckets:
 
 ## 3. Env vars: what we set, and why
 
-our POC defaults live in the main training entrypoint (`_apply_nemotron_env_defaults`) and apply to every CUDA rank unless the operator has set the variable by hand. The defaults are:
+The default environment policy lives in the main training entrypoint and applies to every CUDA rank unless the operator has set the variable by hand. The defaults are:
 
 ```bash
 CUDA_DEVICE_MAX_CONNECTIONS=1
@@ -101,7 +101,7 @@ Second mistake: applying these vars uniformly to retry re-execs. Plain DDP lanes
 | Expert-parallel retry child | Lazy | Skipped | Standard |
 | Known retry-eligible startup error | Lazy | Skipped | Standard, retry once |
 
-The narrow eager-NCCL retry matcher in `the POC/common.py` now treats `ncclRemoteError`, `remote process exited`, `socketPollConnect`, and `Connection refused` as lazy-retry-eligible bootstrap failures. That list was built entirely from reproducible bootstrap receipts on H200 bench hosts.
+The narrow eager-NCCL retry matcher now treats `ncclRemoteError`, `remote process exited`, `socketPollConnect`, and `Connection refused` as lazy-retry-eligible bootstrap failures. That list was built from reproducible bootstrap receipts on H200 hosts.
 
 ## 6. Liveness checks we actually run
 
@@ -129,24 +129,18 @@ Multi-host lanes add the trouble you would expect: bootstrap takes longer (NVLS 
 2. Never kill a run while a collective is outstanding. Ranks left mid-collective take the NCCL communicator with them and the next attempt fails bootstrap. Always prefer the control-plane stop (the `/control` API) over `kill -9`.
 3. Never trust a single-step receipt. Step 0 is compile-contaminated, step 1 is the first real number, three steps is the minimum.
 4. Always print the stack line at start: `torch.__version__`, `flash_attn.__version__`, `triton.__version__`, and the NCCL major version from `torch.cuda.nccl.version()`. Without it, post-mortem is guesswork.
-5. Retry on known bootstrap errors only. The eager-NCCL retry matcher in `the POC/common.py` is the source of truth. New failure classes get a regression test before they get added.
+5. Retry on known bootstrap errors only. The eager-NCCL retry matcher is the source of truth. New failure classes get a regression test before they get added.
 6. Keep the watchdog window greater than compile warmup. 7200 s is overkill for most runs and the right number when warmup is variable and the cost of being wrong is a full restart.
 
 ## What we kept and what we threw away
 
-We kept our POC env defaults, the regional-compile timeout overlay, the `new_group` monkey-patch that propagates the long timeout to internally-created groups, the single-node sanitiser and its multi-host counterpart, the narrow eager-NCCL retry matcher, the lazy-init retry path for expert-parallel children, the long heartbeat window for the whole run, and the five-rule liveness contract. We never `kill -9` a rank mid-collective.
+We kept the env defaults, the regional-compile timeout overlay, the `new_group` monkey-patch that propagates the long timeout to internally-created groups, the single-node sanitiser and its multi-host counterpart, the narrow eager-NCCL retry matcher, the lazy-init retry path for expert-parallel children, the long heartbeat window for the whole run, and the five-rule liveness contract. We never `kill -9` a rank mid-collective.
 
 We threw away disabling monitoring globally (now back on after warmup), uniform retry policy across lane types, blanket `NCCL_DEBUG=INFO`, and chasing stragglers in software when the real fix is a GPU swap. We do not currently run PyTorch's NCCL flight recorder (`TORCH_NCCL_TRACE_BUFFER_SIZE`); it would have shortened several "which rank hung first" investigations and we should wire it in. A small per-rank step-time watchdog emitting a structured event on deviation is the other obvious next step. The rest of the playbook stays.
 
 ## References
 
-- CHANGELOG.md
-- base_train.py
-- gce_h200_perf_feature_quartet.sh
-- gce_h200_exact_modal_matrix.sh
-- distributed_optimizer_stress.py
-- common.py
-- megatron_optimizer.py
-- fsdp_cuda.py
-- test_common_tpu.py
-- test_refactored_base_train.py
+- https://docs.pytorch.org/docs/stable/distributed.html
+- https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/
+- https://docs.pytorch.org/docs/stable/torch_nccl_environment_variables.html
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html

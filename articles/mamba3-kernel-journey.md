@@ -1,6 +1,6 @@
 ---
 title: "The Mamba 3 Kernel Journey: CUDA, Pallas, TileLang, and an Honest Look at CuTe DSL"
-description: "How the Mamba 3 kernel stack actually shipped in our POC: TileLang on H200, Pallas on TPU v6e, a CuTe DSL port that never made it, and the verdicts that came out of each attempt."
+description: "How the Mamba 3 kernel stack shipped in MegaCpp: TileLang on H200, Pallas on TPU v6e, a CuTe DSL port that never made it, and the verdicts that came out of each attempt."
 date: "2026-04-18"
 tags: ["mamba3", "cuda", "tilelang", "pallas", "cute-dsl", "kernels", "h200", "tpu"]
 ---
@@ -67,11 +67,11 @@ The TPU side of the same stack runs under XLA, on v6e-4 for 4K-context rapid abl
 
 The chunked reference is where we caught most of our correctness bugs before the CUDA kernel did. The SSD dual decomposition must include both components: cross-chunk state accumulation (sequential over `nchunks = seq / chunk_size`) and within-chunk attention-like mixing. Drop the within-chunk term and tokens can only see information compressed into a chunk-boundary state; local context mixing is gone. Every reviewer proposed dropping it at some point, and the chunked reference test caught each attempt.
 
-We use `F.rms_norm` (parameterless) for B/C QK-norm to match the POC's attention QK-norm rather than `nn.RMSNorm`. Mixing the two produces orphan parameters that silently stop training. Complex RoPE uses per-dimension frequencies, not a single scalar angle per position, because single-frequency collapses the rotation to one dimension.
+We use `F.rms_norm` (parameterless) for B/C QK-norm to match MegaCpp's attention QK-norm rather than `nn.RMSNorm`. Mixing the two produces orphan parameters that silently stop training. Complex RoPE uses per-dimension frequencies, not a single scalar angle per position, because single-frequency collapses the rotation to one dimension.
 
 ### 4.1 The sparse-attention Pallas kernel
 
-A Pallas kernel does live in the TPU tree, but for a different purpose. We maintain a content-dependent sparse attention prototype: importance scoring, query-tile union selection, and a Pallas sparse attention kernel with online softmax, parameters aligned to the v6e MXU (`Bq=256`, `l'=256`, `H=128`, `Bk=1024`). It is for the attention minority of the hybrid, not the SSM majority. Supports up to 128k sequence length with a top-`n=8` selection. Prototype committed; hardware validation receipt still open.
+A Pallas kernel does live in the TPU tree, but for a different purpose. We maintain a content-dependent sparse attention research-stack: importance scoring, query-tile union selection, and a Pallas sparse attention kernel with online softmax, parameters aligned to the v6e MXU (`Bq=256`, `l'=256`, `H=128`, `Bk=1024`). It is for the attention minority of the hybrid, not the SSM majority. Supports up to 128k sequence length with a top-`n=8` selection. Prototype committed; hardware validation receipt still open.
 
 Main Pallas trade-off: compile time. `torch_xla.experimental.scan` rewrites the SSM loop to avoid `@while_loop` overhead. The fused HLO is cheaper per step but much more expensive to compile the first time. We eat one long compile on rank-0 at process start; without it, the Python-level loop over chunks dominates at 4K context on v6e-8.
 
@@ -101,11 +101,11 @@ DSL choice is an operational cost, not a performance cost. Both TileLang and CuT
 
 Kernel perf work is measurement-bound, not design-bound. P1 selective-forward was a wash (-0.006 percent) because forward is a small fraction of the iteration. P3 looked like 30 to 50 percent on paper; a line-by-line read collapsed that estimate to 1 to 2 percent. Real kernel wins come from an nsys capture that names the actual bottleneck, not a design that names a plausible one.
 
-Current state on H200: upstream TileLang MIMO kernels, three working-tree patches, env-gated P1 pipeline, P2 PsiV cache scaffolded and waiting for a Phase A nsys number, P3 rejected. On TPU v6e: `torch_xla.experimental.scan` for the SSM, Pallas sparse attention prototype for the attention minority, chunked matmul reference as the correctness ground truth. Nothing glamorous, which is exactly the sign the kernel stack is converging.
+Current state on H200: upstream TileLang MIMO kernels, three working-tree patches, env-gated P1 pipeline, P2 PsiV cache scaffolded and waiting for a Phase A nsys number, P3 rejected. On TPU v6e: `torch_xla.experimental.scan` for the SSM, Pallas sparse attention path for the attention minority, chunked matmul reference as the correctness ground truth. Nothing glamorous, which is exactly the sign the kernel stack is converging.
 
 ## What we kept and what we threw away
 
-Kept: TileLang on H200 with three upstream patches, the TMA 3D-to-2D backward layout fix, env-gated idempotent patch application, P1 behind `CPPMEGA_MAMBA3_P1=1`, P2 PsiV cache scaffolded behind `CPPMEGA_MAMBA3_P2=1`, `torch_xla.experimental.scan` on TPU v6e, and the Pallas sparse-attention prototype for the attention minority. Thrown away: the CuTe DSL port as a production path (kept for reference), the P3 register split (rejected on ROI and platform blockers), the SM_121 box for H200-shape correctness diffs, and forward-only P1 as a default. Kernel time we do not have is still budgeted; the way to save it is to read the live set before writing the patch.
+Kept: TileLang on H200 with three upstream patches, the TMA 3D-to-2D backward layout fix, env-gated idempotent patch application, P1 behind `CPPMEGA_MAMBA3_P1=1`, P2 PsiV cache scaffolded behind `CPPMEGA_MAMBA3_P2=1`, `torch_xla.experimental.scan` on TPU v6e, and the Pallas sparse-attention research-stack for the attention minority. Thrown away: the CuTe DSL port as a production path (kept for reference), the P3 register split (rejected on ROI and platform blockers), the SM_121 box for H200-shape correctness diffs, and forward-only P1 as a default. Kernel time we do not have is still budgeted; the way to save it is to read the live set before writing the patch.
 
 ## References
 

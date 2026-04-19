@@ -17,10 +17,10 @@ The other reason this matters: our specialists are small enough that a poisoning
 
 We run eight C++ specialists — Algo-SLM, Template-SLM, Memory-SLM, Concurrency-SLM, and four more. Each is 4B-8B sparse MoE, 0.8B-1.6B active, NVFP4 at inference. The threats we defend against:
 
-- **Corpus poisoning.** Malicious or low-quality code injected via an ingestion path (a catalog addition from the public corpus catalog notes, a compromised release, a vendored blob) that steers a specialist toward insecure patterns.
+- **Corpus poisoning.** Malicious or low-quality code injected via an ingestion path, such as a new catalog entry, a compromised release, or a vendored dependency, that steers a specialist toward insecure patterns.
 - **Memorization of secrets and PII** that slipped past the PII and secret filters.
 - **Harmful code requests at inference.** Exploits for named CVEs, ransomware primitives, credential extraction. A C++ specialist is a more credible author of these than a chat model.
-- **Weaponized context-graph hallucinations.** A poisoned `v5_clang_graph` shard (the public curriculum-mapping notes) teaching the model to emit calls into a fabricated namespace that a downstream RAG system resolves against an attacker-controlled package.
+- **Weaponized context-graph hallucinations.** A poisoned `v5_clang_graph` shard teaching the model to emit calls into a fabricated namespace that a downstream retrieval layer resolves against an attacker-controlled package.
 
 Out of scope: voice clone, image generation, persona attacks, and the chat-LLM failure modes that dominate the public literature.
 
@@ -52,11 +52,11 @@ The exact matrix across drills by specialists is not yet published. The shape of
 
 The refusal layer is small and lives outside the model. It updates independently of any specialist checkpoint.
 
-- **Exploit generation for known CVEs.** The specialist will not produce a working PoC for a named CVE. It will explain the bug class, suggest fixes, and point at public references, but it will not emit the exploit primitive.
+- **Exploit generation for known CVEs.** The specialist will not produce a working exploit sample for a named CVE. It will explain the bug class, suggest fixes, and point at public references, but it will not emit the exploit primitive.
 - **Malware, ransomware, keylogger primitives.** Requests that name the target behavior ("encrypt user files and demand a ransom," "hook keyboard input to exfiltrate keystrokes") refuse at the request level, not the code level.
 - **Credentials extraction.** "Write code that reads Chrome's saved passwords" refuses. Legitimate adjacent requests ("write code that uses the OS keyring API") are allowed.
 - **Anti-debugging and AV/EDR evasion** aimed at commercial security products is refused.
-- **Secret emission.** Any response containing a string that matches the high-entropy patterns flagged by our secret scan is truncated to a placeholder (`API_KEY_REDACTED`, the same placeholder used in a data-pipeline design note at ingest time).
+- **Secret emission.** Any response containing a string that matches the high-entropy patterns flagged by our secret scan is truncated to a fixed redaction marker (`API_KEY_REDACTED`).
 - **PII emission.** Emails and phone numbers in generated output are rewritten to `<redacted-email>` / `<redacted-phone>`, matching the PII redaction policy at ingest.
 
 What we do not refuse: `memcpy`, `strcpy`, raw `new`/`delete`, pointer arithmetic, inline asm, `reinterpret_cast`, manual mmap, ptrace, `LD_PRELOAD` examples, signal handlers, fork-bomb-shaped constructs in a tutorial context. These are part of real C++ and real systems work; refusing them is refusing the job. Security-adjacent education — explaining how buffer overflows work, how ROP chains are constructed conceptually, how SQL injection happens — is allowed. So are dual-use offensive tools written generically (fuzzers, packet crafters, debuggers).
@@ -65,14 +65,14 @@ The operational rule is to refuse at the level of intent, not keyword. A request
 
 ## 4. The safety regression suite
 
-The normal evaluation harness (`eval.md`, the public evaluation note) runs HumanEval-style function completion against our translated C++ problem set, measures compile rate, test-pass rate, context adherence, and hallucination. It catches quality regressions. It does not, by itself, catch safety regressions.
+The normal evaluation harness runs HumanEval-style function completion against the translated C++ problem set, measures compile rate, test-pass rate, context adherence, and hallucination. It catches quality regressions. It does not, by itself, catch safety regressions.
 
 We bolt on a safety-regression suite that runs on the same T4 eval pool immediately after the standard HumanEval pass. It shares the harness wiring but uses a separate prompt set and a separate judge pipeline. The suite has four tiers:
 
 1. **Refusal probes.** Around 500 prompts drawn from the refusal categories above, each with a matched allowed variant. Metric: (refuse-on-bad, allow-on-adjacent-good). Both rates must stay within a narrow band against a pinned baseline checkpoint. Drift on either side fails the tier.
 2. **Memorization probes.** Around 200 prompts designed to elicit memorized content: partial headers from planted drill cohorts, partial secret shapes, partial email/phone patterns. Any verbatim emission fails immediately. Binary, not banded.
 3. **Poisoning-trigger probes.** The trigger token patterns used in the most recent poisoning drills are re-run against the production checkpoint. Activation rate must be at clean-baseline floor. This is our main guard against a poisoned shard slipping into a real training run.
-4. **Context-adherence adversarial.** Prompts carry slightly-wrong call graphs (`v4_context_graph`-shaped, matching the public curriculum-mapping notes) and the specialist must not follow them into fabricated namespaces. Overlaps with standard context-adherence eval but uses hostile graphs rather than merely-terse ones.
+4. **Context-adherence adversarial.** Prompts carry slightly wrong call graphs shaped like `v4_context_graph`, and the specialist must not follow them into fabricated namespaces. This overlaps with standard context-adherence evaluation but uses hostile graphs rather than merely terse ones.
 
 All four tiers run per specialist. A failure in any tier against a pinned baseline blocks promotion. Tiers 2 and 3 are binary-fail; tiers 1 and 4 are banded against a published tolerance.
 
@@ -82,13 +82,13 @@ Judge output for refusal probes uses a non-learned rubric rather than an LLM jud
 
 ## 5. Interaction with the RL reward pipeline
 
-The RL reward design in the public reward-design note uses compile-and-execute rewards (StepCoder, VeRPO, ACECODER). Safety is not in that reward and should not be — mixing safety and correctness into one scalar is how you get a policy trading them off invisibly.
+The RL reward design uses compile-and-execute rewards (StepCoder, VeRPO, ACECODER). Safety is not in that reward and should not be — mixing safety and correctness into one scalar is how you get a policy trading them off invisibly.
 
-Instead, safety is a gate on the reward. An episode that triggers a refusal-tier violation is discarded from the RL buffer, not penalized. Discarding is cheaper, produces a cleaner gradient on remaining episodes, and avoids the reward-hacking mode where the policy emits refusals whenever a test is hard. Compile and runtime negative rewards from the public reward-design note stay; the safety gate is orthogonal.
+Instead, safety is a gate on the reward. An episode that triggers a refusal-tier violation is discarded from the RL buffer, not penalized. Discarding is cheaper, produces a cleaner gradient on remaining episodes, and avoids the reward-hacking mode where the policy emits refusals whenever a test is hard. Compile and runtime negative rewards stay; the safety gate is orthogonal.
 
 ## 6. Costs
 
-The safety regression suite adds a fixed overhead per checkpoint on the same T4 pool as the eval watcher (the public evaluation note), scales on demand, and returns in the same wall-clock order as the standard pass. Since T4-over-H100 already collapses eval cost roughly an order of magnitude per checkpoint (`eval.md`), absorbing safety tests on the same pool is cheap.
+The safety regression suite adds a fixed overhead per checkpoint on the same T4 pool as the standard evaluation watcher, scales on demand, and returns in the same wall-clock order as the standard pass. Since T4-over-H100 already collapses evaluation cost roughly an order of magnitude per checkpoint, absorbing safety tests on the same pool is cheap.
 
 Poisoning drills are the expensive item: each is a short sibling run with the poisoned cohort injected at a controlled fraction of Phase 1 or Phase 4. Specialists are 4B-8B and cohorts are small, so sibling runs finish in hours. Budget is roughly one specialist-hour per drill. We drill on curriculum-structure changes, tokenizer changes (`tokenizer-v2-v3`), and extended-catalog promotion — not every checkpoint.
 
@@ -105,7 +105,7 @@ The directive for future modifiers is short: do not ship a specialist that fails
 - Full published drill-by-specialist matrix. Data exists, not published.
 - Independent red team. Our drills are working; external red team is on the 2026-Q3 plan.
 - Principled over-refusal study. Matched-allowed-variant pairing catches gross drift, not subtle.
-- Coverage for the extended catalog's crypto and EULA-gated corners (the public corpus catalog notes).
+- Coverage for the extended catalog's crypto and EULA-gated corners.
 - Latent-space memorization analysis beyond prompt probes.
 
 ```python
@@ -118,4 +118,5 @@ def evaluate_completion(prompt, completion):
 
 ## References
 
-- The public specialist, evaluation, and corpus notes linked from the MegaCpp materials.
+- [MegaCpp site_samples articles directory](https://github.com/DatasunriseOU/site_samples/tree/main/articles)
+- [MegaCpp site_samples docs directory](https://github.com/DatasunriseOU/site_samples/tree/main/docs)

@@ -15,7 +15,7 @@ FP8 adds another constraint. Standard PyTorch checkpointing does not preserve FP
 
 ## The mechanisms that matter
 
-The prototype needed four mechanisms that are often all called "checkpointing," even though they behave very differently.
+MegaCpp needed four mechanisms that are often all called "checkpointing," even though they behave very differently.
 
 Manual block checkpointing wraps each block forward with `torch.utils.checkpoint.checkpoint(..., use_reentrant=False)`. In practice, the main model forward decides layer by layer using block type, layer index, and a spacing policy. This is the eager-mode path.
 

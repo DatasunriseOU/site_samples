@@ -1,12 +1,12 @@
 ---
 title: "Dynamo and torch.compile Breakage on a Mamba-3 Hybrid"
-description: "Graph breaks, recompile storms, guard explosions, and cache-hygiene rules we landed while keeping torch.compile useful on the POC's hybrid Mamba-3 + Transformer stack."
+description: "Graph breaks, recompile storms, guard explosions, and cache-hygiene rules we landed while keeping torch.compile useful on MegaCpp's hybrid Mamba-3 + Transformer stack."
 date: "2026-04-18"
 author: "David Gornshtein"
-tags: ["torch.compile", "dynamo", "mamba", "the POC"]
+tags: ["torch.compile", "dynamo", "mamba", "megacpp"]
 ---
 
-our POC training core is a hybrid: Attention blocks (ABlock), Mamba-3 SSM blocks (MBlock), Expert blocks (EBlock, MoE), and Engram blocks in a repeating pattern across 52 layers. The TPU/XLA compile story lives in its own post; this one is specifically about Dynamo and Inductor on CUDA. Which graph breaks we silenced, which we accepted, which dynamic-shape guards we set by hand, and the compile-cache hygiene we now treat as non-negotiable.
+MegaCpp's training core is a hybrid: attention blocks (`ABlock`), Mamba-3 SSM blocks (`MBlock`), expert blocks (`EBlock`, MoE), and Engram blocks in a repeating pattern across 52 layers. The TPU/XLA compile story lives in its own post; this one is specifically about Dynamo and Inductor on CUDA. Which graph breaks we silenced, which we accepted, which dynamic-shape guards we set by hand, and the compile-cache hygiene we now treat as non-negotiable.
 
 ## Why this matters
 
@@ -41,7 +41,7 @@ We run `fullgraph=False`. That is a choice.
 
 `MBlock.forward` is permanently wrapped in `@torch.compiler.disable`. We tried the alternatives - per-block compile with the Mamba kernel allowed to recompile, `allow_in_graph(mamba_chunk_scan_combined)`, splitting MBlock into a compiled outer shell and disabled inner - and each one eventually failed. The Dynamo-traces-through-it path crashed on `allow_in_graph` in torch 2.10 because Dynamo still walked into the Triton kernel and hit `.data_ptr()` on a FakeTensor proxy. Per-block compile made the Mamba graph breaks worse, not better, because each block carried its own guard tree and the guards did not all match across blocks of the same type.
 
-So: `MBlock` is black-boxed. The whole-model compile runs with breaks at each Mamba layer. We count them, we cap them, and we ship it. On our deep hybrid preset that is 13 breaks per forward. Each break costs a little (sync plus Python dispatch reentry); collectively, on H200:8 DDP, it is a fixed one to two percent tax we measure every receipt.
+So: `MBlock` is black-boxed. The whole-model compile runs with breaks at each Mamba layer. We count them and cap them. On our deep hybrid preset that is 13 breaks per forward. Each break costs a little (sync plus Python dispatch reentry); collectively, on H200:8 DDP, it is a fixed one to two percent tax measured steady state.
 
 Four other disable points exist inside the main model runtime module and friends, gating things Dynamo cannot safely see:
 
@@ -90,7 +90,7 @@ On Modal H200 the inductor cache previously filled the on-pod ephemeral mount - 
 
 ### Cache sync across hosts
 
-sanitized compile-cache sync tests pins the contract: a bench host starting up should refresh `tokenizer.json` from the checked-in tokenizer artifact, set `TORCHINDUCTOR_CACHE_DIR` to the expected shared path, and skip re-seeding if the hash matches. The test exists because we had two incidents where two agents ran cache-sync concurrently and one of them trashed the other's warm cache; the test covers the "skip if already synced" and "refuse to sync into a non-writable path" branches.
+The public cache-plumbing examples pin the contract: a bench host starting up should refresh `tokenizer.json` from the checked-in tokenizer artifact, set `TORCHINDUCTOR_CACHE_DIR` to the expected shared path, and skip re-seeding if the hash matches. That contract exists because concurrent cache-sync on the same host can trash a warm cache; the safe path is "skip if already synced" and "refuse to sync into a non-writable path."
 
 ### Reset discipline
 
@@ -127,17 +127,19 @@ Dynamo prints a lot. Some of it matters, most does not. We keep a short allowlis
 
 Anything above the expected Mamba break count is a regression. Cache-limit hits are treated the same way; we have an alert on the log line.
 
-## What we kept and what we threw away
+## Current compile policy
 
-We kept the six Dynamo config lines, the `MBlock` disable, the four surgical disable points around DTensor/MoE/score_mod/API, the padded MoE path, the single explicit dynamic axis, the separate Inductor and autograd caches, the reset-exactly-once rule, and the NCCL heartbeat trio. We kept the buffer-not-int rule as a hard lint item on anything compiled code touches.
+The current policy keeps the six Dynamo config lines, the `MBlock` disable, the four surgical disable points around DTensor/MoE/score_mod/API, the padded MoE path, the single explicit dynamic axis, the separate Inductor and autograd caches, the reset-exactly-once rule, and the NCCL heartbeat trio. The buffer-not-int rule is treated as a hard lint item on anything compiled code touches.
 
-We threw away `fullgraph=True` as a goal for now - the Mamba chunk-scan custom op it would require to close the one to two percent break overhead is real work we deliberately deferred. We threw away `enable_compiler_collectives`, any use of `torch._dynamo.reset()` outside the retry re-exec, any uncomputed dynamic axis, and the belief that `MEGACPP_NO_COMPILE=1` was a legitimate production answer rather than an operator footgun. The MoE-counter-as-int pattern is gone from the codebase, and we keep a grep-level guard so it does not come back.
+The policy does not treat `fullgraph=True` as a near-term goal; the Mamba chunk-scan custom op it would require to close the one to two percent break overhead is substantial work and remains deferred. It also excludes `enable_compiler_collectives`, any use of `torch._dynamo.reset()` outside the retry re-exec, and any uncomputed dynamic axis. The MoE-counter-as-int pattern is gone from the codebase, and compile-disable guards remain scoped rather than broad.
 
 `torch.compile` is genuinely load-bearing once these rules are in place. Without them it is a liability. The difference is not the compiler; it is the stance you compile with.
 
 ## References
 
-- [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
-- [Sanitized public sample pack](https://github.com/DatasunriseOU/site_samples)
-- Public compile-cache and runtime regression tests referenced in the repository materials
-- Public changelog and runtime notes linked from the repository materials
+- [PyTorch `torch.compiler`](https://docs.pytorch.org/docs/stable/torch.compiler.html)
+- [PyTorch compiler troubleshooting](https://docs.pytorch.org/docs/stable/torch.compiler_troubleshooting.html)
+- [PyTorch recompilation model](https://docs.pytorch.org/docs/stable/compile/programming_model.recompilation.html)
+- [PyTorch Inductor](https://docs.pytorch.org/docs/stable/inductor.html)
+- [Mamba-3 Trapezoid Porting Notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/mamba3-trapezoid-porting.md)
+- [Mamba-3 TP partition size excerpt](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/cppmega/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py)

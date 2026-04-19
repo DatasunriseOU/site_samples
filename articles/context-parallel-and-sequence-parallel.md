@@ -1,27 +1,27 @@
 ---
 title: "Context Parallel and Sequence Parallel: Similar Names, Different Jobs"
 date: 2026-04-18
-author: MegaCpp Engineering
+author: Engineering Team
 tags: [context-parallel, sequence-parallel, long-context, tensor-parallel]
 summary: >
   Sequence parallelism and context parallelism both split work over tokens, but
   the code shows that they solve different bottlenecks and fail for different reasons.
 description: >
-  A repo-grounded explanation of SP versus CP using TP-aware helpers, training
-  ladders, and hybrid-pattern model design in the MegaCpp stack.
+  An explanation of SP versus CP using TP-aware helpers, long-context
+  bring-up patterns, and hybrid model design.
 ---
 
 # Context Parallel and Sequence Parallel: Similar Names, Different Jobs
 
-**TL;DR:** sequence parallelism is a tensor-parallel companion that keeps activations sharded for longer inside TP-aware layers. Context parallelism is a larger placement decision for long sequences when one-rank sequence residency becomes the dominant problem. They can coexist, but they should not be explained as interchangeable "sequence splitting" features.
+Sequence parallelism is a tensor-parallel companion that keeps activations sharded for longer inside TP-aware layers. Context parallelism is a larger placement decision for long sequences when one-rank sequence residency becomes the dominant problem. They can coexist, but they should not be explained as interchangeable "sequence splitting" features.
 
-The confusion is understandable. Both features mention the sequence dimension, both can reduce memory pressure, and both become visible in long-context discussions. But the source tree makes a cleaner distinction than most short blog summaries do. In the MegaCpp codebase, sequence-parallel behavior shows up directly in TP helper calls such as `scatter_to_sequence_parallel_region` and `gather_from_sequence_parallel_region`. In the prototype repo, context-aware long-context lanes show up in feature ladders, model recipes, and distributed bring-up notes where the question is no longer "should this TP shard keep a shorter local activation view?" but "can this run avoid a full-context residency problem at all?"
+The confusion is understandable. Both features mention the sequence dimension, both can reduce memory pressure, and both become visible in long-context discussions. But the cleaner distinction is the operational one. In Megatron-style tensor-parallel code, sequence-parallel behavior shows up directly in TP helper calls such as `scatter_to_sequence_parallel_region` and `gather_from_sequence_parallel_region`. Context-aware long-context lanes show up in model recipes and distributed bring-up notes where the question is no longer "should this TP shard keep a shorter local activation view?" but "can this run avoid a full-context residency problem at all?"
 
 That distinction matters even more once the model stops being a pure attention stack. The project vocabulary already uses `A`, `M`, `E`, and `R` for attention, Mamba, expert, and recurrent families, with local names like `ablock`, `mblock`, `eblock`, and `rblock`. Pattern strings such as `AEMEAEMEAEMR` are not decorative. They are a reminder that different block families stress memory, collectives, and token layout in different ways. SP and CP touch that stress map at different layers of the stack.
 
 ## Sequence Parallelism Lives Inside TP-Aware Execution
 
-The clearest evidence for SP is the boring, practical kind: helper placement. In the public custom-embedding sample, embedding activations are scattered to the sequence-parallel region when the relevant config is enabled. In the public fast-MTP layer sample, the same family of helpers appears around TP-aware flow. That is not the signature of a global long-context strategy. It is a local contract about where activations should remain sharded so tensor-parallel execution does not immediately pay back all of its memory savings at the next layer boundary.
+The clearest evidence for SP is the boring, practical kind: helper placement. In public Megatron-Core style code, embedding activations are scattered to the sequence-parallel region when the relevant config is enabled, and the same family of helpers appears around TP-aware flow. That is not the signature of a global long-context strategy. It is a local contract about where activations should remain sharded so tensor-parallel execution does not immediately pay back all of its memory savings at the next layer boundary.
 
 The important part is not the existence of one scatter call. It is the implied lifetime of the sharded layout. If activations are scattered and then gathered again one operator later, SP turns into ceremony. If the layout persists across enough compute to avoid redundant activation residency, then the helper calls are doing real work.
 
@@ -34,15 +34,15 @@ That pattern is a strong clue about ownership. SP belongs near TP-aware module b
 
 | Mechanism | Scale of decision | Primary goal | Typical companion |
 | --- | --- | --- | --- |
-| Sequence parallelism | Local layer/layout contract | Lower activation residency under TP | Tensor parallelism |
-| Context parallelism | Whole-sequence placement strategy | Make long contexts fit and scale | Long-context attention or hybrid sequence lanes |
+| Sequence parallelism | Local layer/layout contract on the TP axis | Lower activation residency under TP | Tensor parallelism |
+| Context parallelism | Whole-sequence placement strategy across ranks | Make long contexts fit and scale | Long-context attention or other CP-aware sequence lanes |
 | Early gather | Boundary decision | Restore full sequence semantics | Often the main cost leak |
 
 This is why people get misled by the common phrase "both split the sequence." Technically true, operationally incomplete.
 
 ## Context Parallelism Starts Where Full-Sequence Residency Breaks the Plan
 
-Context parallelism becomes relevant when the sequence itself is large enough that one-rank residency is the wrong unit of execution. The prototype repo's TPU feature ladder and related validation scripts are useful here, not because they spell out CP theory line by line, but because they encode the kind of incremental enablement discipline that long-context systems need. the TPU feature-ladder validation flow starts from a small canary and adds Mamba, MoE, modulation, Engram, MHC, DSA, and MTP-like features rung by rung. That mindset is the practical opposite of hand-waving. First establish what a short, stable sequence lane can hold. Then raise pressure one structural feature at a time.
+Context parallelism becomes relevant when the sequence itself is large enough that one-rank residency is the wrong unit of execution. Public long-context bring-up patterns are useful here, not because they spell out CP theory line by line, but because they encode the kind of incremental enablement discipline that long-context systems need. The right validation flow starts from a small canary and adds features rung by rung. That mindset is the practical opposite of hand-waving. First establish what a short, stable sequence lane can hold. Then raise pressure one structural feature at a time.
 
 CP belongs in that second category. It is a response to global sequence pressure, not only to local TP memory duplication. When the sequence gets long enough, the main design question shifts from "did we shard activations cleanly within TP?" to "where does the sequence live, how often do we need the full view, and which block families truly require that global materialization?"
 
@@ -52,7 +52,7 @@ This is especially visible in hybrid systems. An `A` block stresses attention st
 
 Both SP and CP can be undermined by premature gathers. This is the main conceptual bug, and it is more common than explicit math mistakes. People say they are running sequence-sharded execution, but the implementation reconstructs a full token view at the next normalization, projection, or convenience wrapper. At that point, the optimization is real on paper and mostly absent in residency.
 
-The helper placement in the MegaCpp codebase is useful because it exposes that boundary explicitly. You can ask a concrete question: where is the next `gather_from_sequence_parallel_region`, and is it semantically necessary? If the answer is "we just needed a simpler downstream API," that is not an architectural requirement. That is a local abstraction leak.
+Helper placement is useful because it exposes that boundary explicitly. You can ask a concrete question: where is the next `gather_from_sequence_parallel_region`, and is it semantically necessary? If the answer is "we just needed a simpler downstream API," that is not an architectural requirement. That is a local abstraction leak.
 
 The same discipline should be applied to CP. A long-context layout only earns its keep if full-context materialization is rare and justified. If an allegedly CP-aware path rebuilds the whole sequence around every major block family, then the system is paying the coordination cost of CP without preserving the main benefit.
 
@@ -62,7 +62,17 @@ There is also a sequencing lesson in that failure mode. Teams often try to add C
 
 ## SP and CP Interact Differently Across NAM52 and NAM56R-Style Lanes
 
-The project's own notation is helpful here because it prevents generic transformer talk from taking over. NAM52 and NAM56R are not just size labels. They imply different feature mixes, different pressure points, and different receipts. In the research repo, TPU ladder scripts explicitly toggle features such as `--mamba`, `--moe`, `--engram`, `--mhc`, `--dsa`, and MTP-related steps in a controlled sequence. That means sequence layout should be discussed in the same grounded way.
+The project's own notation is helpful here because it prevents generic transformer talk from taking over. NAM52 and NAM56R are not just size labels. They imply different feature mixes, different pressure points, and different receipts. In public bring-up notes, feature ladders often toggle Mamba, MoE, Engram, MHC, DSA, and MTP-related steps in a controlled sequence. That means sequence layout should be discussed in the same grounded way.
+
+## Taxonomy correction: SP, CP, DCP, and recompute are not the same thing
+
+Sequence parallelism is a tensor-parallel companion. It keeps activations sharded across TP ranks for longer and is usually discussed together with TP, not as an alternative to it. In Megatron-style MoE lanes, `EP + TP` usually implies `SP` so dense activation layout stays consistent with the TP ranks participating in expert work.
+
+Context parallelism is a long-context distribution strategy. It partitions sequence work across ranks when full-context residency becomes the bottleneck. In Megatron-Core that includes both attention-oriented CP documentation and an explicit `mamba_context_parallel` API for state-space models, so CP is not limited to transformer-only paths. CP is still not the same thing as SP: CP changes sequence ownership across ranks, while SP changes activation layout inside TP-aware execution.
+
+Distributed checkpointing, often abbreviated DCP, is not a compute-parallel axis at all. It is a state save and restore mechanism.
+
+Activation recompute, selective checkpointing, and similar memory-saving techniques are also not parallel axes. They trade extra compute for lower activation residency, but they do not define where model, sequence, or expert work is partitioned.
 
 For NAM52-style bring-up, SP often appears first as a practical win because it composes naturally with TP-aware dense layers. It is easy to reason about where the scatter happens and whether later modules respect that layout. For NAM56R-style long-context ambitions, CP becomes harder to avoid because the bigger issue is no longer just dense activation duplication. It is the total cost of owning the sequence, attention state, and any per-token metadata at one rank or one narrow group.
 
@@ -99,9 +109,8 @@ If you keep those boundaries crisp, pattern strings like `AEMEAEMEAEMR` remain u
 
 ## References
 
-- the public custom-embedding sample
-- the public fast-MTP layer sample
-- sanitized transformer utility tests
-- the TPU feature-ladder validation flow
-- the TPU feature-ladder runner
-- the main training entrypoint
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/features/context_parallel.html
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/apidocs/core/core.ssm.mamba_context_parallel.html
+- https://docs.pytorch.org/docs/stable/checkpoint.html
+- https://docs.pytorch.org/docs/main/distributed.checkpoint.html

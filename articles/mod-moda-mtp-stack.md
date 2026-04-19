@@ -15,7 +15,7 @@ MoDA is a different axis. Instead of "do I run this block for this token", it's 
 
 MTP is the third. At train time it is an auxiliary loss head that predicts multiple future tokens through a shared transformer block recursed K times. At inference time the same weights become a draft model for self-speculative decoding — you already trained a cheap future-token predictor, you may as well use it.
 
-## What we built in the prototype stack
+## What we built in MegaCpp
 
 ### Mixture-of-Depths routing
 
@@ -29,7 +29,7 @@ The three shipped routing modes:
 
 The XLA path uses a compact `gather + FFN + gate + scatter` pipeline through JAX so XLA sees a `[C, D]` matmul rather than `[B*T, D]`, saving roughly `1/capacity_factor` FLOPs on the MXU. Gradients flow through `jax.vjp` inside a `torch.autograd.Function`. On non-XLA devices this silently falls back to the PyTorch implementation.
 
-Two bugs from the ablation history matter here. First, MoD plus relation bias crashed: the wrapped block sees compacted `(B, T')` shapes but the relation bias path still expected `(B, T)` shapes, so broadcast failed. The fix was to skip relation bias on MoD-wrapped layers. Second, the attention-scorer bridge used to hardcode dense attention in a way that broke side-output accounting, and the full-block MoD path dropped the MoDA depth-KV contract. Both are explicit in the prototype now with regression coverage in sanitized feature tests.
+Two bugs from the ablation history matter here. First, MoD plus relation bias crashed: the wrapped block sees compacted `(B, T')` shapes but the relation bias path still expected `(B, T)` shapes, so broadcast failed. The fix was to skip relation bias on MoD-wrapped layers. Second, the attention-scorer bridge used to hardcode dense attention in a way that broke side-output accounting, and the full-block MoD path dropped the MoDA depth-KV contract. Both are explicit in MegaCpp now, with coverage reflected in the public examples and notes.
 
 ### MoDA depth-KV buffering
 
@@ -61,7 +61,7 @@ The production port is shipped on a per-specialist basis because the three featu
 
 FastMTP is the path we train on in production. Megatron's default MTP block remains available as a fallback but is not the hot path.
 
-The draft model and the self-speculative decode engine integration stay in the prototype for MegaCpp v1. The draft math is correct; the blockers are on the inference-engine side: KV cache rollback, an acceptance kernel, and per-hardware benchmarking. They are being staged separately and are out of scope for this post.
+The draft model and the self-speculative decode engine integration stay in the MegaCpp roadmap for v1. The draft math is correct; the blockers are on the inference-engine side: KV cache rollback, an acceptance kernel, and per-hardware benchmarking. They are being staged separately and are out of scope for this post.
 
 ## Ablations and what we kept
 
@@ -71,7 +71,7 @@ Snippets from the ablation history that shaped these decisions:
 - MoDA at full depth-KV buffering is a real memory hit on long context. Detaching depth K/V from autograd is non-negotiable; backward through 52 layers of concatenated K/V OOMs immediately.
 - MTP-as-loss is cheap once the lm-head-weight cast is correct. MTP-as-drafter is free at training time; the wall-clock win lives in the inference engine.
 - The MoD wrapper rewrite that preserved dense-attention side outputs and re-plumbed the MoDA depth-KV contract was the single most consequential MoD fix of the cycle. Regression tests cover both.
-- A NaN-scoring investigation on a modern accelerator traced to the structure guard inside the dense-MTP path, not to MTP itself. Aligning the three dense-MTP variants with the same dense reference behavior fixed the Xid 31 fault and restored comparability between no-MTP, `MTP = 1`, and `MTP = 3` runs.
+- A NaN-scoring investigation on an H200-class GPU traced to the structure guard inside the dense-MTP path, not to MTP itself. Aligning the three dense-MTP variants with the same dense reference behavior fixed the Xid 31 fault and restored comparability between no-MTP, `MTP = 1`, and `MTP = 3` runs.
 
 ## Production checklist
 
@@ -109,7 +109,7 @@ for k in range(K):
 - MegaCpp's MoD implementation centers on mixture-of-depths routing, XLA gather/scatter execution, and a fail-closed configuration surface.
 - MegaCpp's MoDA implementation centers on a cross-layer depth-KV buffer and projection path for attention.
 - MegaCpp's MTP implementation centers on roll-and-mask training, fused cross-entropy, and packed-document isolation.
-- MegaCpp's speculative-decoding draft path remains a prototype and is not enabled in MegaCpp v1 inference.
+- MegaCpp's speculative-decoding draft path remains a research-stack and is not enabled in MegaCpp v1 inference.
 - The production fast-MTP path uses a dedicated multi-token prediction layer with Liger-fused cross-entropy.
 - [Mixture-of-Depths: Dynamically Allocating Compute in Transformer-Based Language Models — Raposo et al., 2024]
 - [MoDification: Mixture of Depths Made Easy — Kulkarni et al., arXiv 2410.14268]

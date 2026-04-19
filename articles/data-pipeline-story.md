@@ -5,90 +5,154 @@ date: "2026-04-18"
 tags: ["data", "pipeline", "c++", "tokenizer", "quality"]
 ---
 
-The single most important decision we made on MegaCpp was not which optimizer to use, which sparsity ratio to pick for the MoE, or even how big to make the model. It was deciding what bytes the model would ever see. This post is the long-form version of that decision: how the C++ training data pipeline was assembled, the filters and dedup stages we trust, the producer paths we still consider transitional, and the mistakes we made on the way that are worth writing down so we do not repeat them.
+The most important data decision in MegaCpp is not a model hyperparameter. It
+is deciding what bytes the model is allowed to see, how those bytes are pinned,
+and what checks are required before a dataset snapshot is promoted into a real
+training lane.
 
-## Source selection: keep the operational set small, track the catalog separately
+This article focuses on the public engineering contract behind that pipeline.
 
-The operational corpus — the slice that is actually wired into our training launchers — is eight C/C++ repositories cloned shallow and pinned to explicit refs: LLVM at `llvmorg-19.1.0`, Boost at `boost-1.86.0` with submodules, the Linux kernel at `v6.10`, fmt at `11.0.0`, googletest at `v1.15.0`, abseil-cpp at tip, folly at tip, and grpc at `v1.67.0`. Together they total about 15 GB on disk after shallow clone, all license-clean, no credentials needed. We chose exactly these eight because between them they cover the shapes of C++ that production teams ship: low-level systems C, template-heavy generic C++, modern application C++, and service-framework C++.
+## Start with a small pinned operational slice
 
-Separately, we maintain a much larger catalog of 142 repositories in 16 categories — OS kernels, compilers and runtimes, databases, networking stacks, browsers, game engines, the GNOME and KDE ecosystems, ML/scientific libraries, crypto, and embedded RTOSes. Each entry is tagged by on-disk size bucket (`S`/`M`/`L`/`H`) so we can budget ingestion when a future specialist needs a domain we do not yet cover. The catalog also documents the awkward sources — SQLite's Fossil repo, Chromium and V8 on a hosted source mirror, VLC and x264 on VideoLAN GitLab, Unreal requiring an Epic-linked GitHub account — so a future expansion does not re-discover the same infrastructure traps.
+MegaCpp keeps a clear distinction between:
 
-The split between *operational* and *catalog* is deliberate. Trying to ingest 142 repos on day one would have meant fighting infrastructure issues instead of debugging the pipeline. We did the opposite: a tiny, reproducible operational set first; everything else is metadata.
+- the **operational slice** that is actively wired into training
+- the **catalog** of additional sources that may become future inputs
 
-## Pipeline shape: five stages, transitional middle
+That split matters because data-pipeline work fails differently from model work.
+If the team tries to ingest every interesting repository on day one, most of
+the debugging time is spent on storage, format drift, and tooling gaps rather
+than on quality.
 
-The data build is orchestrated by the public data-preparation pipeline and has five stages: download, tokenize, format, cache, verify. Stage 1 shallow-clones the eight repos into a raw source staging tree under the configured data root. Stage 2 runs a libclang-based semantic indexer over each project, emits enriched text records at one document per semantic chunk (up to 4096 tokens), tokenizes with our hybrid BPE, streams into parquet shards of 50,000 docs each plus a validation parquet shard, and drops a completion sentinel. Stage 3 converts parquet into Megatron's `.bin`/`.idx` format using `uint32` token IDs (vocab is 131,072, so `uint16` is invalid). Stage 4 memory-maps the artifacts and reports doc/token counts. Stage 5 verifies that the indices parse, that no token exceeds the vocab size, and that document zero round-trips through the tokenizer.
+The public rule is simple: keep the active training slice pinned to explicit
+revisions, and keep the larger catalog as metadata until it is needed.
 
-Underneath that user-facing pipeline, we run multiple coexisting *producer* paths because we are still migrating. The current mainline producer is a semantic chunker plus libclang indexer plus enrichment jobs, which write enriched records that become parquet. The legacy flat-text producer still exists and is still used by some research lanes. There is also a binary token dataset path that historical training jobs used. Treating the consumer-side parquet contract as authoritative — and treating producer rollout as transitional — has been one of the most useful framings we adopted, because it lets us ship loader changes without waiting for the producer story to fully converge.
+## The pipeline shape that survived
 
-A subtlety worth surfacing: chunk-generation dataset names like `4k`, `8k`, `16k`, `64k`, `128k` should be read as **target buckets**, not as hard guarantees of real tokenizer-measured lengths. Several legacy chunkers still budget by a chars-per-token heuristic heuristics; only the strict producer lanes have exact-token-budgeted surfaces. We have made the mistake of assuming a `4k` shard is genuinely ≤4096 tokens under the current tokenizer, packed it that way, and then watched the loader silently crop. The fix was discipline: do not over-generalize the `chars/4` heuristic, and re-measure with the current tokenizer when in doubt.
+MegaCpp's pipeline can be summarized in five stages:
 
-## Filtering: language, quality, license, secrets
+| Stage | Output | What must be true before promotion |
+| --- | --- | --- |
+| collect | pinned public inputs | revision and license metadata recorded |
+| normalize | cleaned source tree | encodings and obvious noise normalized |
+| enrich | structure-aware records | provenance of syntax-only vs build-aware signals preserved |
+| tokenize and store | explicit columnar artifacts | schema and token checks pass |
+| verify | candidate training snapshot | round-trip decode and consumer smoke checks pass |
 
-Every file goes through a filter stack before it reaches the chunker. Language detection drops anything whose extension or shebang is not C, C++, or a recognized header. A quality pass removes auto-generated files (large blocks of identical-shaped lines, files with absurd line lengths, embedded base64 blobs, generated lex/yacc output that adds noise without teaching the model anything). License headers are scanned to keep the corpus to permissive and weak-copyleft licenses for the libraries; the Linux kernel headers carry GPL-2.0, which we accept knowingly and tag in the per-document metadata so downstream training mixes can choose to include or exclude them.
+This is deliberately conservative. The pipeline is designed so that a broken
+promotion fails on a measurable check rather than surviving as a vague feeling
+that "the data looked fine."
 
-PII and secret scrubbing runs before tokenization, not after. Email addresses become the synthetic placeholder `<redacted-email>`, network addresses become `<redacted-address>`, high-entropy strings that look like API keys become `API_KEY_REDACTED`, and any absolute user paths that survive into source comments are normalized to `<redacted-path>/`. Buckets and project identifiers in build scripts are normalized to `<bucket>` and `<project>`. We rely on community tooling here rather than rolling our own. The line we hold is "no new dependency unless we have measured it"; we measured these.
+## What we filter before chunking
 
-## Deduplication: file-level exact, then near-dup MinHash
+Three filters do most of the work:
 
-Our dedup runs in two stages. Stage one is exact file-content dedup keyed by SHA-256 of the normalized text. This is cheap and catches the obvious duplicates from vendored copies of the same library inside multiple repos (Boost shows up inside other projects; abseil shows up vendored inside grpc). Stage two is near-duplicate dedup using MinHash with the BigCode dataset script. Near-dup matters more than people expect: we have seen the same algorithm implementation appear with trivial whitespace differences across dozens of repos, and feeding all of them to the model just teaches it that one specific implementation is the universe.
+1. **language and structural filtering**  
+   Keep the language mix intentional. Drop obvious binaries, blobs, and files
+   that are clearly generated noise.
 
-An honest mistake we made: in an early pipeline run we deduped *after* chunking. That produced two pathologies. First, the same function would survive in two near-identical chunks because the surrounding lines differed slightly. Second, dedup ratios looked artificially good because chunk boundaries shifted enough to fool MinHash on otherwise identical files. We moved dedup back to file-level before chunking, and the post-dedup token count dropped by another ~12% with no quality loss on our evaluation set.
+2. **license and provenance filtering**  
+   Treat license metadata as structured data, not as a comment someone might
+   remember to read later. SPDX expressions and REUSE-style headers are useful
+   because they make this machine-readable.
 
-## Tokenization in one paragraph, because it gets its own post
+3. **PII and secret scrubbing**  
+   Secret-like tokens, direct personal addresses, and machine-local paths
+   should be normalized before tokenization, not after.
 
-The tokenizer is a hybrid: a hand-curated fixed vocabulary for C++ primitives (special tokens, keywords, multi-character operators, preprocessor directives, single-char punctuation, common STL identifiers, small integers, diff markers, structural whitespace) merged with a learned BPE layer trained on the C++ corpus. The current shipped artifact is v3 with a 131,072-token vocabulary; the migration story from v2 to v3 — what we proposed, what we measured, what we kept — is its own writeup. The relevant fact for this post is: every document gets a leading BOS token. That single decision unlocks the entire document-masking story below, with zero changes to the storage format.
+The point is not to claim perfect safety. The point is to make the pipeline
+less likely to promote obviously bad inputs.
 
-## Packing and document masking
+## Deduplicate before you believe the token counts
 
-The dataloader reads parquet via PyArrow from local paths or object-store URIs, and packs documents using BOS-aligned best-fit bin packing. This is not fixed-block padded training — we deliberately mix multiple documents into the same packed row to push utilization toward 100% instead of paying explicit pad tokens. That choice is what makes long-context training tractable for us, and it is also what forces document masking to be correct end-to-end, because a 64K row commonly contains a dozen unrelated documents.
+Deduplication is valuable for code data, but it is easy to describe too
+strongly. MegaCpp uses dedup as a mitigation, not as proof that memorization
+risk or contamination risk is gone.
 
-Document boundaries are inferred on the fly from input IDs: a cumulative sum over the BOS positions gives a `doc_ids` tensor that costs O(T) per batch and requires no storage-format change. The attention backends each receive this tensor in their native form: FlexAttention composes a `document_causal_mask` with the existing softcap `score_mod`; FA3 varlen converts `doc_ids` into `cu_seqlens` and runs unpadded; the SDPA fallback materializes a 2D mask but is gated to T ≤ 8192 because the O(T²) mask is unusable above that. On TPU, both Pallas FlashAttention and JAX Splash Attention accept `segment_ids` directly. Mamba layers need an extra step: the SSM hidden state must be zeroed at boundaries, and the conv1d sliding window must be masked so the kernel does not leak across documents.
+The safest public version of the claim is:
 
-The reason we care so much about this: at 4K context the contamination signal is in the noise. At 16K and 64K it is the difference between a model that reasons about a repository and a model that hallucinates dependencies between unrelated files. Our long-context validation refuses to merge a packing change unless `val_bpb` at 16K is strictly better than the same checkpoint trained without masking.
+- exact duplicates should be removed before chunking
+- near-duplicate handling is valuable for vendored and lightly modified code
+- dedup helps training quality, but it does not by itself prove the corpus is safe
 
-## Quality gates: the part where we catch ourselves
+That wording is closer to what public code-model literature supports and avoids
+promising more than the data pipeline can actually guarantee.
 
-Every produced shard goes through automated checks before it can be promoted to a training-data path: shard count, token count, dtype check, vocab-bound check, round-trip decoding of the first N documents, schema validation for enriched columns, and a smoke training step that consumes the shard for one batch and asserts loss is finite. The schema check is strictest on the enriched parquet path because we have a contract that says: if `token_ids` and the requested token-local arrays are present and shape-valid, trust them; if they are missing, empty, or shape-invalid, fall back deterministically rather than partially trusting bad arrays. Wrong-length `doc_ids`, broken token-structure arrays, or invalid `valid_token_count` values fail closed.
+## Why build-aware enrichment stays in the loop
 
-We have hit every one of those failure modes ourselves. The most embarrassing was a v4 graph dataset run that produced thousands of empty files because of a JSON schema deserialization bug in the Rust enrichment binary. The pipeline ran healthy at 100% CPU for hours and emitted statistically plausible shard counts. It was the round-trip decode quality gate that caught it: the first document of each shard was empty. We fixed the deserialization, recompiled, and added an additional gate that fails the shard if the empty-document ratio exceeds a small threshold.
+For C++, plain lexical chunking is not enough. MegaCpp therefore keeps a
+structure-aware enrichment lane that can use build context when it exists and
+syntax-only structure when it does not. That is how the data story connects to
+the semantic-indexing story: broad coverage and semantic trust are different
+axes, and the pipeline records which one produced a given artifact.
 
-Another one worth recording: an early Kubernetes-based Clang indexing job sat in `ImagePullBackOff` because the worker node service account was missing the artifact-registry read role. We were producing zero data and not noticing because the pipeline-level dashboard only showed scheduled-pod count, not running-pod count. The fix was infrastructure (grant the role, re-pull the image, fifty workers transitioned to `Running`) and the lesson was process: the dashboard now alerts on running-pod count, not scheduled.
+The practical effect is that later training or evaluation code can treat a
+build-aware slice differently from a syntax-only slice instead of pretending
+they are the same kind of evidence.
 
-## SFT comes after, and it is its own contract
+## Tokenization and storage are part of the contract
 
-After base training completes, supervised fine-tuning consumes a separate dataset: a 2.4 GB tool-call SFT corpus of about 1.8M examples plus the original 264 MB / 180K-example SFT dataset. SFT runs are short, have their own loader path, and intentionally do not touch the base-training producer story. Mixing the two too early was a mistake we made and had to back out — base-training shards started showing the SFT prompt format leaking in, which produced a model that looked great on assistant-style evals and worse on raw next-token prediction.
+Tokenizer reproducibility is not just "use the same tokenizer name." The safer
+rule is:
 
-## Honest summary of where we are
+- pin the tokenizer artifact by revision or saved files
+- record special-token and normalization settings
+- store the resulting dataset in an explicit schema
 
-The consumer-side parquet contract is canonical. The five-stage public data-preparation pipeline orchestration is reliable enough that contributors run it on workstations without help. The producer-side story is still transitional in places — we have multiple coexisting paths, target-bucket naming versus exact-token-budgeted naming is not fully unified, and the enriched parquet schema is still being extended for structure-aware training. The quality gates are the moat. Every time one of them caught a problem we had not anticipated, we wrote a new gate and kept it.
+MegaCpp uses explicit columnar artifacts for this reason. Columnar storage is
+not the schema itself, but it is a good fit for large corpora because it keeps
+the stored contract visible: token columns, structure columns, metadata
+columns, and per-snapshot versioning.
 
-If there is one thing to take from this post, it is this: the data pipeline is not a thing you finish, it is a thing you keep falsifying. The shard schema check, the round-trip decode, the bucket-vs-actual length re-measurement, the finite-loss smoke step — those are the artifacts that let us trust a 64K training run started on a Friday afternoon.
+## Long-context training made document masking non-optional
 
-## Stage map at a glance
+Once documents are packed into long sequences, document boundaries stop being a
+nice-to-have. They become part of the correctness story. A long packed row that
+does not preserve boundaries can quietly teach the model relationships between
+unrelated files.
 
-| Stage | Tool | Output | Quality gate |
-|---|---|---|---|
-| 1 download | shallow `git clone` | raw source staging tree | repo ref pinned |
-| 2 chunk + tokenize | libclang + hybrid BPE | parquet shards (50K docs) | a completion sentinel |
-| 3 format | parquet -> `.bin`/`.idx` | Megatron mmap files | dtype = `uint32` |
-| 4 cache | mmap + count | doc/token totals | size sanity bounds |
-| 5 verify | round-trip + vocab check | pass/fail per shard | empty-doc ratio threshold |
+That is why MegaCpp treats document masking as a first-class data contract. The
+public point is not one exact implementation. The public point is that packing,
+masking, and evaluation must agree about where a document ends.
 
-```text
-Five-stage public pipeline:
-1. fetch pinned public repositories
-2. build semantic chunks and enriched JSONL
-3. convert to parquet and packed token shards
-4. validate token and document counts
-5. publish reproducible training artifacts
-```
+## The real moat is quality gates
+
+The pipeline only becomes believable once promotion is blocked by explicit
+checks. MegaCpp's checks include:
+
+- schema validation
+- token-range and dtype validation
+- round-trip decode checks
+- sample-level sanity checks
+- a small consumer smoke run before a snapshot is promoted
+
+The exact thresholds may change. The idea should not. A dataset snapshot either
+survives promotion checks or it does not.
+
+## What the public claim should be
+
+The strongest defensible public claim is:
+
+- the active corpus is pinned
+- license and provenance metadata are recorded explicitly
+- dedup happens before promotion
+- build-aware enrichment is kept separate from syntax-only coverage
+- tokenizer and dataset revisions are versioned
+- long-context packing requires explicit document-boundary handling
+- dataset snapshots must pass promotion checks before training uses them
+
+That is a stronger and more useful story than listing many sources without
+explaining the contract that ties them together.
 
 ## References
 
-- the public data-status note
-- the public corpus note
-- the public curriculum mapping note
-- the public training-data examples note
-- the public doc-masking note
-- the public pipeline design note
+- [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega/tree/main)
+- [MegaCpp article samples](https://github.com/DatasunriseOU/site_samples/tree/main/articles)
+
+- [The Stack paper](https://arxiv.org/abs/2211.15533)
+- [The Stack v2 paper](https://arxiv.org/abs/2402.19173)
+- [SPDX license expressions](https://spdx.github.io/spdx-spec/v2.2.2/SPDX-license-expressions/)
+- [REUSE specification](https://reuse.software/specifications/)
+- [Parquet concepts](https://parquet.apache.org/docs/concepts/)
+- [HumanEval](https://github.com/openai/human-eval)
+- [BigCode evaluation harness](https://github.com/bigcode-project/bigcode-evaluation-harness)

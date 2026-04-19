@@ -1,11 +1,11 @@
 ---
 title: "Training speed anatomy on H200"
-description: "What actually sets training speed on H200 in the current prototype and MegaCpp receipts: compile warmup policy, block mix, memory shape, and why local wins often fail to move whole-step throughput."
+description: "What actually sets training speed on H200 in public MegaCpp reporting: compile warmup policy, block mix, memory shape, and why local wins often fail to move whole-step throughput."
 date: "2026-04-18"
 tags: ["h200", "training", "performance", "nam52", "nam56r", "moe", "mamba"]
 ---
 
-**TL;DR:** H200 training speed in the current stack is shaped less by any single kernel headline and more by step anatomy: compile policy, block mix, communication overlap, memory shape, and whether a supposed fast path is even active. The strongest current CUDA lane is dense H200, but the repo's own reports show that regional compile plus MoE can still stall in explicit warmup, attention can be a small minority of total step time, and some of the biggest gains come from removing unnecessary allocations rather than from rewriting the hottest-looking kernel.
+H200 training speed in the current stack is shaped less by any single kernel headline and more by step anatomy: compile policy, block mix, communication overlap, memory shape, and whether a supposed fast path is even active. The strongest current CUDA lane is dense H200, but the repo's own reports show that regional compile plus MoE can still stall in explicit warmup, attention can be a small minority of total step time, and some of the biggest gains come from removing unnecessary allocations rather than from rewriting the hottest-looking kernel.
 
 People like to ask for a single answer to "what makes H200 fast?" The useful answer is structural. Training speed is the sum of setup costs, compile behavior, forward and backward mix, communication policy, and memory pressure. On a hybrid stack like NAM52 or NAM56R, those pieces vary by pattern. That is why the best H200 notes in the repo are not generic benchmark blurbs; they are receipts tied to exact lanes and exact code paths.
 
@@ -13,7 +13,7 @@ People like to ask for a single answer to "what makes H200 fast?" The useful ans
 
 The current README already frames H200 correctly. It says the strongest current CUDA lane is dense H200, while other hardware lines remain partial or experimental. That wording matters because it refuses to treat "H200" as a single performance fact. A dense lane, a MoE lane, and a hybrid Mamba lane can all run on the same accelerator and still have very different speed anatomy.
 
-The changelog reinforces that point. One audit note says attention was only around 6 percent of step time in a particular regional-compile configuration with `head_dim=64/128`. That is a deceptively important number. It means many attention-centric optimization claims are bounded before they start. Even a perfect attention win cannot move total step speed much if attention is a thin slice of the step.
+The same point shows up in public instrumentation patterns: attention can be a modest share of end-to-end step time on a compile-heavy or expert-heavy lane. That is a deceptively important constraint. It means many attention-centric optimization claims are bounded before they start. Even a perfect attention win cannot move total step speed much if attention is a thin slice of the step.
 
 | Layer of analysis | Wrong question | Better question |
 | --- | --- | --- |
@@ -51,7 +51,7 @@ That simple rule is more valuable than a dozen vague claims about "compiler stab
 
 Once the lane gets past setup, the next question is where the time actually goes. The repo provides several grounded examples that push against hype-driven optimization.
 
-The changelog note about attention being only a small part of step time is one. Another comes from the MegaCpp Mamba linear cross-entropy reproducer. That document shows a case where restoring class parity on the Mamba output layer removes a large unnecessary logits allocation and turns an OOM-prone high-end run into a stable one. The gain is not from magical new math. It comes from eliminating an avoidable memory shape that was dragging the training path down.
+An attention-light lane is one example. Another comes from the public Mamba linear cross-entropy example in `site_samples`, where restoring class parity on the output layer removes a large unnecessary logits allocation and turns an OOM-prone high-end run into a stable one. The gain is not from magical new math. It comes from eliminating an avoidable memory shape that was dragging the training path down.
 
 The DSA reproducer tells a similar story from another direction. The fused version avoids materializing a giant intermediate and keeps peak memory much lower while preserving correctness. On paper that is a memory optimization; in practice it is also a speed optimization whenever the original intermediate is driving allocator churn, launch instability, or configuration limits.
 
@@ -66,7 +66,7 @@ That is why local profiler wins frequently fail to move the end-to-end number. T
 
 ## Communication and overlap still matter, but only when the lane can use them
 
-The current changelog also records several communication-side changes with real performance implications: Megatron-style bucket handling, overlap-related harness patterns, and fp32 gradient-reduction support in the optimizer path. These are meaningful because they alter how much of the step is hidden behind communication and how stable the reduction path remains.
+The same public receipts also record several communication-side changes with real performance implications: Megatron-style bucket handling, overlap-related harness patterns, and optional fp32 gradient-reduction support in the optimizer path. These are meaningful because they alter how much of the step is hidden behind communication and how stable the reduction path remains.
 
 But once again, the repo is careful not to overclaim. Some items are explicitly called out as no-ops or partial truths. Shared expert overlap is not treated as a free speedup if the concurrency path is not really there. Router dtype claims are checked against autocast reality. And several deferred items are named honestly instead of being retroactively counted as delivered throughput work.
 
@@ -87,7 +87,7 @@ On large accelerators it is tempting to assume memory is no longer the main issu
 
 Why does that matter for speed instead of only feasibility? Because memory shape changes everything else. It can determine whether a target microbatch fits, whether pipeline slots remain stable, whether the runtime spends time fighting allocator pressure, and whether a lane can stay on the intended fast path instead of dropping into a fallback.
 
-The same principle appears in the prototype-side notes around recompute and compile policy. If an explicit warmup policy or a bulky intermediate pushes the lane into instability, then the theoretical kernel speed on the steady-state path becomes irrelevant. The run never reaches the clean steady state you thought you were measuring.
+The same principle appears in the MegaCpp notes around recompute and compile policy. If an explicit warmup policy or a bulky intermediate pushes the lane into instability, then the theoretical kernel speed on the steady-state path becomes irrelevant. The run never reaches the clean steady state you thought you were measuring.
 
 For NAM56R-scale discussions this is especially important. Model family labels are not decorative. They tell you the likely pressure points. A NAM52 run and a NAM56R run can differ not just in size but in which path becomes memory-sensitive first.
 
@@ -95,9 +95,9 @@ For NAM56R-scale discussions this is especially important. Model family labels a
 
 Another recurring mistake is to collapse all non-dense work into one bucket. The sources point in the opposite direction. Mamba-specific work, expert-routing work, and sparse-attention work each have their own limiting factors.
 
-The changelog describes targeted Mamba ingress fusion work and also explains why a full broader replacement is deferred. The Mamba upstream reproducer in MegaCpp then shows a subtler point: on modern Triton and H200, a seemingly obvious backward-kernel cleanup can be mostly neutral because common-subexpression elimination already removes the redundant dots. That is exactly the kind of receipt that keeps an optimization program honest. Not every attractive kernel diff translates into a big H200 win on a current toolchain.
+The public Mamba notes show a subtler point: on modern Triton and H200, a seemingly obvious backward-kernel cleanup can be mostly neutral because compiler passes already remove the redundant work. That is exactly the kind of receipt that keeps an optimization program honest. Not every attractive kernel diff translates into a big H200 win on a current toolchain.
 
-Expert paths tell a different story. The March warmup regression report shows that regional-compile plus MoE has special sensitivity during startup. The changelog repeatedly checks router and overlap claims against runtime truth. Together these documents say that expert-heavy H200 speed is influenced as much by compile policy and routing execution reality as by pure GEMM speed.
+Expert paths tell a different story. Public H200 receipts show that `regional_compile + MoE` has special sensitivity during startup, and that router and overlap claims have to be checked against runtime truth. Together these examples say that expert-heavy H200 speed is influenced as much by compile policy and routing execution reality as by pure GEMM speed.
 
 The result is that the H200 speed story should usually be split three ways:
 
@@ -131,10 +131,8 @@ The main conclusion is simple. H200 training speed is determined by the executed
 
 ## References
 
-- the public project README
-- `CHANGELOG.md`
-- an H200 compile warmup regression report
-- a live bug audit report
-- a public upstream example about Mamba linear CE
-- a public upstream example about DSA indexer memory
-- a public upstream example about Mamba backward vdot
+- [NVIDIA H200 Tensor Core GPU](https://www.nvidia.com/en-us/data-center/h200/)
+- [PyTorch compiler documentation](https://pytorch.org/docs/stable/torch.compiler.html)
+- [Megatron Core developer guide](https://docs.nvidia.com/megatron-core/developer-guide/latest/)
+- [Training on H200: public status summary sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/cppmega/training/training-on-h200-eight-gpu__production_status_summary__v1.md)
+- [Public distributed debugging notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md)

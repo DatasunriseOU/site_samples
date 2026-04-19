@@ -5,29 +5,31 @@ date: "2026-04-18"
 tags: ["sequence-parallel", "context-parallel", "expert-parallel", "tensor-parallel", "moe", "mamba3", "training"]
 ---
 
-TL;DR: TP, SP, CP, and EP are not four ways to say “make it fit.” They partition different objects. TP shards matrices and heads, SP shards activation flow on the TP axis, CP shards long-context ownership for attention-style paths, and EP shards expert ownership plus routed-token transport. Each one helps a different bottleneck, and each one is structurally unable to solve the others’ problems.
+TP, SP, CP, and EP are not four ways to say “make it fit.” They partition different objects. TP shards matrices and heads, SP shards activation flow on the TP axis, CP shards long-context ownership across ranks, and EP shards expert ownership plus routed-token transport. Each one helps a different bottleneck, and each one is structurally unable to solve the others’ problems.
+
+PP belongs in the same taxonomy even though this article focuses on token and expert ownership. PP partitions depth by stage. It does not shard weights the way TP does, it does not keep activations sequence-sharded the way SP does, and it does not solve expert routing the way EP does.
 
 ## Why MegaCpp cares
 
 The specialist runtime is hybrid: attention blocks, Mamba blocks, and MoE blocks coexist in one model. That means distributed axes have to respect block semantics rather than just tensor shapes. The wrong mental model leads directly to wrong launch plans and wrong debugging priorities. If you think EP should shrink dense attention, or CP should automatically work for a recurrent Mamba path, you are already off the rails.
 
-The prototype pins the intended story down in the distributed parallelism module. Its top-level docstring says the orchestrated order is `TP -> PP -> FSDP2 -> EP`, and its validation logic says TP must divide heads while EP must divide the number of routed experts. Those two constraints alone tell you that the axes are operating on fundamentally different model objects.
+MegaCpp pins the intended story down in the distributed parallelism module. Its top-level docstring says the orchestrated order is `TP -> PP -> FSDP2 -> EP`, and its validation logic says TP must divide heads while EP must divide the number of routed experts. Those two constraints alone tell you that the axes are operating on fundamentally different model objects. They also tell you that PP is depth ownership, not another name for tensor sharding.
 
-## What we built in the POC
+## How MegaCpp uses these splits
 
 Start with TP. In the distributed parallelism module, TP is applied first because it shreds layer-local matrices before later wrappers are added. The validation path checks that TP divides `num_heads` and `n_kv_head`, which is a direct statement about what TP is for: head-structured and matrix-structured modules such as QKV projections, output projections, MLP projections, and related shard-aware math. TP is not a generic model splitter. If a tensor is not written as a TP-aware matrix surface, TP will not save you.
 
 That point matters especially in hybrid models because the presence of several block families can make TP look more universal than it is. It is not. TP can help at the projection edges of a Mamba block because those are still matrices. It cannot automatically partition the internal sequence-state logic the way it partitions a QKV projection. When people say “the model is TP=2,” what they really mean is that the TP-aware matrix surfaces are split by two and the rest of the runtime adapts around that fact.
 
-SP is related to TP but not identical. the distributed parallelism module says the CUDA TP path enables sequence parallelism on the TP axis when `tp > 1`. That means SP is an activation-memory optimization that lives around TP-sharded compute. It shards the sequence dimension for the LayerNorm, dropout, residual, and related activation regions so those surfaces do not stay fully materialized on every TP rank. `CHANGELOG.md` captures the payoff: SP reduces activation memory proportional to TP degree. It also records one of the real failure modes: an SP reduce-scatter dtype mismatch with FP8 activations. That bug only makes sense if SP is understood as activation traffic on the TP axis rather than as a general-purpose parameter split.
+SP is related to TP but not identical. The distributed parallelism module says the CUDA TP path enables sequence parallelism on the TP axis when `tp > 1`. That means SP is an activation-memory optimization that lives around TP-sharded compute. It shards the sequence dimension for the LayerNorm, dropout, residual, and related activation regions so those surfaces do not stay fully materialized on every TP rank. The payoff is reduced activation memory roughly in proportion to TP degree. One representative failure mode is an SP reduce-scatter dtype mismatch with FP8 activations. That bug only makes sense if SP is understood as activation traffic on the TP axis rather than as a general-purpose parameter split. In Megatron-style MoE lanes, `EP + TP` usually implies `SP`; otherwise expert traffic and dense activation layout disagree.
 
 CP is a context split, which is a different animal again. CP divides ownership of the token timeline so long-context attention can reconstruct full context with inter-rank exchange. It is useful when sequence length itself is the dominant pressure. But because CP cuts along time, it only makes sense for blocks whose semantics can be reconstructed from context-partitioned state. That is natural for ring-style attention and much less natural for recurrent state-space paths.
 
-This is the split that most often gets overgeneralized. Engineers see token-shaped tensors on every block boundary and assume that any token-shaped representation can be context-partitioned. The prototype’s hybrid structure is a good corrective. Attention is fundamentally about interactions over context windows, so a dedicated context reconstruction path is natural. A recurrence is fundamentally about carrying temporal state, so cutting the timeline is a semantic operation, not just a layout change.
+This is the split that most often gets overgeneralized. Engineers see token-shaped tensors on every block boundary and assume that any token-shaped representation can be context-partitioned. MegaCpp's hybrid structure is a good corrective. Attention is fundamentally about interactions over context windows, so a dedicated context reconstruction path is natural. A recurrence is fundamentally about carrying temporal state, so cutting the timeline is a semantic operation, not just a layout change.
 
 The hybrid stack makes that limit obvious. Mamba carries recurrence across sequence chunks. A CP split that simply chops the timeline without carrying the right boundary state would be wrong even if tensor shapes still line up. So CP is not “SP but on another axis,” and it is not a free answer for every token-shaped tensor in the model.
 
-EP is the clearest special-purpose split. the distributed parallelism module says EP exists for MoE expert weights and that tokens are dispatched via all-to-all between EP peers. the MoE dispatch runtime module then shows the mechanism in detail: owner-rank mapping, send and receive counts, `all_to_all_single`, compact token receives, and combine-side returns. EP therefore partitions expert ownership and routes tokens to the ranks that own the selected experts. It does not reduce dense attention memory. It does not split sequence length. It does not fix a head-divisibility problem. It is specific to expert banks and routed-token transport.
+EP is the clearest special-purpose split. The distributed parallelism module says EP exists for MoE expert weights and that tokens are dispatched via all-to-all between EP peers. The MoE dispatch runtime module then shows the mechanism in detail: owner-rank mapping, send and receive counts, `all_to_all_single`, compact token receives, and combine-side returns. EP therefore partitions expert ownership and routes tokens to the ranks that own the selected experts. It does not reduce dense attention memory. It does not split sequence length. It does not fix a head-divisibility problem. It is specific to expert banks and routed-token transport.
 
 That specificity is exactly why EP composes well with other axes instead of replacing them. EP can coexist with TP because one answers “who owns this expert bank?” while the other answers “how is this matrix factored across ranks?” EP can coexist with SP because one moves sparse token traffic to experts and the other shrinks dense activation flow around TP regions. Once you see each split as a different ownership contract, the composition becomes much less mysterious.
 
@@ -76,9 +78,9 @@ The same is true for feature planning. If the next architecture change is to inc
 
 ## Ablations and what we kept
 
-The changelog surfaces are consistent with that reading.
+The public evidence surfaces are consistent with that reading.
 
-We kept SP because `CHANGELOG.md` says it reduces activation memory proportional to TP degree. We kept TP because the rest of the hybrid stack depends on shardable projection ownership. We kept EP because the MoE path needs real expert distribution rather than pretending every expert is local. And we kept the Mamba caution because recurrent sequence state is not the same as attention context.
+We kept SP because it reduces activation memory roughly in proportion to TP degree. We kept TP because the rest of the hybrid stack depends on shardable projection ownership. We kept EP because the MoE path needs real expert distribution rather than pretending every expert is local. And we kept the Mamba caution because recurrent sequence state is not the same as attention context.
 
 We also kept the dtype and collective lessons. The recorded SP FP8 reduce-scatter mismatch and TP all-reduce placement fixes are exactly the sort of bugs that appear when the split taxonomy is real rather than rhetorical.
 
@@ -95,8 +97,7 @@ Those fixes are a useful reminder that the split map is not just about memory. I
 
 ## References
 
-- the distributed parallelism module
-- the expert-dispatch and dense-model runtime notes
-- the recurrent-hybrid implementation notes
-- the public Mamba fused trapezoidal kernel sample
-- public changelogs for split-policy changes
+- https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/api-guide/tensor_parallel.html
+- https://docs.nvidia.com/megatron-core/developer-guide/latest/api-guide/moe.html
+- https://docs.pytorch.org/xla/master/spmd.html

@@ -13,7 +13,7 @@ H200 has 141 GB of HBM3e per device and a fast NVLink fabric; GB10 (DGX Spark, s
 
 The calibration loop replaces that with three artifacts: a pre-flight estimate that accounts for every enabled feature, a persistent JSONL catalog of past launches and their OOM outcomes, and a small set of escape hatches (automatic fit search, AdamW offload, activation offload) the runtime can pull when the estimate is tight.
 
-## What we built in the POC
+## What we built in the public MegaCpp calibration path
 
 The pre-flight estimator carries a hardware table with usable HBM per chip for the SKUs we care about — H200: 141.0 GB, GB10: 128.0 GB unified, plus B200, GB200, H100, A100, L40S, and T4 — and a dtype byte table that knows about bf16, fp8, and nvfp4 (0.5 bytes per element). The estimate is feature-aware: it walks the configuration, adds parameter bytes per layer including the right Mamba state-space contribution and MoE expert count, optimizer-state bytes for AdamW plus Muon (Muon's two momentum buffers vs AdamW's two moments), gradient bytes, and activation bytes per microbatch, then subtracts a configurable headroom reserve. The Mamba contribution is the trickiest because the SSM state caches scale with `seq_len * d_state * n_groups` rather than with `n_embd` alone; that audit caught a 6 GB blowup on the depth-52 hybrid preset before any GPU touched it.
 
@@ -43,7 +43,7 @@ The activation-offload split survives. Whole-block offload becomes the supported
 
 The CPU AdamW offload path remains available but is used selectively. It ships behind a feature flag, defaults off on H200 (where AdamW state for the eight specialists fits comfortably), and defaults to `offload_fraction=0.5` on GB10 for the largest specialists. We do not offload Muon, ever. The CPU step's float64 reduction tail can be a few percent of step time when offload_fraction is high, so the practical rule is: only offload enough AdamW state to keep peak headroom above 8 GB; do not chase the maximum.
 
-What stayed experimental: the multi-tier offload scheme that paged optimizer state across pinned host memory, NVMe, and a remote shared store. The complexity-versus-savings ratio was bad and the failure modes were operationally awful. The MegaCpp production codebase has two tiers — GPU and pinned host — and that is the contract.
+What stayed experimental: the multi-tier offload scheme that paged optimizer state across pinned host memory, NVMe, and a remote shared store. The complexity-versus-savings ratio was bad and the failure modes were operationally awful. The MegaCpp deployment stack has two tiers — GPU and pinned host — and that is the contract.
 
 ## Ablations and what we kept
 

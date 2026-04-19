@@ -1,6 +1,6 @@
 # TPU Bringup Notes
 
-This note summarizes a public-safe TPU bringup workflow for training
+This note summarizes a public TPU bringup workflow for training
 experiments.
 
 Key themes:
