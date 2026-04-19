@@ -7,6 +7,10 @@ What is here:
 - `ngram_hash_embedding_sample.py` — token-level hashed local-pattern enrichment at the embedding/input side
 - `mhc_branch_mixer_sample.py` — constrained branch mixing for residual, Engram, and other side paths
 - `engram_mhc_stack_sample.py` — a small wiring example showing how these features fit together around an A-block
+- `gateskip_residual_router_sample.py` — residual gating for token-wise layer skipping
+- `flexidepth_adapter_sample.py` — static-shape layer skipping with a router and lightweight adapter
+- `block_taxonomy_sample.py` — A/M/E/C/R block family map
+- `residual_paths_sample.py` — fp32 residual, AttnRes, and mHC interaction summary
 
 How these features plug into the model:
 - n-gram hash runs early and enriches token embeddings before the main block stack
@@ -17,5 +21,8 @@ What problem they solve:
 - n-gram hash gives the model a cheap memory for repeated local token motifs
 - Engram helps preserve short syntax and local code fragments in a branch specialized for that job
 - mHC prevents multi-branch models from turning into uncontrolled weighted sums
+- GateSkip and FlexiDepth reduce unnecessary block compute without changing sequence shape
+- the block taxonomy clarifies which block family is responsible for which capability
+- the residual path summary shows which branch-mixing alternatives can conflict
 
 These files are adapted from the MegaCpp POC codebase with only public-safety cleanup applied.
