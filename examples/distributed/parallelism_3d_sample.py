@@ -1,9 +1,7 @@
 """Donor-based 3D parallelism planning excerpt.
 
-This public-safe sample is a reduced excerpt from the donor's
-``ParallelismConfig`` and ``validate_3d_config`` surface. It keeps the
-configuration contract and the main divisibility checks without copying the
-runtime mesh/wrapper code.
+Public-safe excerpt of the donor configuration contract and its main
+divisibility checks.
 """
 
 from __future__ import annotations
@@ -69,9 +67,7 @@ def validate_3d_config(
 ) -> list[str]:
     """Validate a 3D parallelism plan against a model config.
 
-    This mirrors the donor's public planning checks: world-size agreement,
-    layer divisibility for PP, head divisibility for TP, and expert
-    divisibility for EP.
+    Checks world-size agreement plus PP, TP, and EP divisibility.
     """
 
     warnings: list[str] = []

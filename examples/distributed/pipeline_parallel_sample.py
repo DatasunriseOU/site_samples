@@ -1,7 +1,7 @@
 """Pipeline Parallelism (PP) donor excerpt.
 
-Public-facing example of how the donor stack partitions transformer layers into
-pipeline stages with ``torch.distributed.pipelining``.
+Public-facing example of donor-style transformer partitioning with
+``torch.distributed.pipelining``.
 
 Usage:
     from examples.distributed.pipeline_parallel_sample import (
@@ -108,10 +108,10 @@ def _as_tensor(value: object) -> torch.Tensor:
 class _AuxLossInjector(torch.autograd.Function):
     """Inject auxiliary loss gradients into a hidden-state tensor.
 
-    This follows the same basic pattern as Megatron-Core's auxiliary-loss
-    scaler: attach an auxiliary loss to the hidden states' backward graph
-    without changing forward values, then inject a scaled gradient during
-    backward so router weights receive the intended signal.
+    This follows the usual auxiliary-loss scaler pattern: attach an auxiliary
+    loss to the hidden states' backward graph without changing forward values,
+    then inject a scaled gradient during backward so router weights receive the
+    intended signal.
 
     **Loss scaling** depends on the PP schedule:
 
@@ -133,8 +133,8 @@ class _AuxLossInjector(torch.autograd.Function):
     Call :meth:`set_loss_scale` with the appropriate scale before the forward
     pass that produces the auxiliary losses.
 
-    This is used for all non-last pipeline stages (both VPP chunks and
-    standard 1f1b/gpipe PP) whose aux losses would otherwise be lost:
+    This is used for non-last pipeline stages whose auxiliary losses would
+    otherwise be lost:
     - VPP: cleared by the next microbatch's forward before loss_fn drains
     - Standard PP: loss_fn only runs on the last stage, so non-last stage
       aux losses have no path to the backward pass without injection.
