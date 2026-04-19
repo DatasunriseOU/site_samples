@@ -49,6 +49,8 @@ Near-copy runtime receipts:
 - `dsa_indexer_memory_nearcopy.py`: heavier near-copy reproducer for the fp32 DSA score-intermediate blow-up
 - `sparse_mla_fp8_dispatch_nearcopy.py`: heavier near-copy dispatch surface for FP8-aware SparseMLA routing
 - `sparse_mla_dimension_generalization_nearcopy.py`: heavier near-copy comparison of hardcoded vs generalized SparseMLA dimensions
+- `liger_flce_reduction_none_nearcopy.py`: heavier near-copy loss-contract sample for the broken `reduction="none"` FLCE path
+- `megatron_flce_hopper_nearcopy.py`: heavier near-copy output-layer contract sample for Hopper-ready fused linear cross entropy
 
 What problem these files solve:
 - they keep the public model description tied to real recipe and launcher surfaces
@@ -66,6 +68,8 @@ What problem these files solve:
   seams, and structure-aware embedding contracts inspectable as separate units
 - they expose SparseMLA-specific dispatch and dimension assumptions as explicit
   public contracts instead of leaving them implicit in one kernel family
+- they also expose FLCE loss-path and output-layer-path assumptions as explicit
+  public contracts instead of treating them as invisible kernel details
 
 Where this fits in the model:
 - these are the top-level recipe, layout, and launch adapters for the training stack

@@ -45,6 +45,8 @@ Near-copy runtime receipts:
 - `tilelang_tma_bulk_copy_smem_nearcopy.py`
 - `sparse_mla_fp8_dispatch_nearcopy.py`
 - `sparse_mla_dimension_generalization_nearcopy.py`
+- `liger_flce_reduction_none_nearcopy.py`
+- `megatron_flce_hopper_nearcopy.py`
 
 In simple words: this directory is the bridge between the public NAM56R model
 story and the smaller contracts that make the recipe, runtime, and kernel
