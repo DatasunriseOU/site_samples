@@ -1,0 +1,94 @@
+"""Packed-row schema constants excerpt.
+
+This example captures the packed-row contract used by training rows after
+documents have been tokenized and packed together. The problem it solves is
+interface drift: the loader, trainer, and diagnostics all need the same row
+layout.
+"""
+
+from __future__ import annotations
+
+
+INPUT_IDS_COLUMN = "input_ids"
+TARGET_IDS_COLUMN = "target_ids"
+LOSS_MASK_COLUMN = "loss_mask"
+DOC_IDS_COLUMN = "doc_ids"
+VALID_TOKEN_COUNT_COLUMN = "valid_token_count"
+NUM_DOCS_COLUMN = "num_docs"
+TOKEN_STRUCTURE_IDS_COLUMN = "token_structure_ids"
+TOKEN_DEP_LEVELS_COLUMN = "token_dep_levels"
+TOKEN_AST_DEPTH_COLUMN = "token_ast_depth"
+TOKEN_SIBLING_INDEX_COLUMN = "token_sibling_index"
+TOKEN_AST_NODE_TYPE_COLUMN = "token_ast_node_type"
+TOKEN_SYMBOL_IDS_COLUMN = "token_symbol_ids"
+TOKEN_CALL_TARGETS_COLUMN = "token_call_targets"
+TOKEN_TYPE_REFS_COLUMN = "token_type_refs"
+TOKEN_DEF_USE_COLUMN = "token_def_use"
+TOKEN_CHANGE_MASK_PRE_COLUMN = "token_change_mask_pre"
+TOKEN_CHANGE_MASK_POST_COLUMN = "token_change_mask_post"
+HUNK_ID_PER_TOKEN_COLUMN = "hunk_id_per_token"
+EDIT_OP_PER_TOKEN_COLUMN = "edit_op_per_token"
+TOKEN_CHUNK_STARTS_COLUMN = "token_chunk_starts"
+TOKEN_CHUNK_ENDS_COLUMN = "token_chunk_ends"
+TOKEN_CHUNK_KINDS_COLUMN = "token_chunk_kinds"
+TOKEN_CHUNK_DEP_LEVELS_COLUMN = "token_chunk_dep_levels"
+TOKEN_CALL_EDGES_COLUMN = "token_call_edges"
+TOKEN_TYPE_EDGES_COLUMN = "token_type_edges"
+
+
+PACKED_ROWS_LOADER_REQUIRED_COLUMNS = (
+    INPUT_IDS_COLUMN,
+    TARGET_IDS_COLUMN,
+    LOSS_MASK_COLUMN,
+)
+
+PACKED_ROWS_PACKER_REQUIRED_COLUMNS = (
+    INPUT_IDS_COLUMN,
+    TARGET_IDS_COLUMN,
+    LOSS_MASK_COLUMN,
+    DOC_IDS_COLUMN,
+    VALID_TOKEN_COUNT_COLUMN,
+    NUM_DOCS_COLUMN,
+)
+
+PACKED_ROWS_TOKEN_METADATA_COLUMNS = (
+    TOKEN_STRUCTURE_IDS_COLUMN,
+    TOKEN_DEP_LEVELS_COLUMN,
+    TOKEN_AST_DEPTH_COLUMN,
+    TOKEN_SIBLING_INDEX_COLUMN,
+    TOKEN_AST_NODE_TYPE_COLUMN,
+    TOKEN_SYMBOL_IDS_COLUMN,
+    TOKEN_CALL_TARGETS_COLUMN,
+    TOKEN_TYPE_REFS_COLUMN,
+    TOKEN_DEF_USE_COLUMN,
+    TOKEN_CHANGE_MASK_PRE_COLUMN,
+    TOKEN_CHANGE_MASK_POST_COLUMN,
+    HUNK_ID_PER_TOKEN_COLUMN,
+    EDIT_OP_PER_TOKEN_COLUMN,
+)
+
+PACKED_ROWS_CHUNK_METADATA_COLUMNS = (
+    TOKEN_CHUNK_STARTS_COLUMN,
+    TOKEN_CHUNK_ENDS_COLUMN,
+    TOKEN_CHUNK_KINDS_COLUMN,
+    TOKEN_CHUNK_DEP_LEVELS_COLUMN,
+    TOKEN_CALL_EDGES_COLUMN,
+    TOKEN_TYPE_EDGES_COLUMN,
+)
+
+PACKED_ROWS_DENSE_FALLBACK_FILL_VALUES = {
+    DOC_IDS_COLUMN: 0,
+    TOKEN_STRUCTURE_IDS_COLUMN: 0,
+    TOKEN_DEP_LEVELS_COLUMN: 0,
+    TOKEN_AST_DEPTH_COLUMN: -1,
+    TOKEN_SIBLING_INDEX_COLUMN: -1,
+    TOKEN_AST_NODE_TYPE_COLUMN: -1,
+    TOKEN_SYMBOL_IDS_COLUMN: 0,
+    TOKEN_CALL_TARGETS_COLUMN: 0,
+    TOKEN_TYPE_REFS_COLUMN: 0,
+    TOKEN_DEF_USE_COLUMN: 0,
+    TOKEN_CHANGE_MASK_PRE_COLUMN: 0,
+    TOKEN_CHANGE_MASK_POST_COLUMN: 0,
+    HUNK_ID_PER_TOKEN_COLUMN: -1,
+    EDIT_OP_PER_TOKEN_COLUMN: 0,
+}

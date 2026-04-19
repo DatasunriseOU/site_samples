@@ -1,9 +1,8 @@
-"""Structure-aware masking pipeline excerpt.
+"""Long-context chunk boundary remap sample.
 
-This example shows how MegaCpp POC masking keeps token-aligned metadata valid
-after a fill-in-the-middle transform. The problem it solves is silent metadata
-drift: if token order changes but chunk boundaries or structure labels do not,
-the model trains on corrupted supervision.
+This example shows how chunk offsets are rewritten after a FIM transform. The
+problem it solves is graph integrity: call and type edges become misleading if
+their chunk spans no longer describe the current token order.
 """
 
 from __future__ import annotations
@@ -20,64 +19,15 @@ class FimResult:
     is_spm: bool = False
 
 
-def permute_metadata_for_fim(
-    meta_array: list[int],
-    fim_result: FimResult,
-    sentinel_value: int = 0,
-) -> list[int]:
-    """Remap a token-aligned metadata array through a FIM permutation.
-
-    The layout matches the real MegaCpp POC masking contract:
-      PSM: [FIM_PREFIX] prefix [FIM_SUFFIX] suffix [FIM_MIDDLE] middle [EOT]
-      SPM: [FIM_PREFIX] [FIM_SUFFIX] suffix [FIM_MIDDLE] prefix middle [EOT]
-    """
-    if not fim_result.was_transformed:
-        return meta_array
-
-    split_start, split_end = fim_result.split_start, fim_result.split_end
-    prefix_meta = meta_array[:split_start]
-    middle_meta = meta_array[split_start:split_end]
-    suffix_meta = meta_array[split_end:]
-    sentinel = sentinel_value
-
-    if fim_result.is_spm:
-        return (
-            [sentinel, sentinel]
-            + suffix_meta
-            + [sentinel]
-            + prefix_meta
-            + middle_meta
-            + [sentinel]
-        )
-    return (
-        [sentinel]
-        + prefix_meta
-        + [sentinel]
-        + suffix_meta
-        + [sentinel]
-        + middle_meta
-        + [sentinel]
-    )
-
-
 def remap_chunk_boundaries_for_fim(
     chunk_boundaries: list[dict],
     fim_result: FimResult,
     original_token_count: int,
 ) -> tuple[list[dict], list[int], list[int]]:
-    """Move chunk offsets into the new FIM token order.
-
-    Chunks that cross the FIM split are dropped. That keeps call/type graph
-    metadata conservative instead of pretending partially moved chunks are still
-    meaningful.
-    """
     if not fim_result.was_transformed or not chunk_boundaries:
         ordered = sorted(chunk_boundaries, key=lambda chunk: chunk["token_offset"])
         starts = [chunk["token_offset"] for chunk in ordered]
-        ends = [
-            ordered[index + 1]["token_offset"] if index + 1 < len(ordered) else original_token_count
-            for index in range(len(ordered))
-        ]
+        ends = [ordered[idx + 1]["token_offset"] if idx + 1 < len(ordered) else original_token_count for idx in range(len(ordered))]
         return ordered, starts, ends
 
     split_start, split_end = fim_result.split_start, fim_result.split_end
@@ -92,10 +42,7 @@ def remap_chunk_boundaries_for_fim(
         middle_offset = 1 + split_start + 1 + (token_count - split_end) + 1
 
     ordered = sorted(chunk_boundaries, key=lambda chunk: int(chunk.get("token_offset", 0)))
-    ends_orig = [
-        ordered[index + 1]["token_offset"] if index + 1 < len(ordered) else token_count
-        for index in range(len(ordered))
-    ]
+    ends_orig = [ordered[idx + 1]["token_offset"] if idx + 1 < len(ordered) else token_count for idx in range(len(ordered))]
 
     remapped: list[dict] = []
     starts: list[int] = []
