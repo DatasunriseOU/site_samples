@@ -34,7 +34,7 @@ MAMBA_NUM_GROUPS = 8
 
 
 def build_nemo_hybrid_pattern(*, pattern: str = NAM56R_PATTERN, depth: int = NAM56R_DEPTH, mtp_depths: int = 0, use_moe: bool = True) -> str:
-    """Translate the donor NAM pattern into the NeMo/Megatron hybrid pattern syntax."""
+    """Translate the MegaCpp POC NAM pattern into the NeMo/Megatron hybrid pattern syntax."""
 
     mapping = {
         "A": "*",

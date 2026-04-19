@@ -1,6 +1,6 @@
 """TPU startup calibration catalog example.
 
-This example shows the donor-backed record format used to remember which TPU
+This example shows the MegaCpp POC-backed record format used to remember which TPU
 startup candidates succeeded or failed. It exists so repeated launches do not
 retry the same bad sharding or batch-size combination after a compile-time or
 startup OOM.
@@ -16,7 +16,7 @@ import json
 
 
 def build_candidate_signature(signature_base: dict, candidate: dict) -> dict:
-    """Public-safe excerpt of the donor launch signature contract."""
+    """Public-safe excerpt of the MegaCpp POC launch signature contract."""
 
     return {
         "code": dict(signature_base.get("code", {})),
@@ -37,7 +37,7 @@ def build_candidate_signature(signature_base: dict, candidate: dict) -> dict:
 
 
 def build_signature_hash(signature: dict) -> str:
-    """Hash the candidate contract the same way the donor catalog indexes entries."""
+    """Hash the candidate contract the same way the MegaCpp POC catalog indexes entries."""
 
     payload = json.dumps(signature, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()

@@ -15,9 +15,9 @@ import torch
 
 
 def maybe_mark_cudagraph_step_begin(*, training: bool, device: torch.device) -> bool:
-    """Mirror the donor guard before calling cudagraph_mark_step_begin().
+    """Mirror the MegaCpp POC guard before calling cudagraph_mark_step_begin().
 
-    The donor calls this at the start of `GPT.forward()` on CUDA training paths.
+    The MegaCpp POC calls this at the start of `GPT.forward()` on CUDA training paths.
     Graph capture helps when repeated steps are shape-stable, but the runtime
     also needs a clear step boundary so replay does not observe stale aliases
     from patterns like `x = x + f(x)`.
@@ -30,10 +30,10 @@ def maybe_mark_cudagraph_step_begin(*, training: bool, device: torch.device) -> 
 
 
 def apply_cudagraph_env_defaults(environ: dict[str, str] | None = None) -> dict[str, str]:
-    """Return the donor's CUDA-graph-related environment defaults.
+    """Return the MegaCpp POC's CUDA-graph-related environment defaults.
 
-    Grounded donor note: the training launcher sets these defaults because
-    Inductor can capture per-block compiled kernels as CUDA graphs. The donor
+    Grounded MegaCpp POC note: the training launcher sets these defaults because
+    Inductor can capture per-block compiled kernels as CUDA graphs. The MegaCpp POC
     comment records a measured `+4.5% throughput on bench3 H200:8 d20 FSDP`
     when `TORCHINDUCTOR_TRITON_CUDAGRAPHS=1` is active together with
     `TORCH_COMPILE_CUDAGRAPH_TREES=1`.

@@ -3,7 +3,7 @@
 What it is: the rollout-side helper that emits a runnable CUDA smoke command for
 the dense/full FA4 path.
 
-Why it exists: import success is not enough for a backend migration. The donor
+Why it exists: import success is not enough for a backend migration. The MegaCpp POC
 helper materializes a concrete forward pass and records whether the output shape
 and NaN checks pass.
 
@@ -26,10 +26,10 @@ def torch_dtype_expr(dtype_name: str) -> str:
 
 
 def build_dense_fa4_smoke_python(*, shape: dict[str, Any], report_json: str, environment: str) -> str:
-    """Minimal donor-based version of `_build_dense_fa4_smoke_python`.
+    """Minimal MegaCpp POC-based version of `_build_dense_fa4_smoke_python`.
 
     Grounding:
-    - donor: `scripts/dense_fa4_rollout_helper.py`
+    - MegaCpp POC: `scripts/dense_fa4_rollout_helper.py`
     - backend import: `flash_attn.cute.interface.flash_attn_func`
 
     The key operational change is that the emitted script checks a real CUDA

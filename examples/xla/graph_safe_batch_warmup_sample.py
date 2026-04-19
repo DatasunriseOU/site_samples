@@ -1,6 +1,6 @@
 """Graph-safe runtime warmup scheduling.
 
-What it is: a donor-based excerpt of the helper logic that disables runtime
+What it is: a MegaCpp POC-based excerpt of the helper logic that disables runtime
 batch warmup on XLA while preserving scheduled-token accounting helpers.
 
 Why it exists: early-step shape or schedule changes can force recompiles on

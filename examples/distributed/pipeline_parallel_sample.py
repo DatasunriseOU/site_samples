@@ -1,6 +1,6 @@
-"""Pipeline Parallelism (PP) donor excerpt.
+"""Pipeline Parallelism (PP) MegaCpp POC excerpt.
 
-Public-facing example of donor-style transformer partitioning with
+Public-facing example of MegaCpp POC-style transformer partitioning with
 ``torch.distributed.pipelining``.
 
 Usage:
@@ -1698,7 +1698,7 @@ def apply_pipeline_parallel(
 
 
 # ---------------------------------------------------------------------------
-# Comm-stream separation (Megatron pattern, donor research item #1)
+# Comm-stream separation (Megatron pattern, MegaCpp POC research item #1)
 # ---------------------------------------------------------------------------
 #
 # torch.distributed.pipelining schedules issue NCCL P2P via the module-level

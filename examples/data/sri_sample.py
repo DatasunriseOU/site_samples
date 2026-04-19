@@ -36,7 +36,7 @@ def apply_sri(
 ) -> list[int]:
     """Turn a token span into SEARCH/REPLACE edit format.
 
-    This donor-style transform solves the mismatch between plain FIM and the
+    This MegaCpp POC-style transform solves the mismatch between plain FIM and the
     way developers often express code changes: by editing an existing region.
     """
 

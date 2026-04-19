@@ -1,6 +1,6 @@
 """call_jax TPU bridge runtime sample.
 
-What it is: a donor-based public-safe excerpt of the narrow bridge that hands a
+What it is: a MegaCpp POC-based public-safe excerpt of the narrow bridge that hands a
 TPU attention kernel from PyTorch into JAX/Pallas.
 Why it exists: the model stayed in PyTorch, but a few TPU-native kernels were
 worth bridging instead of reimplementing the full training stack in JAX.

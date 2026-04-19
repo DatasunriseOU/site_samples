@@ -1,6 +1,6 @@
 # Distributed Memory Notes
 
-This note is a public-safe summary derived from donor code in `cpu_offload.py`, `meta_init.py`, `memory_estimator.py`, and `memory_debug.py`.
+This note is a public-safe summary derived from MegaCpp POC code in `cpu_offload.py`, `meta_init.py`, `memory_estimator.py`, and `memory_debug.py`.
 
 ## What usually consumes memory
 
@@ -19,7 +19,7 @@ This note is a public-safe summary derived from donor code in `cpu_offload.py`, 
 - MoE routing can add bursty dispatch, gather, and imbalance buffers that are not obvious from parameter counts alone
 - allocator reservation and fragmentation can make `reserved` memory materially higher than `allocated` memory
 
-## Donor-backed triage order
+## MegaCpp POC-backed triage order
 
 - Start with a bucketed estimate: parameters, gradients, optimizer, activations, MoE routing, feature activations, runtime reserve, and fixed overhead
 - If runtime still fails, inspect allocator counters such as current and peak allocated bytes, current and peak reserved bytes, allocation retries, OOM count, and inactive split bytes
@@ -28,7 +28,7 @@ This note is a public-safe summary derived from donor code in `cpu_offload.py`, 
 
 ## What selective activation offload really means
 
-- The donor offload path is opt-in and module-targeted, not a blanket "offload the whole model" switch
+- The MegaCpp POC offload path is opt-in and module-targeted, not a blanket "offload the whole model" switch
 - Valid target families include attention projections, the full attention module, dense or MoE feed-forward blocks, and selected auxiliary branches
 - Large saved tensors are the intended candidates; small bookkeeping tensors stay on device
 

@@ -1,6 +1,6 @@
 """Runtime optimization receipts sample.
 
-This example distills the donor's validated runtime fixes into a public-safe
+This example distills the MegaCpp POC's validated runtime fixes into a public-safe
 table. It exists because optimization work is only useful when it is tied to a
 real failure mode and an observed outcome. The problem it solves is separating
 measured runtime wins from generic tuning advice.
@@ -23,12 +23,12 @@ RUNTIME_RECEIPTS = (
     {
         "problem": "CUDA compile retry launched an extra process and doubled memory pressure",
         "fix": "set --cuda_compile_retry_limit=0",
-        "impact": "the donor receipt classifies this as the fix for double-process OOM",
+        "impact": "the MegaCpp POC receipt classifies this as the fix for double-process OOM",
     },
     {
         "problem": "FP8 activation hooks cost about 35% overhead",
         "fix": "apply a 16K size threshold, exclude selected layers, and use fused packing",
-        "impact": "the donor receipt attributes the 35% overhead fix to those three changes",
+        "impact": "the MegaCpp POC receipt attributes the 35% overhead fix to those three changes",
     },
 )
 

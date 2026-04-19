@@ -17,10 +17,10 @@ import torch
 
 
 def load_flex_attention() -> tuple[Callable | None, Callable | None]:
-    """Load the donor FlexAttention surface with CUDA-only compilation.
+    """Load the MegaCpp POC FlexAttention surface with CUDA-only compilation.
 
-    Grounded donor rule: CPU import and test paths must not drag Inductor or
-    cudagraph machinery in just to prove that FlexAttention imports. The donor
+    Grounded MegaCpp POC rule: CPU import and test paths must not drag Inductor or
+    cudagraph machinery in just to prove that FlexAttention imports. The MegaCpp POC
     therefore wraps `flex_attention` with `torch.compile(...,
     mode="max-autotune-no-cudagraphs")` only when CUDA is available.
     """
@@ -39,9 +39,9 @@ def load_flex_attention() -> tuple[Callable | None, Callable | None]:
 
 @lru_cache(maxsize=1)
 def probe_flex_flash_backend() -> tuple[bool, str | None]:
-    """Probe the optional FLASH/CuTe backend exactly like the donor surface.
+    """Probe the optional FLASH/CuTe backend exactly like the MegaCpp POC surface.
 
-    The donor does this upfront so unsupported systems fail with a clear reason
+    The MegaCpp POC does this upfront so unsupported systems fail with a clear reason
     instead of surfacing an opaque import error from generated code deep inside
     the compiled attention path.
     """
@@ -50,20 +50,20 @@ def probe_flex_flash_backend() -> tuple[bool, str | None]:
         return False, "CUDA unavailable"
     try:
         major, minor = torch.cuda.get_device_capability()
-    except Exception as exc:  # pragma: no cover - mirrors donor failure path
+    except Exception as exc:  # pragma: no cover - mirrors MegaCpp POC failure path
         return False, f"CUDA capability probe failed: {type(exc).__name__}: {exc}"
     if major not in (9, 10, 11):
         return False, f"unsupported compute capability sm{major}{minor}"
     for module_name in ("cutlass", "cuda.bindings.driver", "flash_attn.cute.interface"):
         try:
             importlib.import_module(module_name)
-        except Exception as exc:  # pragma: no cover - mirrors donor failure path
+        except Exception as exc:  # pragma: no cover - mirrors MegaCpp POC failure path
             return False, f"{module_name} import failed: {type(exc).__name__}: {exc}"
     return True, None
 
 
 def compile_safe_softcap_note() -> tuple[str, ...]:
-    """Return the donor's compile-safety note for score modifiers."""
+    """Return the MegaCpp POC's compile-safety note for score modifiers."""
 
     return (
         "compiled CUDA paths should use compile-safe score modifiers",

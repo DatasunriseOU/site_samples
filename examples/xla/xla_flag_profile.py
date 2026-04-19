@@ -1,6 +1,6 @@
-"""Canonical public-safe XLA sample derived from the internal TPU donors.
+"""Canonical public-safe XLA sample derived from the internal TPU MegaCpp POCs.
 
-The donor repo has two distinct XLA surfaces:
+The MegaCpp POC repo has two distinct XLA surfaces:
 1. an XLA flag helper for pre-import runtime configuration.
 2. an optimizer pattern that avoids graph-breaking
    scalar extraction.
@@ -43,7 +43,7 @@ def summarize_xla_profile(profile: dict) -> str:
 def build_public_xla_env() -> dict[str, str]:
     """Return a compact public-safe environment sketch.
 
-    The names mirror the donor contract at a high level, but the values stay
+    The names mirror the MegaCpp POC contract at a high level, but the values stay
     intentionally generic and publication-safe.
     """
 

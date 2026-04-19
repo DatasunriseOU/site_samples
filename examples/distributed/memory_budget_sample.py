@@ -19,7 +19,7 @@ class MemoryBreakdown:
 
 
 def estimate_total_memory(breakdown: MemoryBreakdown) -> float:
-    """Mirror the donor budget arithmetic used in memory planning helpers."""
+    """Mirror the MegaCpp POC budget arithmetic used in memory planning helpers."""
     return (
         breakdown.params_gb
         + breakdown.optimizer_gb
@@ -41,7 +41,7 @@ def estimate_fsdp_memory(
     base_seq_len: int = 4096,
     overhead_gb: float = 1.5,
 ) -> float:
-    """Public-safe excerpt of donor memory planning math for FSDP/TP runs."""
+    """Public-safe excerpt of MegaCpp POC memory planning math for FSDP/TP runs."""
     sharding = max(dp, 1) if fsdp_enabled and dp > 1 else 1
     params_gb = total_param_gb / sharding
     optimizer_gb = total_optimizer_gb / sharding

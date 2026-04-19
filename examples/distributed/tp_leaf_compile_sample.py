@@ -1,6 +1,6 @@
 """Compile leaf modules only after tensor-parallel sharding has landed.
 
-This example shows the donor's CUDA TP compile rule. It exists because wrapping
+This example shows the MegaCpp POC's CUDA TP compile rule. It exists because wrapping
 an entire block too early can hide the exact leaf modules that the parallel
 planner still needs to rewrite.
 """
@@ -16,7 +16,7 @@ import torch.nn as nn
 def apply_cuda_tp_leaf_compile(model, compile_kwargs: dict) -> int:
     """Compile selected attention and MLP leaves after TP/SP rewrite.
 
-    The include filter and block limit match the donor knobs used to reduce the
+    The include filter and block limit match the MegaCpp POC knobs used to reduce the
     first compile blast radius while bringing a new lane up.
     """
 

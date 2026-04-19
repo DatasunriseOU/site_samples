@@ -9,14 +9,14 @@ from __future__ import annotations
 
 
 def lora_sync_mode(*, injected_before_fsdp: bool) -> str:
-    """Return the donor-backed sync strategy for LoRA parameters."""
+    """Return the MegaCpp POC-backed sync strategy for LoRA parameters."""
     if injected_before_fsdp:
         return "ignore_in_fully_shard"
     return "register_grad_hooks"
 
 
 def fsdp2_wrap_order() -> tuple[str, ...]:
-    """Canonical donor order for TP, FSDP2, and late LoRA injection."""
+    """Canonical MegaCpp POC order for TP, FSDP2, and late LoRA injection."""
     return (
         "apply tensor parallel first",
         "wrap the model or per-block layers with FSDP2",

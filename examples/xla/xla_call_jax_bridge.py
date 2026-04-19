@@ -5,7 +5,7 @@ to execute a JAX/Pallas kernel from a PyTorch training loop. It exists so the
 rest of the model can stay in PyTorch while only the hot sparse-attention path
 crosses the runtime boundary.
 
-The donor path used this bridge for Splash-style kernels and then validated the
+The MegaCpp POC path used this bridge for Splash-style kernels and then validated the
 behavior with forward, backward, document-masking, and softcap checks.
 """
 
@@ -28,9 +28,9 @@ def load_call_jax() -> Callable[..., Any] | None:
 
 
 def enable_splash_contract(attn_softcap: float) -> dict[str, object]:
-    """Describe the runtime contract the donor tests exercised.
+    """Describe the runtime contract the MegaCpp POC tests exercised.
 
-    The donor test suite re-enabled the bridge with multiple softcap values to
+    The MegaCpp POC test suite re-enabled the bridge with multiple softcap values to
     make sure cache resets and kernel selection behaved predictably.
     """
 
@@ -57,7 +57,7 @@ def choose_bridge_path(*, device_type: str, call_jax_available: bool) -> str:
 
 
 def build_segment_ids(batch: int, tokens: int, split_at: int) -> torch.Tensor:
-    """Recreate the donor document-mask setup used in the TPU bridge test."""
+    """Recreate the MegaCpp POC document-mask setup used in the TPU bridge test."""
 
     segment_ids = torch.zeros(batch, tokens, dtype=torch.int32)
     segment_ids[:, split_at:] = 1

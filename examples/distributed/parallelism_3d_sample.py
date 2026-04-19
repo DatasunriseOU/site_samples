@@ -1,6 +1,6 @@
-"""Donor-based 3D parallelism planning excerpt.
+"""MegaCpp POC-based 3D parallelism planning excerpt.
 
-Public-safe excerpt of the donor configuration contract and its main
+Public-safe excerpt of the MegaCpp POC configuration contract and its main
 divisibility checks.
 """
 

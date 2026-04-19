@@ -1,4 +1,4 @@
-"""Public OOM triage helper using donor-backed memory buckets.
+"""Public OOM triage helper using MegaCpp POC-backed memory buckets.
 
 The bucket names are adapted from the internal memory estimator and the
 residual split used by the internal memory debug helpers.
@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class MemoryBreakdown:
-    """Per-device memory buckets aligned to the donor estimator."""
+    """Per-device memory buckets aligned to the MegaCpp POC estimator."""
 
     params_gb: float = 0.0
     gradients_gb: float = 0.0
@@ -52,7 +52,7 @@ def dominant_pressure(breakdown: MemoryBreakdown) -> str:
 
 
 def residual_runtime_bytes(*, allocated_bytes: int, param_bytes: int, grad_bytes: int, buffer_bytes: int) -> int:
-    """Mirror the donor debug split between model-state memory and everything else."""
+    """Mirror the MegaCpp POC debug split between model-state memory and everything else."""
 
     residual = allocated_bytes - (param_bytes + grad_bytes + buffer_bytes)
     return max(residual, 0)

@@ -47,7 +47,7 @@ class HybridPlan:
 
 
 def parse_nem_pattern(pattern: str, depth: int) -> list[str]:
-    """Match the donor tiling rules for NAM-style layer patterns."""
+    """Match the MegaCpp POC tiling rules for NAM-style layer patterns."""
 
     if not pattern:
         raise ValueError("pattern must be non-empty")
@@ -86,7 +86,7 @@ def translate_pattern(
 ) -> HybridPlan:
     """Translate a NAM-style pattern into Megatron hybrid syntax.
 
-    The important donor contract is that `R` does not get silently remapped,
+    The important MegaCpp POC contract is that `R` does not get silently remapped,
     and `M` can still require a custom Mamba3-backed runtime even when the
     textual Megatron symbol is available.
     """

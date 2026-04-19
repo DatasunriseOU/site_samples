@@ -18,7 +18,7 @@ class OffloadPlan:
 
 
 def split_params_largest_first(param_numels: list[int], offload_fraction: float) -> OffloadPlan:
-    """Mirror the donor's largest-first offload heuristic for AdamW params."""
+    """Mirror the MegaCpp POC's largest-first offload heuristic for AdamW params."""
     if not 0.0 <= offload_fraction <= 1.0:
         raise ValueError("offload_fraction must be in [0, 1]")
     total = sum(param_numels)

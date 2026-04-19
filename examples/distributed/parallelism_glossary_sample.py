@@ -1,4 +1,4 @@
-"""Public-safe glossary for the main parallel axes used by the donor code."""
+"""Public-safe glossary for the main parallel axes used by the MegaCpp POC code."""
 
 GLOSSARY = {
     "pp": {
@@ -9,7 +9,7 @@ GLOSSARY = {
     "dp": {
         "name": "data parallel sharding",
         "ownership": "shards parameters and optimizer state within each stage instead of fully replicating them everywhere",
-        "notes": "this sample follows the donor's sharded FSDP-style interpretation, not classic full-replica DP",
+        "notes": "this sample follows the MegaCpp POC's sharded FSDP-style interpretation, not classic full-replica DP",
     },
     "tp": {
         "name": "tensor parallelism",
@@ -40,6 +40,6 @@ def describe_parallelism(mode: str) -> dict[str, str]:
 
 
 def describe_application_order() -> tuple[str, ...]:
-    """Return the donor-grounded high-level application order for the axes."""
+    """Return the MegaCpp POC-grounded high-level application order for the axes."""
 
     return APPLY_ORDER

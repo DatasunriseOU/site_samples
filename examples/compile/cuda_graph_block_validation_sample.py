@@ -1,6 +1,6 @@
 """Block-scoped CUDA graph validation for compiled model regions.
 
-What it is: a donor-based excerpt of the runtime check that validates requested
+What it is: a MegaCpp POC-based excerpt of the runtime check that validates requested
 CUDA-graph block types and forces the matching Inductor env vars on.
 
 Why it exists: explicit graph requests are easy to misconfigure when the model
@@ -8,7 +8,7 @@ changes and the requested block names no longer exist.
 
 What problem it solves: it turns a silent "graph flags were passed but nothing
 was captured" failure mode into a visible summary of found and missing block
-types, while preserving the donor runtime behavior of enabling the graph env
+types, while preserving the MegaCpp POC runtime behavior of enabling the graph env
 vars when explicit graph blocks are requested.
 """
 
@@ -61,7 +61,7 @@ def validate_cuda_graph_blocks(
 
     missing = [module_type for module_type in requested if module_type not in found]
     if found and not inductor_active:
-        # Donor behavior: explicit block capture should force the Inductor graph
+        # MegaCpp POC behavior: explicit block capture should force the Inductor graph
         # env vars so the request cannot silently degrade into a no-op.
         os.environ["TORCHINDUCTOR_TRITON_CUDAGRAPHS"] = "1"
         os.environ["TORCH_COMPILE_CUDAGRAPH_TREES"] = "1"

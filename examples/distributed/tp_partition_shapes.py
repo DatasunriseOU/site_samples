@@ -1,4 +1,4 @@
-"""Donor-grounded TP partition excerpt from MLA refresh helpers."""
+"""MegaCpp POC-grounded TP partition excerpt from MLA refresh helpers."""
 
 from __future__ import annotations
 

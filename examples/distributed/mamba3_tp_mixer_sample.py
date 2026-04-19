@@ -1,6 +1,6 @@
 """Grounded excerpt of the TP-aware Mamba3 mixer contract.
 
-This keeps the donor topology arithmetic and the rationale around replicated vs
+This keeps the MegaCpp POC topology arithmetic and the rationale around replicated vs
 sharded parameters, but trims away the full Megatron module body and kernel
 calls so the sample remains readable and import-clean.
 """

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Grounded donor excerpt for enriched JSONL -> parquet normalization.
+"""Grounded MegaCpp POC excerpt for enriched JSONL -> parquet normalization.
 
 This keeps the real record-normalization structure from the production data
 pipeline, but trims away tokenizer-coupled materialization so the sample stays

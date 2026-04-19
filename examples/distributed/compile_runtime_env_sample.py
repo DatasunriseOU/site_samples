@@ -1,4 +1,4 @@
-"""Apply the donor's compile-safety environment switches for CUDA bringup.
+"""Apply the MegaCpp POC's compile-safety environment switches for CUDA bringup.
 
 This example shows the small runtime policy layer around compile. It exists to
 reduce known failure modes during multi-GPU compile startup instead of changing
@@ -11,9 +11,9 @@ import os
 
 
 def configure_compile_runtime_env(args) -> dict[str, str]:
-    """Return the environment changes used by the donor compile path.
+    """Return the environment changes used by the MegaCpp POC compile path.
 
-    The donor keeps this logic narrow: disable compile only for explicit eager
+    The MegaCpp POC keeps this logic narrow: disable compile only for explicit eager
     mode or unstable lanes, and otherwise tune Inductor/NCCL settings so cold
     compile is less likely to fail before step 0.
     """

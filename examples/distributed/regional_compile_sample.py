@@ -1,6 +1,6 @@
 """Compile transformer blocks one by one before outer sharding wrappers.
 
-This example shows the donor's regional-compile pattern in a public-safe form.
+This example shows the MegaCpp POC's regional-compile pattern in a public-safe form.
 It exists because whole-model compile can hide submodules from later sharding
 passes, while per-block compile keeps the compile boundary small and easier to
 skip when a block family is known to be unstable.
@@ -14,7 +14,7 @@ from collections.abc import Iterable
 def iter_native_mamba3_children(module) -> Iterable[object]:
     """Yield children that look like upstream native Mamba3 modules.
 
-    The donor skips these because upstream Triton TMA descriptors are not safe
+    The MegaCpp POC skips these because upstream Triton TMA descriptors are not safe
     to push through the same static compile analysis path.
     """
 
@@ -28,9 +28,9 @@ def iter_native_mamba3_children(module) -> Iterable[object]:
 
 
 def apply_regional_compile_public(model, compile_kwargs: dict, *, tp_active: bool = False) -> dict[str, int]:
-    """Compile each block in-place when the donor rules say that is safe.
+    """Compile each block in-place when the MegaCpp POC rules say that is safe.
 
-    This mirrors the donor contract:
+    This mirrors the MegaCpp POC contract:
     1. run tensor/sequence parallel sharding first,
     2. compile block-by-block,
     3. let outer wrappers attach afterwards.

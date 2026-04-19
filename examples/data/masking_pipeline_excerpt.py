@@ -41,7 +41,7 @@ def apply_fim_function_level(
 ) -> FimResult:
     """Apply FIM around brace-delimited code blocks.
 
-    This donor-style masking strategy prefers real function-like blocks over
+    This MegaCpp POC-style masking strategy prefers real function-like blocks over
     random spans, which makes the infill target look more like the code edits
     we want the model to learn.
     """

@@ -1,6 +1,6 @@
 """Training goodput tracker excerpt.
 
-This example shows the donor-backed runtime metric used to separate useful step
+This example shows the MegaCpp POC-backed runtime metric used to separate useful step
 time from compilation, checkpointing, evaluation, and input stalls. It exists
 so an optimization pass can answer whether a run got faster for the right
 reason.
@@ -38,7 +38,7 @@ _SPAN_EVENTS = {
 
 
 class GoodputTracker:
-    """Trimmed donor implementation for wall-time accounting."""
+    """Trimmed MegaCpp POC implementation for wall-time accounting."""
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
@@ -116,7 +116,7 @@ class GoodputTracker:
 
 @contextmanager
 def maybe_record_goodput(tracker: GoodputTracker | None, event: GoodputEvent):
-    """Donor-backed event wrapper for code that may or may not enable tracking."""
+    """MegaCpp POC-backed event wrapper for code that may or may not enable tracking."""
 
     if tracker is None:
         yield

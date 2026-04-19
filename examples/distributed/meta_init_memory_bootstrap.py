@@ -1,6 +1,6 @@
 """Public-safe meta-init bootstrap excerpt.
 
-This mirrors the donor pattern used in the internal meta-init helper:
+This mirrors the MegaCpp POC pattern used in the internal meta-init helper:
 instantiate on the meta device, materialize empty tensors directly on the
 target device, then run the model's initializer once real storage exists.
 """
@@ -13,7 +13,7 @@ from typing import Any
 def create_model_on_device(model_cls: type, config: Any, device: Any):
     """Create a model without transient full-size CPU parameter storage.
 
-    The donor-backed bootstrap sequence is:
+    The MegaCpp POC-backed bootstrap sequence is:
     1. Instantiate on the meta device so parameters have metadata only.
     2. Call ``to_empty(device=...)`` to materialize empty tensors directly on
        the destination device.

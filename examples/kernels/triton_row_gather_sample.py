@@ -20,7 +20,7 @@ def gather_rows_3d(src: torch.Tensor, idx: torch.Tensor) -> torch.Tensor:
     """Public sample of the sparse attention row-staging contract.
 
     Grounding:
-    - donor source: `triton_kernels.py::gather_rows_3d`
+    - MegaCpp POC source: `triton_kernels.py::gather_rows_3d`
     - runtime caller source: `sparse_attention.py::_gather_sparse_rows_3d`
 
     The important change is not “use Triton everywhere”. The runtime only uses
@@ -45,7 +45,7 @@ def gather_rows_3d(src: torch.Tensor, idx: torch.Tensor) -> torch.Tensor:
     out = torch.empty((rows, src.shape[1], src.shape[2]), device=src.device, dtype=src.dtype)
     out_flat = out.reshape(rows, inner_dim)
 
-    # The donor launches a Triton kernel here after choosing BLOCK_SIZE and
+    # The MegaCpp POC launches a Triton kernel here after choosing BLOCK_SIZE and
     # num_warps from `inner_dim`. This sample keeps the exact staging contract
     # but leaves the actual Triton launch out so the file remains import-safe.
     out_flat.copy_(src_flat.index_select(0, idx_i32.to(dtype=torch.int64)))
@@ -60,9 +60,9 @@ def gather_rows_3d_pair(
     """Fused two-tensor variant used for paired K/V staging.
 
     Grounding:
-    - donor source: `triton_kernels.py::gather_rows_3d_pair`
+    - MegaCpp POC source: `triton_kernels.py::gather_rows_3d_pair`
 
-    The change relative to two separate gathers is that the donor kernel stages
+    The change relative to two separate gathers is that the MegaCpp POC kernel stages
     both tensors behind one row-layout check and one kernel launch. That keeps
     K/V staging aligned and avoids duplicated eligibility logic in the sparse
     attention packer.
@@ -87,7 +87,7 @@ def gather_rows_3d_pair(
 
 
 def sparse_attention_gather_policy(idx: torch.Tensor) -> str:
-    """Runtime policy lifted from the donor sparse-attention wrapper.
+    """Runtime policy lifted from the MegaCpp POC sparse-attention wrapper.
 
     `sparse_attention.py` keeps Triton only for bounded chunked staging. Once a
     request grows past one million rows, the runtime intentionally falls back to

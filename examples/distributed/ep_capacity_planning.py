@@ -1,10 +1,10 @@
-"""Public-safe EP capacity planning excerpt from donor parallelism checks."""
+"""Public-safe EP capacity planning excerpt from MegaCpp POC parallelism checks."""
 
 from __future__ import annotations
 
 
 def validate_ep_degree(*, routed_experts: int, ep_size: int, moe_enabled: bool = True) -> None:
-    """Mirror donor hard checks for expert-parallel splits."""
+    """Mirror MegaCpp POC hard checks for expert-parallel splits."""
     if ep_size <= 1:
         return
     if not moe_enabled:
@@ -25,7 +25,7 @@ def estimate_memory_per_device(
     bytes_per_param: float = 2.0,
     optimizer_multiplier: float = 10.0,
 ) -> dict[str, float]:
-    """Simplified donor-based per-device memory estimate under 3D parallelism."""
+    """Simplified MegaCpp POC-based per-device memory estimate under 3D parallelism."""
     params_per_stage = total_params / max(pp, 1)
 
     tp_shardable_frac = 0.65
@@ -56,7 +56,7 @@ def plan_ep_capacity(
     dp: int = 1,
     tp: int = 1,
 ) -> dict[str, int | float]:
-    """Combine donor EP divisibility checks with donor memory heuristics."""
+    """Combine MegaCpp POC EP divisibility checks with MegaCpp POC memory heuristics."""
     validate_ep_degree(routed_experts=routed_experts, ep_size=ep_size)
     memory = estimate_memory_per_device(pp=pp, dp=dp, tp=tp, total_params=total_params)
     return {

@@ -36,7 +36,7 @@ def fused_rope_qk(
 
     Grounded changes:
     - the fast path is CUDA-only
-    - bf16 tensors are deliberately excluded in the donor guard
+    - bf16 tensors are deliberately excluded in the MegaCpp POC guard
     - invalid cosine/sine layouts fall back immediately instead of trying to
       coerce the launch into a shape it was not written for
     """
@@ -56,7 +56,7 @@ def fused_rope_qk(
     ):
         return _apply_rotary_emb_plain(q, cos, sin), _apply_rotary_emb_plain(k, cos, sin)
 
-    # The donor launches two autograd-backed Triton calls here, one for Q and
+    # The MegaCpp POC launches two autograd-backed Triton calls here, one for Q and
     # one for K, so callers can backpropagate through each output independently.
     # This sample keeps the same guard contract and the same output semantics.
     return _apply_rotary_emb_plain(q, cos, sin), _apply_rotary_emb_plain(k, cos, sin)

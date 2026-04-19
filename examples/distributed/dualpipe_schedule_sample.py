@@ -9,7 +9,7 @@ from __future__ import annotations
 
 
 def dualpipe_loss_scale(grad_accum_steps: int, num_chunks: int) -> float:
-    """Mirror the donor scale rule for auxiliary losses under DualPipe."""
+    """Mirror the MegaCpp POC scale rule for auxiliary losses under DualPipe."""
     if grad_accum_steps < 1 or num_chunks < 1:
         raise ValueError("grad_accum_steps and num_chunks must be >= 1")
     return 1.0 / (grad_accum_steps * num_chunks)

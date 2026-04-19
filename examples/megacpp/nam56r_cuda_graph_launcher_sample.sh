@@ -2,7 +2,7 @@
 
 # CUDA-graph launcher settings for the NAM56R production lane.
 #
-# What it is: a donor-based excerpt of the production launch flags that scope
+# What it is: a MegaCpp POC-based excerpt of the production launch flags that scope
 # CUDA graph capture for selected model subsystems.
 #
 # Why it exists: the production lane needed an explicit graph path that could

@@ -1,6 +1,6 @@
 """GPU profile receipt sample.
 
-This is a donor-based public sample for matched GPU profiling receipts. It
+This is a MegaCpp POC-based public sample for matched GPU profiling receipts. It
 exists to keep throughput comparisons honest: same shapes, same warmup, same
 step count, then compare tok/sec, memory, and dispatch results. The problem it
 solves is false speedup claims caused by changing more than one thing at once.
@@ -34,9 +34,9 @@ def build_profile_receipt(
     dense_fa4_requested: bool,
     dense_fa4_dispatch_observed: bool,
 ) -> ProfileReceipt:
-    """Mirror the donor's central accounting: tokens divided by measured elapsed time.
+    """Mirror the MegaCpp POC's central accounting: tokens divided by measured elapsed time.
 
-    Grounded note: the donor profile runner resets state, performs warmup, then
+    Grounded note: the MegaCpp POC profile runner resets state, performs warmup, then
     measures only the timed loop. That matters because the measured tok/sec is
     otherwise dominated by first-compile overhead.
     """
@@ -55,7 +55,7 @@ def build_profile_receipt(
 
 
 def compare_receipts(baseline: ProfileReceipt, candidate: ProfileReceipt) -> dict[str, float | str]:
-    """Return the donor-style comparison summary for two matched profile lanes."""
+    """Return the MegaCpp POC-style comparison summary for two matched profile lanes."""
 
     speedup = candidate.tok_per_sec / baseline.tok_per_sec if baseline.tok_per_sec > 0 else 0.0
     memory_delta_gb = candidate.peak_mem_gb - baseline.peak_mem_gb
@@ -69,10 +69,10 @@ def compare_receipts(baseline: ProfileReceipt, candidate: ProfileReceipt) -> dic
 
 
 def fa4_profile_takeaways() -> tuple[str, ...]:
-    """Measured-note strings grounded in donor receipt practice."""
+    """Measured-note strings grounded in MegaCpp POC receipt practice."""
 
     return (
-        "The donor FA4-vs-Triton profiler measures only matched fwd+bwd loops after warmup.",
-        "Dispatch confirmation matters: requested FA4 is not enough, the donor also records whether FA4 really dispatched.",
+        "The MegaCpp POC FA4-vs-Triton profiler measures only matched fwd+bwd loops after warmup.",
+        "Dispatch confirmation matters: requested FA4 is not enough, the MegaCpp POC also records whether FA4 really dispatched.",
         "Peak memory belongs next to tok/sec because a faster lane that blows past the memory budget is not a usable promotion.",
     )

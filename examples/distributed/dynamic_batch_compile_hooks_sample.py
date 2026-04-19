@@ -1,6 +1,6 @@
 """Mark only the batch dimension as dynamic before compiled block calls.
 
-This example shows the donor helper used to avoid recompiling every time the
+This example shows the MegaCpp POC helper used to avoid recompiling every time the
  device batch size changes. It keeps sequence length concrete, because some
  compile grids break when the time dimension becomes symbolic.
 """
@@ -13,7 +13,7 @@ import torch
 def install_batch_dynamic_hooks(model):
     """Add temporary forward pre-hooks to compiled blocks.
 
-    The donor uses this because compiled block inputs are hidden states, not the
+    The MegaCpp POC uses this because compiled block inputs are hidden states, not the
     original token tensor, so symbolic batch information does not automatically
     flow into every regional-compile boundary.
     """

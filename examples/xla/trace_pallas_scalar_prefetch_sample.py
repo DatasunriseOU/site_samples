@@ -1,6 +1,6 @@
 """trace-pallas scalar-prefetch sample.
 
-What it is: a donor-based excerpt of the autograd wrapper around a TPU Pallas
+What it is: a MegaCpp POC-based excerpt of the autograd wrapper around a TPU Pallas
 attention kernel with softcapping and shrunk sparse grids.
 Why it exists: the bridge needed one place that traces the Pallas body, records
 the custom-call payload, and feeds the compact sparse metadata in the exact

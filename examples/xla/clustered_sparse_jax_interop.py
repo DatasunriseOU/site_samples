@@ -1,6 +1,6 @@
 """Clustered sparse JAX interop contract sample.
 
-What it is: a donor-based excerpt of the narrow helper layer that prepares a
+What it is: a MegaCpp POC-based excerpt of the narrow helper layer that prepares a
 clustered sparse TPU path to call JAX/Pallas kernels from a PyTorch model.
 Why it exists: the sparse pipeline evolved across multiple kernel signatures,
 so the wrapper had to detect which exact-mask, doc-id, and valid-prefix kwargs
@@ -76,7 +76,7 @@ def _ensure_jax():
 def _ensure_sparse_pallas():
     """Lazy-load sparse-pallas pipeline functions or raise ImportError."""
     raise ImportError(
-        "The donor bridge expected a sparse-pallas package on the Python path. "
+        "The MegaCpp POC bridge expected a sparse-pallas package on the Python path. "
         "This public sample documents the contract only and does not ship that package."
     )
 

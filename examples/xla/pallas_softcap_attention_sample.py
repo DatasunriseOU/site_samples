@@ -4,7 +4,7 @@ This example shows the small helper layer that prepares runtime metadata before
 the TPU Pallas attention kernels run. It exists so the fast path can accept one
 stable mask and validity contract instead of many ad hoc call shapes.
 
-The donor implementation added three important pieces:
+The MegaCpp POC implementation added three important pieces:
 - lazy TPU-only imports so CPU and CUDA code can still import shared helpers;
 - validity normalization so tiled kernels see a consistent token-prefix view;
 - dispatch rules that keep the native `trace_pallas` path for the modified
@@ -44,7 +44,7 @@ NUM_SUBLANES = 8
 def require_trace_pallas() -> TracePallasFn:
     """Load the native TPU bridge only when the runtime actually needs it.
 
-    The donor switched to `trace_pallas` so forward and backward stay on the
+    The MegaCpp POC switched to `trace_pallas` so forward and backward stay on the
     XLA custom-kernel path instead of bouncing through a separate `call_jax`
     bridge.
     """
@@ -74,7 +74,7 @@ def ensure_attention_validity(
 ) -> AttentionValidity | None:
     """Repair stale tile metadata so the kernel cannot silently use the wrong contract.
 
-    In the donor path this keeps local-window and document-mask prep stable when
+    In the MegaCpp POC path this keeps local-window and document-mask prep stable when
     tile sizes change across attention phases.
     """
 
@@ -97,9 +97,9 @@ def should_delegate_to_native_kernel(
     causal: bool,
     gqa_groups: int,
 ) -> bool:
-    """Mirror the donor dispatch rule for the simplest TPU path.
+    """Mirror the MegaCpp POC dispatch rule for the simplest TPU path.
 
-    When no added masking or softcap behavior is active, the donor falls back to
+    When no added masking or softcap behavior is active, the MegaCpp POC falls back to
     the stock TPU flash-attention kernel rather than paying for the larger
     modified wrapper.
     """

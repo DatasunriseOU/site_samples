@@ -1,6 +1,6 @@
-"""Donor-based VPP warmup-count helper excerpt.
+"""MegaCpp POC-based VPP warmup-count helper excerpt.
 
-This is a public-safe excerpt of the donor's ``get_vpp_warmup_count`` helper.
+This is a public-safe excerpt of the MegaCpp POC's ``get_vpp_warmup_count`` helper.
 It keeps the validated warmup/steady-state formula used for analysis and tests.
 """
 

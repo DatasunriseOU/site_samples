@@ -11,7 +11,7 @@ import torch
 
 
 def mod_capacity(seq_len: int, capacity_factor: float) -> int:
-    """Mirror the donor rule for how many tokens a routed layer may keep."""
+    """Mirror the MegaCpp POC rule for how many tokens a routed layer may keep."""
     if seq_len <= 0:
         raise ValueError("seq_len must be positive")
     capacity = int(seq_len * capacity_factor)
@@ -27,7 +27,7 @@ def mod_topk_indices(router_logits: torch.Tensor, capacity: int) -> torch.Tensor
 
 
 def routed_token_mask(router_logits: torch.Tensor, capacity_factor: float) -> torch.Tensor:
-    """Return a donor-style mask for tokens that should execute the layer."""
+    """Return a MegaCpp POC-style mask for tokens that should execute the layer."""
     batch, seq_len = router_logits.shape
     keep = mod_capacity(seq_len, capacity_factor)
     indices = mod_topk_indices(router_logits, keep)

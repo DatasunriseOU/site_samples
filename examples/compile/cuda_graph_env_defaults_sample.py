@@ -1,6 +1,6 @@
 """CUDA graph env defaults for compiled training blocks.
 
-What it is: a donor-based excerpt of the runtime env defaults that turn on
+What it is: a MegaCpp POC-based excerpt of the runtime env defaults that turn on
 Inductor CUDA graph trees for compiled CUDA regions.
 
 Why it exists: the training stack needed a graph path that removes Python
@@ -18,23 +18,23 @@ import os
 
 
 def apply_cuda_graph_env_defaults() -> dict[str, tuple[str, str]]:
-    """Apply donor-faithful CUDA graph env defaults unless the user opted out.
+    """Apply MegaCpp POC-faithful CUDA graph env defaults unless the user opted out.
 
     Grounding:
-    - `scripts/base_train.py` in the donor repo documents these two env vars as
+    - `scripts/base_train.py` in the MegaCpp POC repo documents these two env vars as
       the PyTorch-native CUDA-graph path for compiled blocks.
-    - The same donor comments record a measured H200:8 bench gain for this path
+    - The same MegaCpp POC comments record a measured H200:8 bench gain for this path
       on a regional-compile lane.
     """
     if os.environ.get("PUBLIC_SAMPLE_NO_ENV_DEFAULTS") == "1":
         return {}
 
     defaults: dict[str, str] = {
-        # Donor note: compiled regions are captured as CUDA graphs to remove
-        # Python dispatch overhead. The donor repo records a +4.5% H200:8
+        # MegaCpp POC note: compiled regions are captured as CUDA graphs to remove
+        # Python dispatch overhead. The MegaCpp POC repo records a +4.5% H200:8
         # throughput gain on one regional-compile FSDP lane.
         "TORCHINDUCTOR_TRITON_CUDAGRAPHS": "1",
-        # Required alongside TORCHINDUCTOR_TRITON_CUDAGRAPHS in the donor path.
+        # Required alongside TORCHINDUCTOR_TRITON_CUDAGRAPHS in the MegaCpp POC path.
         "TORCH_COMPILE_CUDAGRAPH_TREES": "1",
     }
 

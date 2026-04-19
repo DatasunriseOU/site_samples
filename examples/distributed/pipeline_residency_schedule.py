@@ -1,6 +1,6 @@
-"""Donor-based VPP schedule-regime helper excerpt.
+"""MegaCpp POC-based VPP schedule-regime helper excerpt.
 
-This public-safe helper keeps the donor's proven operating-regime checks for
+This public-safe helper keeps the MegaCpp POC's proven operating-regime checks for
 interleaved pipeline schedules.
 """
 
@@ -11,7 +11,7 @@ def validate_vpp_microbatch_regime(
     num_model_chunks: int,
     num_microbatches: int,
 ) -> dict[str, int | bool]:
-    """Validate the default VPP operating regime used by the donor helpers."""
+    """Validate the default VPP operating regime used by the MegaCpp POC helpers."""
 
     if pp_degree < 1 or num_model_chunks < 1 or num_microbatches < 1:
         raise ValueError("pp_degree, num_model_chunks, and num_microbatches must be positive")

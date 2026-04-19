@@ -1,6 +1,6 @@
 """Pallas grid shrinking sample.
 
-What it is: a donor-based excerpt of the mask compaction step used before the
+What it is: a MegaCpp POC-based excerpt of the mask compaction step used before the
 TPU Pallas softcapped attention custom call.
 Why it exists: sparse masks often contain many empty KV columns, and iterating
 over all of them wastes TPU work and scalar-memory budget.
@@ -90,7 +90,7 @@ def _build_splash_info_t(mask_obj, q_seq_len, kv_seq_len, block_q, block_k) -> S
 def _build_partial_mask_blocks(mask_obj, full_bm, q_seq_len, kv_seq_len, block_q, block_k):
     """Placeholder dependency for publication pack wiring.
 
-    The donor implementation precomputes dense partial masks here. Public docs
+    The MegaCpp POC implementation precomputes dense partial masks here. Public docs
     link this file for the grid-shrinking contract, not for the full mask
     materialization routine.
     """

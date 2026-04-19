@@ -1,6 +1,6 @@
 """Measured optimization receipts sample.
 
-This is a donor-based public helper for parsing measured optimization outcomes
+This is a MegaCpp POC-based public helper for parsing measured optimization outcomes
 from training result tables. It exists because optimization work needs receipt
 discipline: what changed, under what condition, and what got faster or lighter.
 The problem it solves is vague claims like "it was faster" without the matching
@@ -23,7 +23,7 @@ class OptimizationReceipt:
 
 
 def parse_compact_tok_sec(value: str) -> float:
-    """Convert donor-style compact throughput strings like ``304K`` into floats."""
+    """Convert MegaCpp POC-style compact throughput strings like ``304K`` into floats."""
 
     cleaned = value.strip().upper().replace(",", "")
     if cleaned.endswith("K"):
@@ -51,8 +51,8 @@ def feature_delta(base: OptimizationReceipt, candidate: OptimizationReceipt) -> 
     }
 
 
-def donor_measured_notes() -> tuple[OptimizationReceipt, ...]:
-    """Receipt rows grounded in the donor hardware-results document.
+def megacpp_poc_measured_notes() -> tuple[OptimizationReceipt, ...]:
+    """Receipt rows grounded in the MegaCpp POC hardware-results document.
 
     Grounded notes:
     - warm inductor/Triton cache was explicitly called out for these numbers

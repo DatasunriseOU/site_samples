@@ -20,9 +20,9 @@ def build_flash_call_kwargs(
     attention_validity: object | None,
     flash_accepts_attention_validity: bool,
 ) -> dict[str, Any]:
-    """Pre-resolve optional kwargs before the donor flash-attention call.
+    """Pre-resolve optional kwargs before the MegaCpp POC flash-attention call.
 
-    The donor comment explains why this matters: conditionally building a dict
+    The MegaCpp POC comment explains why this matters: conditionally building a dict
     and then unpacking it with `**kwargs` triggers a `CALL_FUNCTION_EX` graph
     break under `regional_compile`. That caused per-step recompiles on a live
     NAM56R-class lane, so the hot path resolves optional arguments before the
@@ -41,9 +41,9 @@ def build_flash_call_kwargs(
 
 
 def checkpoint_wrapper_contract() -> tuple[str, ...]:
-    """Return the donor's compile contract for recompute wrappers.
+    """Return the MegaCpp POC's compile contract for recompute wrappers.
 
-    The donor replaces a cold `_maybe_recompute(fn, recompute, *args, **kwargs)`
+    The MegaCpp POC replaces a cold `_maybe_recompute(fn, recompute, *args, **kwargs)`
     wrapper with an explicit-keyword helper because variadic argument unpacking
     causes a Dynamo `CALL_FUNCTION_EX` inside the compiled region.
     """
@@ -57,7 +57,7 @@ def checkpoint_wrapper_contract() -> tuple[str, ...]:
 
 
 def dynamic_batch_expectation() -> tuple[str, ...]:
-    """Mirror the donor test expectation for dynamic regional compile lanes."""
+    """Mirror the MegaCpp POC test expectation for dynamic regional compile lanes."""
 
     return (
         "compile once at a small batch size",

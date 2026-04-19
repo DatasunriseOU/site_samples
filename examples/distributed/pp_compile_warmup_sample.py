@@ -1,6 +1,6 @@
 """Warm compiled pipeline stages without running the real schedule.
 
-This example shows the donor warmup used for pipeline stages. It solves the
+This example shows the MegaCpp POC warmup used for pipeline stages. It solves the
 practical problem that compiled blocks still need one forward and backward pass,
 but the full pipeline scheduler adds transport logic that is not part of the
 compile target.
@@ -14,7 +14,7 @@ import torch
 def run_pp_stage_compile_warmup(stage_mods, model_config, *, warmup_dbs: int, seq_len: int, device, dynamic_batch: bool = False):
     """Run one synthetic forward/backward pass per stage module.
 
-    The donor promotes B=1 to B=2 for dynamic batch warmup because size-1 dims
+    The MegaCpp POC promotes B=1 to B=2 for dynamic batch warmup because size-1 dims
     are specialized as constants and produce a different compile cache key.
     """
 

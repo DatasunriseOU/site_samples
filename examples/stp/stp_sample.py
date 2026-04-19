@@ -41,7 +41,7 @@ def _stp_loss_single(h: torch.Tensor, n_spans: int = 1) -> torch.Tensor:
     if seq_len < 3:
         return h.new_zeros(())
 
-    # Use the donor's static-shape-friendly sampling pattern: draw 3 base
+    # Use the MegaCpp POC's static-shape-friendly sampling pattern: draw 3 base
     # positions, sort them, then add `[0, 1, 2]` to guarantee `s < r < t`.
     max_base = seq_len - 2
     total_cos = h.new_zeros(())

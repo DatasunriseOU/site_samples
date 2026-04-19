@@ -4,7 +4,7 @@ What it is: the adapter that lets a custom recurrent mixer live inside a real
 Megatron `MambaLayer` without rewriting the mixer math.
 
 Why it exists: Megatron expects `[seq, batch, hidden]`, extra constructor
-kwargs, and a `(output, bias)` return contract, while the donor recurrent layer
+kwargs, and a `(output, bias)` return contract, while the MegaCpp POC recurrent layer
  expects a different config surface and `[batch, seq, hidden]` tensors.
 
 What problem it solves: it preserves Megatron overlap and residual plumbing
@@ -22,10 +22,10 @@ import torch
 
 @dataclass(frozen=True)
 class WrapperConfigShim:
-    """Read-through config shim matching the donor wrapper idea.
+    """Read-through config shim matching the MegaCpp POC wrapper idea.
 
     Grounding:
-    - donor source: `megatron_m2rnn.py::NanochatM2RNNMixer`
+    - MegaCpp POC source: `megatron_m2rnn.py::NanochatM2RNNMixer`
     """
 
     primary: Any
@@ -38,7 +38,7 @@ class WrapperConfigShim:
 
 
 class RegionalCompileM2RNNWrapper(torch.nn.Module):
-    """Shape adapter extracted from the donor integration path.
+    """Shape adapter extracted from the MegaCpp POC integration path.
 
     Grounded changes:
     - swallow Megatron-only construction kwargs instead of duplicating the
@@ -82,7 +82,7 @@ class RegionalCompileM2RNNWrapper(torch.nn.Module):
 
 def compile_boundary_note() -> str:
     return (
-        "The donor keeps this wrapper on a pure-PyTorch recurrence path so it can "
+        "The MegaCpp POC keeps this wrapper on a pure-PyTorch recurrence path so it can "
         "participate in regional_compile without depending on Triton kernel "
         "introspection or TMA-descriptor-specific behavior."
     )
