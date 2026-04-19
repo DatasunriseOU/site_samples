@@ -47,6 +47,8 @@ Near-copy runtime receipts:
 - `sparse_mla_dimension_generalization_nearcopy.py`
 - `liger_flce_reduction_none_nearcopy.py`
 - `megatron_flce_hopper_nearcopy.py`
+- `author_mamba3_spec_nearcopy.py`
+- `index_cache_patch_nearcopy.py`
 
 In simple words: this directory is the bridge between the public NAM56R model
 story and the smaller contracts that make the recipe, runtime, and kernel
