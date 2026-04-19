@@ -3,6 +3,11 @@
 This directory contains public-safe MegaCpp model-spec examples centered on
 NAM56R and its launch/runtime wiring.
 
+Reading order:
+- start with the recipe and launch surfaces to understand the public NAM56R contract
+- then use the compact runtime receipts to see each issue in a smaller teaching-sized sample
+- then use the near-copy receipts when you need a shape/layout contract that stays much closer to the MegaCpp POC source
+
 What is here:
 - `nam56r_nemo_recipe_sample.py`: authoritative NAM56R recipe values and CLI emission
 - `megatron_args_sample.py`: argument shaping for Megatron-style launch flows
@@ -28,6 +33,15 @@ What is here:
 - `mla_shared_adapter_sample.py`: shared MLA compatibility adapter contract
 - `parquet_to_megatron_indexed_dataset_sample.py`: parquet-token-shard to indexed-dataset bridge
 - `prepare_format_megacpp_sample.py`: thin public wrapper for naming and split policy in Megatron-ready data prep
+
+Compact runtime receipts:
+- `dsa_cuda_graph_safety_sample.py`: compact CUDA-graph-safe DSA mask-update sample
+- `mamba3_mimo_3d_to_2d_smem_sample.py`: compact shared-memory legality sample for the Mamba3 layout rewrite
+- `tilelang_tma_bulk_copy_smem_sample.py`: compact TileLang TMA/shared-memory lowering sample
+- `mamba_linear_ce_parity_sample.py`: compact linear-CE parity sample for Mamba-style output layers
+- `dsa_indexer_memory_sample.py`: compact memory-shape sample for the DSA score-materialization issue
+
+Near-copy runtime receipts:
 - `dsa_cuda_graph_safety_nearcopy.py`: heavier near-copy reproducer for CUDA-graph-safe DSA mask updates
 - `mamba3_mimo_3d_to_2d_smem_nearcopy.py`: heavier near-copy layout refactor for the Mamba3 shared-memory/TMA issue
 - `tilelang_tma_bulk_copy_smem_nearcopy.py`: heavier near-copy lowering contract for TileLang TMA bulk-copy layouts
@@ -55,3 +69,5 @@ Where this fits in the model:
 - the reproducer-style files sit at the boundary between recipe/launcher policy
   and low-level runtime behavior, where a small standalone sample is often more
   useful than a full model launch
+- the compact lane is for readability first; the near-copy lane is for contract
+  fidelity first

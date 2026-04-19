@@ -1,7 +1,9 @@
 # MegaCpp Index
 
 Use this folder for public NAM56R recipe surfaces, Megatron/Nemotron
-translation seams, and small runnable runtime receipts.
+translation seams, and two runtime-example lanes:
+- compact receipts for a smaller teaching-sized view of each issue
+- near-copy receipts for a closer MegaCpp POC contract when shape/layout details matter
 
 Recipe and launch surfaces:
 - `nam56r_nemo_recipe_sample.py`
