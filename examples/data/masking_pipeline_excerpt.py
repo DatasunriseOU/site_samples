@@ -1,16 +1,11 @@
-"""Public-safe document masking and enrichment flow.
-
-This example mirrors the row-oriented data-prep contract described in the
-public notes: normalize a source record, apply document masking, and emit a
-compact enriched row ready for columnar writing.
-"""
+"""Compact masking-stage excerpt used by public data-processing docs."""
 
 from __future__ import annotations
 
 
 def normalize_record(record: dict[str, object]) -> dict[str, object]:
     return {
-        "repo": record.get("repo", "public/example-repo"),
+        "repo": record.get("repo", "datasunriseou/megacpp-public"),
         "filepath": record.get("filepath", "src/example.cpp"),
         "language": record.get("language", "c++"),
         "text": str(record.get("text", "")),

@@ -1,0 +1,13 @@
+{
+  "text": "template <typename T> T add(T a, T b) { return a + b; }",
+  "structure_ids": [1, 1, 1, 2, 2, 2, 3, 3],
+  "chunk_boundaries": [
+    {"start": 0, "end": 21, "kind": "signature", "name": "add", "dep_level": 0},
+    {"start": 22, "end": 48, "kind": "body", "name": "add", "dep_level": 1}
+  ],
+  "call_edges": [],
+  "type_edges": [{"from": 1, "to": 3}],
+  "repo": "datasunriseou/megacpp-public",
+  "filepath": "src/add.hpp",
+  "commit_hash": "public-example-commit"
+}

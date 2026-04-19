@@ -1,0 +1,14 @@
+{
+  "commands": [
+    {
+      "directory": "/workspace/project",
+      "file": "src/parser.cpp",
+      "command": "clang++ -std=c++20 -Iinclude -c src/parser.cpp -o build/parser.o"
+    },
+    {
+      "directory": "/workspace/project",
+      "file": "src/indexer.cpp",
+      "command": "clang++ -std=c++20 -Iinclude -DENABLE_MEGACPP=1 -c src/indexer.cpp -o build/indexer.o"
+    }
+  ]
+}
