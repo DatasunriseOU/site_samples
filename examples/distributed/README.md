@@ -23,6 +23,7 @@ What the new MoE files cover:
 Additional distributed control files:
 - `gateskip_residual_budget_sample.py`: residual gating budget schedule
 - `flexidepth_skip_router_sample.py`: adaptive layer-skip router contract
+- `mtp_shared_block_sample.py`: shared-block multi-token prediction contract
 - `fsdp2_muon_local_shard_sample.py`: local-row optimizer shard mapping
 - `dualpipe_stage_contract_sample.py`: DualPipe output lifetime and aux-loss rules
 
@@ -33,5 +34,6 @@ In simple terms:
 - dispatch moves those token slices to the right expert shard
 - aux-loss and z-loss keep the router stable and balanced
 - GateSkip and FlexiDepth reduce wasted compute without changing the global model layout
+- MTP reuses one extra block across several depths so future-token prediction stays cheap and compile-friendly
 - FSDP2 still needs local-shard-aware optimizer math even when the model topology is right
 - DualPipe schedules only work if stage outputs and aux losses survive long enough for overlap

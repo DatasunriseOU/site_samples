@@ -15,6 +15,7 @@ What is here:
 - `fused_residual_add_rms_norm_sample.py`: block-boundary residual + norm fusion contract.
 - `fused_rope_qk_sample.py`: fused rotary application for Q/K attention ingress.
 - `mhc_fused_static_sample.py`: static 4-stream fused mixing surface for mHC fast paths.
+- `moba_block_sparse_decode_sample.py`: requested-vs-actual backend receipt for blockized sparse decode.
 - `triton_row_gather_sample.py`: single-tensor sparse row gather staging.
 - `triton_row_gather_pair_sample.py`: paired K/V sparse row gather staging.
 
@@ -25,6 +26,8 @@ How these fit into the model/runtime:
   dense, sparse, and local wrappers aligned on which tokens are real.
 - Attention backend rollout: dense FA4 helpers keep rollout and decode claims
   tied to a real bounded contract.
+- Blockized sparse decode: the MoBA-style resolver records when a FLASH-style
+  sparse request had to execute as Triton instead.
 - Block boundaries: residual + RMSNorm fusion and bias-dropout-add cut repeated
   elementwise traffic.
 - Expert compute: relu2 is one of the cheap expert activation surfaces used in

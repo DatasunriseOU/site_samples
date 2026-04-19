@@ -21,6 +21,7 @@ Key files in this directory:
 - `token_chunk_layout_sample.py`: turns chunk boundaries and graph edges into token-aligned layout
 - `structure_embedding_components_sample.py`: shows which enriched columns feed the structure embedding path
 - `structure_graph_relations_sample.py`: normalizes chunk relations for TreeFFN and relation-bias style features
+- `structure_graph_enricher_sample.py`: explains the chunk-graph message-passing contract itself
 - `platform_embedding_sample.py`: summarizes per-document platform label inputs
 - `loader_enriched_columns_sample.py`: shows the loader fallback path for optional enriched JSON columns
 - `masking_pipeline_excerpt.py`: preserves metadata through FIM-style masking
@@ -30,3 +31,6 @@ Key files in this directory:
 
 The code is intentionally trimmed to stay readable, but the control flow and
 data contracts come from real MegaCpp POC sources.
+
+The structure-aware line specifically pools tokens to chunks, runs TreeFFN-style
+message passing over chunk relations, and scatters the result back to tokens.

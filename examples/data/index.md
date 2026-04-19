@@ -23,4 +23,5 @@ If you only read three files, start with:
 Then continue with:
 - `structure_embedding_components_sample.py`
 - `structure_graph_relations_sample.py`
+- `structure_graph_enricher_sample.py`
 - `platform_embedding_sample.py`

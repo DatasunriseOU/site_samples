@@ -10,6 +10,7 @@
 ## Sparse staging kernels
 - `triton_row_gather_sample.py`: gathers one contiguous `(N, H, D)` tensor by row index.
 - `triton_row_gather_pair_sample.py`: gathers matching K/V rows under one contract.
+- `moba_block_sparse_decode_sample.py`: resolves requested vs actual backend for blockized sparse decode.
 
 ## Block-boundary kernels
 - `fused_bias_dropout_add_sample.py`: compiled bias + dropout + residual-add helper.
