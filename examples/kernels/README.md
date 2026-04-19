@@ -7,6 +7,8 @@ What is here:
 - `attention_validity_prefix_sample.py`: normalize token-prefix and slot-prefix validity metadata.
 - `dense_fa4_execute_proof_sample.py`: rollout-side execute-proof builder for dense FA4.
 - `dense_fa4_kvcache_decode_sample.py`: bounded KV-cache decode contract for FA4 intent.
+- `exact_mask_contract_cache_sample.py`: static cache key for exact-mask clustered sparse kernels.
+- `exact_token_sparse_telemetry_sample.py`: runtime receipt for exact-token sparse routing vs reroute-to-full.
 - `doc_window_mask_sample.py`: dense document and local-window mask builder shared by attention wrappers.
 - `fused_bias_dropout_add_sample.py`: compiled bias + dropout + residual-add block-boundary helper.
 - `fused_linear_cross_entropy_chunked_sample.py`: bounded-memory chunked loss path.
@@ -16,6 +18,7 @@ What is here:
 - `fused_rope_qk_sample.py`: fused rotary application for Q/K attention ingress.
 - `mhc_fused_static_sample.py`: static 4-stream fused mixing surface for mHC fast paths.
 - `moba_block_sparse_decode_sample.py`: requested-vs-actual backend receipt for blockized sparse decode.
+- `clustered_sparse_three_phase_sample.py`: clustered sparse TPU pipeline split into routing and attention stages.
 - `triton_row_gather_sample.py`: single-tensor sparse row gather staging.
 - `triton_row_gather_pair_sample.py`: paired K/V sparse row gather staging.
 
@@ -26,8 +29,13 @@ How these fit into the model/runtime:
   dense, sparse, and local wrappers aligned on which tokens are real.
 - Attention backend rollout: dense FA4 helpers keep rollout and decode claims
   tied to a real bounded contract.
+- Exact-token sparse runtime: telemetry and cache-key helpers keep the sparse
+  lane honest when indexers reroute or when mask semantics must stay out of the
+  JAX closure key.
 - Blockized sparse decode: the MoBA-style resolver records when a FLASH-style
   sparse request had to execute as Triton instead.
+- Clustered sparse TPU: the three-phase sample shows how routing and sparse
+  attention are separated in the clustered Pallas pipeline.
 - Block boundaries: residual + RMSNorm fusion and bias-dropout-add cut repeated
   elementwise traffic.
 - Expert compute: relu2 is one of the cheap expert activation surfaces used in
@@ -52,5 +60,6 @@ Primary MegaCpp POC source modules:
 - `fused_residual.py`
 - `fused_mla_projection.py`
 - `mhc_fused.py`
+- `clustered_sparse_attention.py`
 - `flash_attention.py`
 - `kernels.py`
