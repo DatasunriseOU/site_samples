@@ -1,7 +1,7 @@
 """Public excerpt.
 
 Source repo: MegaCpp public samples
-Source material: https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/research/fire/fire-plasticity-toolkit__fire_dash_redo_surface__v1.py
+Reference note: docs/plasticity-toolkit-notes.md
 Purpose: show the combined FIRE, DASH, and ReDo control surface
 Edited for clarity.
 """

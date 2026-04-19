@@ -120,8 +120,8 @@ The practical directive is straightforward: do not change shingle size, LSH band
 
 ## References
 
-- [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
-- [MegaCpp article samples](https://github.com/DatasunriseOU/site_samples/tree/main/articles)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
+- [MegaCpp article samples](https://megacpp.com/blog)
 - [The Stack](https://arxiv.org/abs/2211.15533)
 - [BigCode evaluation harness](https://github.com/bigcode-project/bigcode-evaluation-harness)
 - [datasketch](https://github.com/ekzhu/datasketch)

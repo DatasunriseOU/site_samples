@@ -51,7 +51,7 @@ That simple rule is more valuable than a dozen vague claims about "compiler stab
 
 Once the lane gets past setup, the next question is where the time actually goes. The repo provides several grounded examples that push against hype-driven optimization.
 
-An attention-light lane is one example. Another comes from the public Mamba linear cross-entropy example in `site_samples`, where restoring class parity on the output layer removes a large unnecessary logits allocation and turns an OOM-prone high-end run into a stable one. The gain is not from magical new math. It comes from eliminating an avoidable memory shape that was dragging the training path down.
+An attention-light lane is one example. Another comes from the public Mamba linear cross-entropy example in `MegaCpp sample pack`, where restoring class parity on the output layer removes a large unnecessary logits allocation and turns an OOM-prone high-end run into a stable one. The gain is not from magical new math. It comes from eliminating an avoidable memory shape that was dragging the training path down.
 
 The DSA reproducer tells a similar story from another direction. The fused version avoids materializing a giant intermediate and keeps peak memory much lower while preserving correctness. On paper that is a memory optimization; in practice it is also a speed optimization whenever the original intermediate is driving allocator churn, launch instability, or configuration limits.
 
@@ -134,5 +134,5 @@ The main conclusion is simple. H200 training speed is determined by the executed
 - [NVIDIA H200 Tensor Core GPU](https://www.nvidia.com/en-us/data-center/h200/)
 - [PyTorch compiler documentation](https://pytorch.org/docs/stable/torch.compiler.html)
 - [Megatron Core developer guide](https://docs.nvidia.com/megatron-core/developer-guide/latest/)
-- [Training on H200: public status summary sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/cppmega/training/training-on-h200-eight-gpu__production_status_summary__v1.md)
+- [Training on H200: public status summary sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/MegaCpp source repository/training/training-on-h200-eight-gpu__production_status_summary__v1.md)
 - [Public distributed debugging notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md)

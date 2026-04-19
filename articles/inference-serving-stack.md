@@ -1,6 +1,6 @@
 ---
-title: "Serving the Eight: Router, Per-Specialist Scheduler, and the KV Layout That Keeps Them Honest"
-description: "How we actually serve an eight-specialist C++ ensemble: top-level router, per-specialist continuous-batch schedulers, paged KV per model, admission control, and the SLOs we publish."
+title: "Serving the eight: router, per-specialist scheduler, and the KV layout that keeps them honest"
+description: "How we actually serve an eight-specialist C++ ensemble: a top-level router, per-specialist continuous-batch schedulers, paged KV per model, admission control, and the SLOs we publish."
 date: "2026-04-18"
 tags: ["inference", "serving", "ensemble", "kv-cache", "scheduler", "slo"]
 ---
@@ -122,6 +122,6 @@ The boundary between routing, scheduling, and KV management is the only thing ke
 
 ## Public references
 
-- [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
 - [vLLM documentation](https://docs.vllm.ai/)
 - [FlashAttention repository](https://github.com/Dao-AILab/flash-attention)

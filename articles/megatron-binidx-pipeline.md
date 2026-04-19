@@ -1,6 +1,6 @@
 ---
-title: "The Megatron .bin/.idx Pipeline: uint32, Sharding, and Why We Do Not Pre-Build the Sample Index"
-description: "How parquet shards become a Megatron MMapIndexedDataset — the uint32 token width forced on us by a 131K vocab, the streaming writer, the brittle sample-index that we deliberately do not pre-build, and the stage-4 cache discipline that catches everything else."
+title: "The Megatron .bin/.idx Pipeline: uint32, sharding, and why we do not prebuild the sample index"
+description: "How parquet shards become a Megatron MMapIndexedDataset: the uint32 token width forced by a 131K vocabulary, the streaming writer, the brittle sample index we deliberately do not prebuild, and the stage-4 cache discipline around it."
 date: "2026-04-18"
 tags: ["megatron", "data", "binidx", "pipeline", "c++"]
 ---
@@ -168,5 +168,5 @@ The summary is that stages 3 and 4 are intentionally small. Most of the engineer
 ## References
 
 - [Megatron-LM indexed dataset implementation](https://github.com/NVIDIA/Megatron-LM/tree/main/megatron/core/datasets)
-- [MegaCpp site_samples articles directory](https://github.com/DatasunriseOU/site_samples/tree/main/articles)
-- [MegaCpp site_samples docs directory](https://github.com/DatasunriseOU/site_samples/tree/main/docs)
+- [MegaCpp MegaCpp sample pack articles directory](https://megacpp.com/blog)
+- [MegaCpp MegaCpp sample pack docs directory](https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md)

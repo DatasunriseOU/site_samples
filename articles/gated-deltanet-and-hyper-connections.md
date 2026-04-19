@@ -1,6 +1,6 @@
 ---
-title: "Gated DeltaNet, Hyper-Connections, and DynamicTanh: The Bits We Slipped Between the Hybrid Layers"
-description: "How Gated DeltaNet, cross-layer hyper-connections, dynamic tanh normalization, attention residuals, and gated attention compose inside the MegaCpp hybrid stack — what augments, what replaces, and what survived ablation."
+title: "Gated DeltaNet, hyper-connections, and DynamicTanh inside the hybrid stack"
+description: "How Gated DeltaNet, cross-layer hyper-connections, dynamic tanh normalization, attention residuals, and gated attention compose inside the MegaCpp hybrid stack, what augments, what replaces, and what survived ablation."
 date: "2026-04-18"
 tags: ["gated-deltanet", "hyper-connections", "dynamictanh", "gated-attention", "attn-res", "architecture"]
 ---

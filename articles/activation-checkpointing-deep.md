@@ -1,6 +1,6 @@
 ---
-title: "Activation Checkpointing Deep Dive: Why Per-Block Policies Beat One Global Switch"
-description: "Full versus selective versus narrow recompute across attention, MoE, Mamba-style, and recurrent blocks: what saves memory, what costs too much compute, and why a per-block policy usually wins."
+title: "Activation checkpointing deep dive: why per-block policies beat one global switch"
+description: "Full, selective, and narrow recompute across attention, MoE, Mamba-style, and recurrent blocks: what saves memory, what costs too much compute, and why a per-block policy usually wins."
 date: "2026-04-18"
 tags: ["activation-checkpointing", "selective-recompute", "mamba", "moe", "mla", "h200", "ablation"]
 ---

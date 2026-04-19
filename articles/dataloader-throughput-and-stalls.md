@@ -84,8 +84,8 @@ What we kept:
 
 - [Data preparation notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/data-prep-notes.md)
 - [TPU bringup notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/tpu-bringup-notes.md)
-- [Tokenized enriched pipeline on TPU](https://github.com/DatasunriseOU/site_samples/blob/main/articles/tokenized-enriched-pipeline-on-tpu.md)
-- [Structure embeddings and relation bias](https://github.com/DatasunriseOU/site_samples/blob/main/articles/structure-embeddings-and-relation-bias.md)
+- [Tokenized enriched pipeline on TPU](https://megacpp.com/blog/tokenized-enriched-pipeline-on-tpu.md)
+- [Structure embeddings and relation bias](https://megacpp.com/blog/structure-embeddings-and-relation-bias.md)
 - [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness](https://arxiv.org/abs/2205.14135)
 - [Sequence Packing for Transformer Pre-training](https://arxiv.org/abs/2107.02027)
 - [Apache Arrow documentation](https://arrow.apache.org/docs/)

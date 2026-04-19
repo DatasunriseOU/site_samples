@@ -1,11 +1,11 @@
 ---
-title: "Building a C/C++ Corpus for Training: What We Actually Keep, What We Throw Away, and Why"
+title: "Building a C/C++ corpus for training: what we keep, what we throw away, and why"
 description: "A detailed walkthrough of how MegaCpp builds a C/C++ corpus: source selection, pins, deduplication, compile-command metadata, chunking, structure-aware exports, and refusal rules."
 date: "2026-04-18"
 tags: ["cpp", "corpus", "dataset", "training", "data", "tokenizer"]
 ---
 
-A usable C/C++ training corpus is not just a dump of repositories. The work is in deciding which public inputs are eligible, how they are pinned, which metadata survives preprocessing, and which sources should stay out until they can be described cleanly. The public `site_samples` files are enough to outline that process without leaning on unpublished inventories.
+A usable C/C++ training corpus is not just a dump of repositories. The work is in deciding which public inputs are eligible, how they are pinned, which metadata survives preprocessing, and which sources should stay out until they can be described cleanly. The public `MegaCpp sample pack` files are enough to outline that process without leaning on unpublished inventories.
 
 ## What the corpus story should keep explicit
 

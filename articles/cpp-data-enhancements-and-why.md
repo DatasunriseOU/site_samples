@@ -1,6 +1,6 @@
 ---
-title: "Data Enhancements: Why structure_ids, AST Features, and the Clang Graph Are Worth Their Cost"
-description: "The structural metadata layered on top of raw C++ source - structure_ids, chunk_boundaries, call_edges, type_edges, tree-sitter AST features, and the optional libclang semantic graph. What each one is for, the ablation that justified shipping it, and what we pay in storage and runtime."
+title: "Data Enhancements: Why structure IDs, AST features, and the Clang graph earn their cost"
+description: "The structural metadata layered on top of raw C++ source: structure IDs, chunk boundaries, call edges, type edges, tree-sitter AST features, and the optional libclang semantic graph. What each one is for, what the ablations justified, and what we pay in storage and runtime."
 date: "2026-04-18"
 tags: ["data", "enrichment", "tree-sitter", "clang", "ablation"]
 ---
@@ -88,10 +88,10 @@ enhancements:
 
 ## References
 
-- https://github.com/DatasunriseOU/site_samples/blob/main/articles/cpp-data-preparation-pipeline-deep.md
+- https://megacpp.com/blog/cpp-data-preparation-pipeline-deep.md
 - https://github.com/DatasunriseOU/site_samples/blob/main/docs/data-prep-notes.md
-- https://github.com/DatasunriseOU/site_samples/blob/main/articles/structure-embeddings-and-relation-bias.md
-- https://github.com/DatasunriseOU/site_samples/blob/main/articles/ablation-after-10k-steps.md
+- https://megacpp.com/blog/structure-embeddings-and-relation-bias.md
+- https://megacpp.com/blog/ablation-after-10k-steps.md
 - https://tree-sitter.github.io/tree-sitter/
 - https://clang.llvm.org/docs/LibClang.html
 - https://dl.acm.org/doi/10.1145/360825.360855

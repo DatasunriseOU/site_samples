@@ -1,0 +1,10 @@
+{
+  "repo": "public/example-repo",
+  "filepath": "src/index/semantic_index.cpp",
+  "language": "c++",
+  "text": "int build_index(Node& root) { return root.child_count(); }",
+  "chunk_boundaries": [0, 18, 54],
+  "structure_ids": [11, 11, 24, 24, 24, 39],
+  "call_edges": [[3, 5]],
+  "type_edges": [[1, 2]]
+}

@@ -93,12 +93,12 @@ The fact that we keep both paths is not free, but the cost is bounded by the rul
 
 ## References
 
-- https://github.com/DatasunriseOU/site_samples/blob/main/articles/torch-xla-pjrt-reality.md
-- https://github.com/DatasunriseOU/site_samples/blob/main/articles/xla-spmd-sharding-annotations.md
-- https://github.com/DatasunriseOU/site_samples/blob/main/articles/xla-adamw-and-flags-on-tpu.md
-- https://github.com/DatasunriseOU/site_samples/blob/main/articles/oom-on-v6e.md
-- https://github.com/DatasunriseOU/site_samples/blob/main/articles/comms-cost-and-overlap.md
-- https://github.com/DatasunriseOU/site_samples/blob/main/articles/tensor-parallel-and-sharding.md
-- https://github.com/DatasunriseOU/site_samples/blob/main/articles/fsdp2-on-xla-tpu.md
+- https://megacpp.com/blog/torch-xla-pjrt-reality.md
+- https://megacpp.com/blog/xla-spmd-sharding-annotations.md
+- https://megacpp.com/blog/xla-adamw-and-flags-on-tpu.md
+- https://megacpp.com/blog/oom-on-v6e.md
+- https://megacpp.com/blog/comms-cost-and-overlap.md
+- https://megacpp.com/blog/tensor-parallel-and-sharding.md
+- https://megacpp.com/blog/fsdp2-on-xla-tpu.md
 - https://docs.pytorch.org/xla/master/runtime.html
 - https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html

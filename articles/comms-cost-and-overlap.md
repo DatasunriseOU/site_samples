@@ -1,6 +1,6 @@
 ---
 title: "Communication cost and overlap: NCCL on H200, XLA collectives on TPU v6e"
-description: "How MegaCPP budgets all-reduce, reduce-scatter, and all-gather against compute on the hybrid stack, including bucket sizing, launch coalescing, alignment, and the overlap windows that actually matter."
+description: "How MegaCpp budgets all-reduce, reduce-scatter, and all-gather against compute on the hybrid stack, including bucket sizing, launch coalescing, alignment, and the overlap windows that actually matter."
 date: "2026-04-18"
 tags: ["nccl", "xla", "fsdp", "performance", "h200", "tpu-v6e"]
 ---

@@ -75,4 +75,4 @@ The other ablation worth keeping is the regional vs full-graph comparison. We re
 - [PyTorch custom operators landing page](https://pytorch.org/tutorials/advanced/custom_ops_landing_page.html)
 - [JAX persistent compilation cache](https://docs.jax.dev/en/latest/persistent_compilation_cache.html)
 - [PyTorch/XLA documentation](https://docs.pytorch.org/xla/)
-- [FIRE plasticity toolkit article](https://github.com/DatasunriseOU/site_samples/blob/main/articles/fire-plasticity-toolkit.md)
+- [FIRE plasticity toolkit article](https://megacpp.com/blog/fire-plasticity-toolkit.md)

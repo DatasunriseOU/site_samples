@@ -142,4 +142,4 @@ The policy does not treat `fullgraph=True` as a near-term goal; the Mamba chunk-
 - [PyTorch recompilation model](https://docs.pytorch.org/docs/stable/compile/programming_model.recompilation.html)
 - [PyTorch Inductor](https://docs.pytorch.org/docs/stable/inductor.html)
 - [Mamba-3 Trapezoid Porting Notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/mamba3-trapezoid-porting.md)
-- [Mamba-3 TP partition size excerpt](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/cppmega/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py)
+- [Mamba-3 TP partition size excerpt](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/MegaCpp source repository/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py)

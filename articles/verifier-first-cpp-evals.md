@@ -2,7 +2,7 @@
 title: "Verifier-first C++ evals: why compile-and-test owns the metric"
 description: "What the C++ evaluation stack teaches about deterministic extraction, sandbox contracts, pass@k, and why benchmark tables only become trustworthy after the verifier owns the pass label."
 date: "2026-04-18"
-tags: ["evaluation", "cpp", "verifier", "benchmarking", "human-eval", "cppmega"]
+tags: ["evaluation", "cpp", "verifier", "benchmarking", "human-eval", "MegaCpp source repository"]
 ---
 
 Executable evaluation only becomes honest when the verifier is the authority. The current C++ stack is valuable because it does not treat compilation as a cleanup step after generation. It treats deterministic extraction, declared sandboxing, compile/test outcomes, and failure bucketing as the source of truth, then computes summary metrics on top. That order matters more than any single leaderboard number.
@@ -133,7 +133,7 @@ In other words, verifier-first is not a preference about style. It is the minimu
 
 ## References
 
-- [Compile commands and semantic graphs](https://github.com/DatasunriseOU/site_samples/blob/main/articles/compile-commands-and-semantic-graphs.md)
+- [Compile commands and semantic graphs](https://megacpp.com/blog/compile-commands-and-semantic-graphs.md)
 - [HumanEval: Evaluating Large Language Models Trained on Code](https://arxiv.org/abs/2107.03374)
 - [LiveCodeBench](https://livecodebench.github.io/)
 - [tree-sitter](https://tree-sitter.github.io/tree-sitter/)

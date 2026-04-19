@@ -1,6 +1,6 @@
 ---
-title: "Fused MoE and DeepEP on NVIDIA: The Dispatch Layer We Ship"
-description: "How MegaCpp dispatches MoE tokens on H200 and GB10 — DeepEP NVSHMEM all-to-all on NVLink and IB, fused expert GEMM, expert sharding, drop policies, and how the kernel layer interacts with our 8-specialist routing."
+title: "Fused MoE and DeepEP on NVIDIA: the dispatch layer we ship"
+description: "How MegaCpp dispatches MoE tokens on H200 and GB10: DeepEP NVSHMEM all-to-all on NVLink and IB, fused expert GEMM, expert sharding, drop policies, and how the kernel layer interacts with our eight-specialist routing."
 date: "2026-04-18"
 tags: ["moe", "deep-ep", "nvshmem", "all-to-all", "h200", "nvidia", "fused-moe"]
 ---

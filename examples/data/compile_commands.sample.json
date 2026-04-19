@@ -1,26 +1,60 @@
 [
   {
-    "directory": "/workspace/build",
-    "file": "src/parser.cpp",
+    "directory": "/workspace/project/build",
+    "file": "src/index/semantic_index.cpp",
     "arguments": [
       "clang++",
-      "-std=c++20",
+      "-std=gnu++20",
       "-Iinclude",
-      "-DMEGACPP_EXAMPLE=1",
+      "-Igenerated",
+      "-isystem",
+      "/opt/llvm/include",
+      "-DMEGACPP_USE_CLANG_INDEX=1",
+      "-DMEGACPP_ENABLE_STRUCTURE_IDS=1",
       "-c",
-      "src/parser.cpp"
+      "src/index/semantic_index.cpp"
     ]
   },
   {
-    "directory": "/workspace/build",
-    "file": "src/indexer.cpp",
+    "directory": "/workspace/project/build",
+    "file": "src/parser/compile_db_reader.cpp",
     "arguments": [
       "clang++",
-      "-std=c++20",
+      "-std=gnu++20",
       "-Iinclude",
-      "-Igenerated",
+      "-Ithird_party/json",
+      "-isystem",
+      "/opt/llvm/include",
+      "-DMEGACPP_ENABLE_COMPILE_COMMANDS=1",
       "-c",
-      "src/indexer.cpp"
+      "src/parser/compile_db_reader.cpp"
+    ]
+  },
+  {
+    "directory": "/workspace/project/build",
+    "file": "tests/parser/compile_db_contract_test.cpp",
+    "arguments": [
+      "clang++",
+      "-std=gnu++20",
+      "-Iinclude",
+      "-Itests/include",
+      "-DMEGACPP_TEST=1",
+      "-c",
+      "tests/parser/compile_db_contract_test.cpp"
+    ]
+  },
+  {
+    "directory": "/workspace/project/build",
+    "file": "tools/schema/emit_enriched_rows.cpp",
+    "arguments": [
+      "clang++",
+      "-std=gnu++20",
+      "-Iinclude",
+      "-Itools/include",
+      "-Igenerated/schema",
+      "-DMEGACPP_EMIT_ENRICHED_ROWS=1",
+      "-c",
+      "tools/schema/emit_enriched_rows.cpp"
     ]
   }
 ]

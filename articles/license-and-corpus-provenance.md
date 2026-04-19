@@ -7,7 +7,7 @@ tags: ["corpus", "license", "provenance", "spdx", "data"]
 
 A C++ training corpus should not be described with one blanket licensing sentence. Public source corpora mix Apache-2.0, BSL-1.0, MIT, GPL-family licenses, exception clauses, repository-level `LICENSE` files, and files that only carry provenance through version control history. If a corpus description ignores that mix, it stops being a provenance statement and turns into marketing.
 
-The public `site_samples` material supports a stricter and more useful story: pin every input, treat license metadata as structured data, keep a refusal list for sources that do not fit the current policy, and make provenance auditable enough that a regression can be traced back to a concrete revision.
+The public MegaCpp sample pack supports a stricter and more useful story: pin every input, treat license metadata as structured data, keep a refusal list for sources that do not fit the current policy, and make provenance auditable enough that a regression can be traced back to a concrete revision.
 
 ## Why this matters
 

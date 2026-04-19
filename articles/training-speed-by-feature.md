@@ -1,6 +1,6 @@
 ---
 title: "Training speed by feature: which parts of the stack really move step time"
-description: "A grounded feature-by-feature look at training-speed impact across a modern hybrid stack: Mamba fused paths, memory-traffic cleanup, MLA pieces, MoE dispatch, routing bridges, and feature taxes that should stay experimental."
+description: "A grounded feature-by-feature look at training speed across a modern hybrid stack: Mamba fused paths, memory-traffic cleanup, MLA pieces, MoE dispatch, routing bridges, and feature taxes that should stay experimental."
 date: "2026-04-18"
 tags: ["performance", "kernels", "mamba3", "moe", "mla", "transformer-engine"]
 ---

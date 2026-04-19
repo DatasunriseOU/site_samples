@@ -1,6 +1,6 @@
 ---
 title: "What changed after the 10K-step gate: the ablations that stayed honest"
-description: "A grounded reading of training changes after the configured 10K-step gate: STP activation, auxiliary-head timing, plasticity scheduling, and why later ablations are more trustworthy than warmup receipts."
+description: "A grounded reading of training changes after the configured 10K-step gate: STP activation, auxiliary-head timing, plasticity scheduling, and why later ablations are more trustworthy than warmup-era receipts."
 date: "2026-04-18"
 tags: ["ablation", "training", "stp", "fire", "mtp", "nam52", "nam56r"]
 ---

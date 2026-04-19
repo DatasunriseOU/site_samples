@@ -1,6 +1,6 @@
 ---
-title: "Modal Image Construction and the Cold-Start Tax We Actually Pay"
-description: "How we layer the Modal training image, why every wheel is pinned to the training stack, how persistent volumes absorb the inductor-cache hit, and the 30-90s startup tax we accept as the price of burst compute."
+title: "Modal image construction and the cold-start tax we actually pay"
+description: "How we layer the Modal training image, why every wheel is pinned to the training stack, how persistent volumes absorb the inductor-cache hit, and the 30-90 second startup tax we accept as the price of burst compute."
 date: "2026-04-18"
 tags: ["modal", "docker", "cold-start", "inductor-cache", "triton", "h200"]
 ---

@@ -85,6 +85,6 @@ cfg = StructureConfig.from_args(
 
 ## References
 
-- [Compile commands and semantic graphs](https://github.com/DatasunriseOU/site_samples/blob/main/articles/compile-commands-and-semantic-graphs.md)
+- [Compile commands and semantic graphs](https://megacpp.com/blog/compile-commands-and-semantic-graphs.md)
 - [Attention with Linear Biases Enables Input Length Extrapolation](https://arxiv.org/abs/2108.12409)
 - [tree-sitter](https://tree-sitter.github.io/tree-sitter/)

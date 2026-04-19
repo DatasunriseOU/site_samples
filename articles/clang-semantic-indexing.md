@@ -1,6 +1,6 @@
 ---
-title: "The Clang Semantic Indexer: Translation Units, Call Graphs, and the Perf Wall"
-description: "How the libclang-based semantic indexer feeds v6_enriched parquet — compile_commands handling, the per-file translation-unit graph, call/type edges, the failure modes we hit, and the wall-clock cost we accept for ground-truth semantics."
+title: "The Clang semantic indexer: translation units, call graphs, and the perf wall"
+description: "How the libclang-based semantic indexer feeds `v6_enriched` parquet: compile_commands handling, the per-file translation-unit graph, call and type edges, the failure modes we hit, and the wall-clock cost of ground-truth semantics."
 date: "2026-04-18"
 tags: ["clang", "data", "indexer", "c++", "pipeline"]
 ---

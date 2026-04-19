@@ -37,9 +37,31 @@ a canonical public inventory of every pinned source.
 - Notes describing how schema and quality gates work.
 - Runnable examples for masking and build-aware metadata collection.
 
+## Public-safe artifact families
+
+- `examples/data/compile_commands.sample.json` shows the build-database shape we rely on for semantic indexing without exposing any real workstation or CI paths.
+- `examples/data/masking_pipeline_sample.py` shows how masking and lightweight enrichment can be expressed as explicit stages rather than hidden preprocessing magic.
+- `docs/reference-corpus-pins.md` describes the policy for pinning public upstream inputs by revision, tag, or release line.
+- `docs/semantic-indexing-notes.md` explains why compile-aware structure is higher trust than syntax-only extraction when the build graph is available.
+
+## Data enhancements we describe in public
+
+- Build-aware fields that preserve compile flags, include roots, and translation-unit boundaries when they are available.
+- Documentation masking and curriculum shaping so the training mix can emphasize actionable C++ structure instead of repeated prose boilerplate.
+- Deduplication layers that separate exact duplicates from near-duplicate generated expansions.
+- Schema versioning that keeps structure-aware metadata, provenance, and tokenization outputs legible across snapshot upgrades.
+- Small sanity samples that can be linked from articles without exposing private directory layouts, machine names, or internal storage conventions.
+
+## Inspection checklist
+
+- Confirm every public sample can be traced back to a named input class.
+- Check that provenance and license fields survive normalization.
+- Verify deduplication happens before downstream chunk statistics are reported.
+- Keep schema checks separate from quality judgments so failures stay legible.
+
 ## Related public files
 
-- https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands.sample.json
-- https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/masking_pipeline_sample.py
-- https://github.com/DatasunriseOU/site_samples/blob/main/docs/reference-corpus-pins.md
-- https://github.com/DatasunriseOU/site_samples/blob/main/docs/semantic-indexing-notes.md
+- `examples/data/compile_commands.sample.json`
+- `examples/data/masking_pipeline_sample.py`
+- `docs/reference-corpus-pins.md`
+- `docs/semantic-indexing-notes.md`

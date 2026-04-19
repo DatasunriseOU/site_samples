@@ -98,7 +98,7 @@ Memory-subsystem roles at a glance:
 
 - [Model glossary](https://megacpp.com/blog/megacpp-model-glossary/)
 - [Hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md)
-- [Tensor parallel and sharding article](https://github.com/DatasunriseOU/site_samples/blob/main/articles/tensor-parallel-and-sharding.md)
+- [Tensor parallel and sharding article](https://megacpp.com/blog/tensor-parallel-and-sharding.md)
 - [Mamba-3 paper](https://arxiv.org/abs/2603.15569)
 - [Memorizing Transformers](https://arxiv.org/abs/2203.08913)
 - [Flamingo](https://arxiv.org/abs/2204.14198)

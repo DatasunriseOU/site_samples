@@ -6,7 +6,7 @@ experiments.
 Key themes:
 - isolate runtime issues from model issues
 - keep flag changes small and auditable
-- separate host bringup, XLA graph stability, and data pipeline checks
+- separate control-plane bringup, XLA graph stability, and data pipeline checks
 
 Observed pressure points:
 - graph recompilation after seemingly small shape drift
@@ -19,3 +19,8 @@ Working habits that helped:
 - keep a small deterministic smoke lane
 - log stable labels for compile, execute, and input-pipeline phases
 - write down the current pass/fail frontier after every useful repro
+
+## Related local notes
+
+- `docs/tpu-backend-ownership.md`
+- `docs/distributed-debugging-notes.md`

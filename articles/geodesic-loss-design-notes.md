@@ -1,5 +1,5 @@
 ---
-title: "Trajectory-straightness loss: span sampling, layer choices, and XLA-safe constraints"
+title: "Trajectory-straightness loss: span sampling, layer choices, and XLA-safe limits"
 description: "How the STP-style trajectory-straightness auxiliary loss is implemented in the public sample, why it samples ordered triples instead of predicting future latents, and what the runtime should preserve."
 date: "2026-04-18"
 tags: ["design", "stp", "trajectory-straightness", "xla", "representation-learning"]

@@ -24,9 +24,21 @@ syntax-only pass.
 - record which outputs came from which lane
 - never present partial semantic coverage as full semantic truth
 
+## Public output contract
+
+- syntax-first outputs should remain inspectable even when compile metadata is absent
+- compile-aware outputs should carry enough provenance to explain why symbol resolution worked
+- coverage labels should distinguish missing build metadata from parser or tooling failure
+- article claims should cite the lane that produced the result, not an abstract blended pipeline
+
 ## Suggested metrics
 
 - percentage of files matched to compile commands
 - percentage of matched files that indexed successfully
 - percentage of repositories with partial coverage only
 - percentage of outputs that fell back to syntax-only structure
+
+## Related local notes
+
+- `docs/data-prep-notes.md`
+- `docs/reference-corpus-pins.md`

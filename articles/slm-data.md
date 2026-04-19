@@ -1,11 +1,11 @@
 ---
-title: "SLM data: what the current pipeline optimizes for, where it still fails, and why the loader contract matters more than the storage format"
+title: "SLM data: what the pipeline optimizes for and why the loader contract matters most"
 description: "A grounded walkthrough of the MegaCpp data path: parquet shards, split logic, packed rows, metadata columns, and the interface choices documented in the public sample corpus."
 date: "2026-04-18"
 tags: ["data", "slm", "training", "dataloader", "dataset", "packing"]
 ---
 
-Small-model data discussions often stay too abstract. People argue about corpus mix, synthetic ratios, or token budgets without showing what the training input actually looks like. The public `site_samples` materials are useful because they keep the discussion on concrete surfaces: pinned-input rules, masking examples, compile-command examples, and notes about structure-aware metadata. Taken together, those files show that in this stack, “SLM data” is not just a bag of documents. It is the whole path from pinned source inputs to packed training rows with explicit metadata and compatibility rules.
+Small-model data discussions often stay too abstract. People argue about corpus mix, synthetic ratios, or token budgets without showing what the training input actually looks like. The public MegaCpp sample packs are useful because they keep the discussion on concrete surfaces: pinned-input rules, masking examples, compile-command examples, and notes about structure-aware metadata. Taken together, those files show that in this stack, “SLM data” is not just a bag of documents. It is the whole path from pinned source inputs to packed training rows with explicit metadata and compatibility rules.
 
 That framing matters because most data failures are interface failures. A pipeline can store tokens in a perfectly reasonable format and still train on the wrong thing if split rules, metadata defaults, or schema evolution are underspecified.
 
@@ -85,7 +85,7 @@ A third is resume compatibility in the broad sense: when a dataset snapshot evol
 
 ## What a robust SLM data pipeline should preserve
 
-The public `site_samples` materials support a fairly strict checklist.
+The public MegaCpp sample packs support a fairly strict checklist.
 
 - Pin every upstream repository, dataset, and tokenizer artifact to an exact revision.
 - Keep license metadata and provenance records as structured side data, not prose.

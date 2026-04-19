@@ -86,4 +86,4 @@ The last missing piece in many wheel guides is workload evidence. A correct entr
 - https://pytorch.org/get-started/locally/
 - https://triton-lang.org/main/getting-started/installation.html
 - https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html
-- https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/cppmega/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py
+- https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/MegaCpp source repository/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py

@@ -14,7 +14,19 @@ Practical habits:
 - test split strategies independently before combining them
 - prefer small reproducible batches when validating a new sharding plan
 
+## Public-safe framing rule
+
+Describe the mechanism of the failure, not the private machine story around it.
+Public notes should preserve tensor ownership, scheduling boundaries, and
+verification method while dropping rack-level, account-level, or operator-level
+details.
+
 Why this matters:
 - small specialist models can still go out-of-memory on large GPUs
 - split strategy names alone do not explain what is truly sharded
 - public notes are easier to cite when they focus on mechanisms, not machines
+
+## Related local notes
+
+- `docs/architecture-notes.md`
+- `docs/tpu-bringup-notes.md`

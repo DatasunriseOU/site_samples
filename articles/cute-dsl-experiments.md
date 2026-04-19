@@ -93,7 +93,7 @@ The short answer to "is CuTe DSL worth it?" is: for specific shapes and for cons
 ```python
 # FA4 via CuTe DSL, called from a FlexAttention backend path
 import torch
-from cppmega.kernels.fa4_cute import fa4_forward
+from MegaCpp source repository.kernels.fa4_cute import fa4_forward
 
 @torch.compiler.disable()
 def attn(q, k, v, block_mask):
@@ -103,7 +103,7 @@ def attn(q, k, v, block_mask):
 
 ## References
 
-- Public benchmark notes and code receipts in `site_samples`
+- Public benchmark notes and code receipts in `MegaCpp sample pack`
 - build.sh
 - Dockerfile
 - modal_train.py

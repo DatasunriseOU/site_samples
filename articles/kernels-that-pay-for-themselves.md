@@ -115,4 +115,4 @@ One more practical filter is readability of the contract. `fused_rope_qk` and ML
 - [FlashAttention repository](https://github.com/Dao-AILab/flash-attention)
 - [Triton language documentation](https://triton-lang.org/main/index.html)
 - [PyTorch compile documentation](https://pytorch.org/docs/stable/torch.compiler.html)
-- [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)

@@ -1,6 +1,6 @@
 ---
-title: "Benchmarking the MegaCpp Stack on Modal: Multi-GPU Lessons From Rented Boxes"
-description: "What we learned running our training stack on rented H100, H200, and B200 boxes through Modal — three benchmark lanes, an 8-GPU FSDP2 hang, and the bookkeeping that lets the numbers survive a week."
+title: "Benchmarking the MegaCpp stack on Modal: multi-GPU lessons from rented boxes"
+description: "What we learned running the training stack on rented H100, H200, and B200 boxes through Modal: three benchmark lanes, an 8-GPU FSDP2 hang, and the bookkeeping that lets the numbers survive a week."
 date: "2026-04-18"
 tags: ["modal", "benchmarks", "multi-gpu", "fsdp", "h200", "b200", "reproducibility"]
 ---

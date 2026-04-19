@@ -108,5 +108,5 @@ Coexisting object-store layout:
 
 ## References
 
-- [MegaCpp site_samples articles directory](https://github.com/DatasunriseOU/site_samples/tree/main/articles)
-- [MegaCpp site_samples docs directory](https://github.com/DatasunriseOU/site_samples/tree/main/docs)
+- [MegaCpp MegaCpp sample pack articles directory](https://megacpp.com/blog)
+- [MegaCpp MegaCpp sample pack docs directory](https://github.com/DatasunriseOU/site_samples/blob/main/docs/data-prep-notes.md)

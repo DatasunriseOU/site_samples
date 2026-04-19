@@ -1,6 +1,6 @@
 ---
-title: "Transformer Engine replacements on TPU: keeping one model definition across two paths"
-description: "Transformer Engine is an NVIDIA Hopper/Blackwell story. On TPU v6e it does not exist. Here is the layer-spec abstraction and the XLA-friendly substitutes that let one model definition ship across both paths."
+title: "Transformer Engine replacements on TPU: keeping one model definition across paths"
+description: "Transformer Engine is an NVIDIA Hopper and Blackwell story. On TPU v6e it does not exist. This is the layer-spec abstraction and the XLA-friendly substitutes that let one model definition ship across both paths."
 date: "2026-04-18"
 tags: ["tpu", "v6e", "xla", "transformer-engine", "layer-spec", "fp8"]
 ---

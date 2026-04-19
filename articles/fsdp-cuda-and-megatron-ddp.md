@@ -1,6 +1,6 @@
 ---
-title: "Hybrid FSDP/DDP on NVIDIA: Megatron DDP plus FSDP2 for the Specialist Ensemble"
-description: "How MegaCpp combines Megatron-Core DistributedDataParallel with PyTorch FSDP2 across H200 and GB10, the gradient-bucket sizing rules we ship, the freeze plan for the eight specialists, and the failure modes that taught us the contract."
+title: "Hybrid FSDP/DDP on NVIDIA: Megatron DDP plus FSDP2 for the ensemble"
+description: "How MegaCpp combines Megatron-Core DistributedDataParallel with PyTorch FSDP2 across H200 and GB10, the gradient-bucket sizing rules we ship, the freeze plan for the eight specialists, and the failure modes that defined the contract."
 date: "2026-04-18"
 tags: ["FSDP2", "Megatron", "Distributed Training", "H200", "GB10"]
 ---

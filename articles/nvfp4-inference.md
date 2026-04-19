@@ -117,8 +117,8 @@ The through-line is the one constraint Blackwell inference does not let you nego
 
 ## References
 
-- [Precision recipe: FP16, BF16, FP8, NVFP4](https://github.com/DatasunriseOU/site_samples/blob/main/articles/precision-recipe-fp16-bf16-fp8-nvfp4.md)
-- [Training on H200 eight-GPU machines](https://github.com/DatasunriseOU/site_samples/blob/main/articles/training-on-h200-eight-gpu.md)
+- [Precision recipe: FP16, BF16, FP8, NVFP4](https://megacpp.com/blog/precision-recipe-fp16-bf16-fp8-nvfp4.md)
+- [Training on H200 eight-GPU machines](https://megacpp.com/blog/training-on-h200-eight-gpu.md)
 - [NVIDIA Transformer Engine user guide](https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/index.html)
 - [TensorRT quantized types](https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/work-quantized-types.html)
 - [TensorRT-LLM installation and support matrix](https://nvidia.github.io/TensorRT-LLM/installation/linux.html)

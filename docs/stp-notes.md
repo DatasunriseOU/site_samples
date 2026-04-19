@@ -36,13 +36,13 @@ feature is actually live.
 
 ## Backend posture
 
-The public sample uses fixed-rank tensor operations with no host-side rejection
+The public sample uses fixed-rank tensor operations with no controller-side rejection
 loop and no variable-size outputs. That is the right support surface for
 describing the implementation as graph-friendly and easy to transport across
 backends.
 
 ## References
 
-- https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/research/stp/stp-geodesic-regularizer__stp_loss_surface__v1.py
-- https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/research/stp/stp-after-ten-thousand-steps__activation_gate_note__v1.md
-- https://arxiv.org/abs/2602.22617
+- `excerpts/code/research/stp/stp-geodesic-regularizer__stp_loss_surface__v1.py`
+- `excerpts/docs/research/stp/stp-after-ten-thousand-steps__activation_gate_note__v1.md`
+- public STP paper references should be cited from articles, not duplicated as raw URLs here

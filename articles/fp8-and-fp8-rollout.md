@@ -1,12 +1,12 @@
 ---
-title: "FP8 in the Training Stack: What Shipped, What We Rolled Back"
-description: "An engineer's account of rolling FP8 through the training stack: DeepGEMM block-scaled GEMMs, torchao Float8Linear, TransformerEngine's FP8-aware activation checkpointing, and the parts that looked good on paper and lost the benchmark."
+title: "FP8 in the training stack: what shipped and what we rolled back"
+description: "An engineer's account of rolling FP8 through the training stack: DeepGEMM block-scaled GEMMs, torchao Float8Linear, TransformerEngine FP8-aware activation checkpointing, and the parts that looked good on paper but lost the benchmark."
 date: "2026-04-18"
 author: "David Gornshtein"
 tags: ["fp8", "training", "deepgemm", "torchao", "transformer-engine", "h200", "gb10"]
 ---
 
-# FP8 in the Training Stack: What Shipped, What We Rolled Back
+# FP8 in the training stack: what shipped and what we rolled back
 
 FP8 is the first precision step where the textbook answer and the measured answer disagree on this stack. On paper it is free throughput: one byte per element, twice the tensor-core flops on H200, a known recipe from DeepSeek-V3. In practice, for the deployed hybrid we train (Mamba-3 majority, a minority of MLA/DSA attention, a fat MoE tail), the honest sum of wins and losses has been much closer to zero than the marketing pitch suggests. This post walks through the three FP8 surfaces we actually touched in deployed code this quarter: DeepGEMM as an alternative block-scaled GEMM backend, `torchao.float8.Float8Linear` as the default dense path, and TransformerEngine's FP8-aware activation checkpointing. For each we say what we tried, what the numbers said, and which pieces we kept.
 
@@ -82,5 +82,5 @@ train.py --fp8-recipe tensorwise \
 ## References
 
 - Public FP8 rollout notes in the public engineering project
-- Public precision and backend comparison notes in `site_samples`
+- Public precision and backend comparison notes in `MegaCpp sample pack`
 - Public training review summaries attached to the public engineering documentation

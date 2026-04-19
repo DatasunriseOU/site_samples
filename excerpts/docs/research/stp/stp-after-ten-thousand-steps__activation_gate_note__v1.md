@@ -1,7 +1,7 @@
 > Public note.
 >
 > Source repo: MegaCpp public samples
-> Source material: https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/research/stp/stp-after-ten-thousand-steps__activation_gate_note__v1.md
+> Reference note: docs/stp-notes.md
 > Purpose: explain why STP starts after an explicit warmup boundary
 > Edited for clarity.
 

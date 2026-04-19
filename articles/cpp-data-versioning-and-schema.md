@@ -5,7 +5,7 @@ date: "2026-04-18"
 tags: ["cpp", "data", "schema", "versioning", "dataset", "training"]
 ---
 
-As soon as a C/C++ corpus carries more than plain text, schema versioning becomes part of model quality work. The public `site_samples` notes already describe the ingredients that make this true: pinned inputs, explicit columnar artifacts, build-aware metadata, structure-aware exports, and promotion gates based on schema and consumer checks. Once those pieces exist, the hard question is no longer “what file format should we use?” It is “how do we keep rows readable and semantically stable while the corpus evolves?”
+As soon as a C/C++ corpus carries more than plain text, schema versioning becomes part of model quality work. The public MegaCpp notes already describe the ingredients that make this true: pinned inputs, explicit columnar artifacts, build-aware metadata, structure-aware exports, and promotion gates based on schema and consumer checks. Once those pieces exist, the hard question is no longer “what file format should we use?” It is “how do we keep rows readable and semantically stable while the corpus evolves?”
 
 ## The important boundary is semantic stability
 
@@ -100,7 +100,7 @@ That is the real goal of schema versioning: not just preserving bytes on disk, b
 - Run round-trip checks and at least one consumer smoke pass before promotion.
 - Keep model code on canonicalized rows rather than raw producer variants.
 
-The public `site_samples` corpus notes support exactly that narrower claim. Stable training data is not mainly about picking a fashionable format. It is about making every field explicit enough that a new snapshot can evolve without forcing every consumer to relearn the dataset.
+The public `MegaCpp sample pack` corpus notes support exactly that narrower claim. Stable training data is not mainly about picking a fashionable format. It is about making every field explicit enough that a new snapshot can evolve without forcing every consumer to relearn the dataset.
 
 ## References
 

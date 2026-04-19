@@ -126,6 +126,6 @@ The right habit is to treat manual splits as versioned architecture, not a tempo
 
 ## References
 
-- https://github.com/DatasunriseOU/site_samples/tree/main/docs
+- https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md
 - https://github.com/DatasunriseOU/site_samples/blob/main/examples/hybrid/hybrid_pattern_sample.py
 - https://docs.nvidia.com/megatron-core/developer-guide/latest/api-guide/pipeline_parallel.html

@@ -1,5 +1,5 @@
 ---
-title: "MegaCpp model glossary: patterns, blocks, and what names like NAM52 and NAM56R actually encode"
+title: "MegaCpp model glossary: patterns, blocks, and what names like NAM52 and NAM56R encode"
 description: "A grounded glossary for MegaCpp model notation, hybrid layer patterns, and block-family names, tied back to live builder code, launch helpers, and regression tests in MegaCpp."
 date: "2026-04-18"
 tags: ["glossary", "models", "mamba", "moe", "attention", "architecture"]
@@ -133,5 +133,5 @@ The recipe name alone is not enough. The effective model is the pattern plus the
 
 ## References
 
-- [MegaCpp site_samples articles directory](https://github.com/DatasunriseOU/site_samples/tree/main/articles)
-- [MegaCpp site_samples docs directory](https://github.com/DatasunriseOU/site_samples/tree/main/docs)
+- [MegaCpp MegaCpp sample pack articles directory](https://megacpp.com/blog)
+- [MegaCpp MegaCpp sample pack docs directory](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md)

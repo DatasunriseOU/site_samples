@@ -1,6 +1,6 @@
 ---
-title: "Semantic Tube Prediction: a trajectory-straightness auxiliary loss, the 10K-step gate, and the wiring mistakes that mattered more than the math"
-description: "A grounded walkthrough of an STP-style trajectory-straightness loss: the loss in the public sample, the multi-span and multi-layer variants, the start-step gate, and the integration mistakes that can quietly disable an auxiliary loss."
+title: "Semantic Tube Prediction: the 10K-step gate, trajectory straightness, and the wiring mistakes that mattered"
+description: "A grounded walkthrough of the STP-style auxiliary loss: the public sample, the multi-span and multi-layer variants, the 10K-step gate, and the integration mistakes that can quietly disable it."
 date: "2026-04-18"
 tags: ["stp", "geodesic", "regularization", "representation-learning", "training", "jepa"]
 ---

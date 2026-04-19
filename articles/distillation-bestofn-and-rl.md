@@ -1,6 +1,6 @@
 ---
-title: "Distillation, Best-of-N, and Verifier-Grounded RL: The Post-Training Loop for the C++ Specialist"
-description: "How distillation, best-of-N, GRPO, GSPO, and verifier-grounded reward shaping compose the MegaCpp post-training pipeline - what we ship, what we still iterate, and the RL recipes behind the C++ specialist."
+title: "Distillation, best-of-N, and verifier-grounded RL in the post-training loop"
+description: "How distillation, best-of-N, GRPO, GSPO, and verifier-grounded reward shaping compose the MegaCpp post-training pipeline: what we ship, what we still iterate, and the RL recipes behind the C++ specialist."
 date: "2026-04-18"
 tags: ["distillation", "best-of-n", "grpo", "gspo", "rlvr", "cpp-verifier", "post-training"]
 ---

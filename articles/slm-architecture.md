@@ -1,6 +1,6 @@
 ---
-title: "SLM Architecture in MegaCpp: Hybrid Patterns, Block Ownership, and Why the Letters Matter"
-description: "A grounded architectural read of the MegaCpp small-model stack: hybrid patterns, block semantics, schedule ownership, and why names like `ablock`, `mblock`, and `eblock` are operational, not decorative."
+title: "SLM architecture in MegaCpp: hybrid patterns, block ownership, and why the letters matter"
+description: "A grounded architectural read of the MegaCpp small-model stack: hybrid patterns, block semantics, schedule ownership, and why names like `ablock`, `mblock`, and `eblock` are operational rather than decorative."
 date: "2026-04-18"
 tags: ["architecture", "slm", "hybrid-models", "mamba", "moe", "nam56r"]
 ---

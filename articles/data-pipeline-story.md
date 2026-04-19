@@ -146,8 +146,8 @@ explaining the contract that ties them together.
 
 ## References
 
-- [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega/tree/main)
-- [MegaCpp article samples](https://github.com/DatasunriseOU/site_samples/tree/main/articles)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
+- [MegaCpp article samples](https://megacpp.com/blog)
 
 - [The Stack paper](https://arxiv.org/abs/2211.15533)
 - [The Stack v2 paper](https://arxiv.org/abs/2402.19173)

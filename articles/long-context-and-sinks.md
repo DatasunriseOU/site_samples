@@ -1,5 +1,5 @@
 ---
-title: "Long Context and Attention Sinks: What Actually Held Up Past 16K"
+title: "Long context and attention sinks: what actually held up past 16K"
 description: "YaRN, RNoPE, packed-document masking, attention sinks, massive activations, and query-dependent output gating: a field report on which long-context techniques survived contact with the MegaCpp C++ corpus."
 date: 2026-04-18
 author: "David Gornshtein"

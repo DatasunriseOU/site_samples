@@ -1,6 +1,6 @@
 ---
-title: "Document Masking and the Curriculum: What to Feed Each Specialist First"
-description: "Why MegaCpp masks documents inside packed sequences, how the four-phase curriculum is shaped from 4K syntax to 64K repository graphs, and what our ablations told us about the right starting diet for each specialist."
+title: "Document masking and the curriculum: what to feed each specialist first"
+description: "Why MegaCpp masks documents inside packed sequences, how the four-phase curriculum runs from 4K syntax to 64K repository graphs, and what the ablations told us about the right starting diet for each specialist."
 date: "2026-04-18"
 tags: ["curriculum", "doc-masking", "long-context", "training", "c++"]
 ---
@@ -97,6 +97,6 @@ doc_ids = torch.cumsum(is_bos.to(torch.int32), dim=-1)
 
 ## References
 
-- [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
-- [MegaCpp public sample pack](https://github.com/DatasunriseOU/site_samples)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
+- [MegaCpp sample pack](https://github.com/DatasunriseOU/site_samples)
 - The public masking, curriculum, and data-pipeline notes linked from the MegaCpp repositories.

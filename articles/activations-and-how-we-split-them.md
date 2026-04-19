@@ -1,6 +1,6 @@
 ---
-title: "Activations and How We Split Them"
-description: "What activations actually are in a hybrid Mamba 3 + Transformer + MoE stack, why they dominate memory at long context, and the levers we have: selective recompute per layer/op, sequence parallel, context parallel, and the trade-offs we live with."
+title: "Activations and how we split them"
+description: "What activations actually are in a hybrid Mamba 3, Transformer, and MoE stack, why they dominate memory at long context, and the levers we have: selective recompute per layer or op, sequence parallel, context parallel, and the trade-offs we live with."
 date: "2026-04-18"
 tags: ["activations", "gradient-checkpointing", "sequence-parallel", "context-parallel", "mamba", "moe", "h200"]
 ---

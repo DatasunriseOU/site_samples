@@ -1,6 +1,6 @@
 ---
-title: "Tokenized Enriched Packed Rows on TPU: Feeding Structure to XLA Without Recompiles"
-description: "How the v6_enriched packed-rows pipeline feeds per-token structure_ids, chunk_boundaries, and call_edges into the XLA dataloader on TPU v6e without triggering compile cache misses, and how the contract lifts into the main path."
+title: "Tokenized enriched packed rows on TPU: feeding structure to XLA without recompiles"
+description: "How the `v6_enriched` packed-rows pipeline feeds per-token structure IDs, chunk boundaries, and call edges into the XLA dataloader on TPU v6e without triggering compile cache misses, and how that contract lifts into the main path."
 date: "2026-04-18"
 tags: ["tpu", "xla", "data-pipeline", "structure-aware", "packed-rows"]
 ---
@@ -111,8 +111,8 @@ def _canonicalize_structure_meta_for_xla(x, structure_meta):
 - [Data preparation notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/data-prep-notes.md)
 - [TPU bringup notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/tpu-bringup-notes.md)
 - [Pallas kernel selection notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/pallas-kernel-selection.md)
-- [Structure embeddings and relation bias](https://github.com/DatasunriseOU/site_samples/blob/main/articles/structure-embeddings-and-relation-bias.md)
-- [C/C++ data enhancements and why](https://github.com/DatasunriseOU/site_samples/blob/main/articles/cpp-data-enhancements-and-why.md)
+- [Structure embeddings and relation bias](https://megacpp.com/blog/structure-embeddings-and-relation-bias.md)
+- [C/C++ data enhancements and why](https://megacpp.com/blog/cpp-data-enhancements-and-why.md)
 - [PyTorch/XLA runtime and SPMD docs](https://docs.pytorch.org/xla/master/runtime.html)
 - [JAX Pallas on TPU](https://docs.jax.dev/en/latest/pallas/tpu/)
 - [JAX Pallas TPU details](https://docs.jax.dev/en/latest/pallas/tpu/details.html)

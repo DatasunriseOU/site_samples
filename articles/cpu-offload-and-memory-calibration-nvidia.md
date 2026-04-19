@@ -91,7 +91,7 @@ What we threw out:
 
 ```python
 # boot-time calibration: pick microbatch from the estimator plus probe
-from cppmega.memory import estimator, probe
+from MegaCpp source repository.memory import estimator, probe
 plan = estimator.plan(model, preset)
 dbs = probe.fit(model, plan, headroom_gb=8)
 ```

@@ -36,3 +36,15 @@ tokenizer pinning.
 
 Pinning does not guarantee legal or scientific perfection. It does make claims
 auditable, which is the minimum requirement for a public training narrative.
+
+## Public-safe redaction rule
+
+When publishing a pin note, keep the identifiers that explain the snapshot and
+remove the identifiers that only describe a private environment. Revision tags,
+release names, dataset versions, and stable provenance pointers stay. Machine
+names, private storage layouts, and local tracking labels do not.
+
+## Related local notes
+
+- `docs/data-prep-notes.md`
+- `docs/semantic-indexing-notes.md`

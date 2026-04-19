@@ -1,6 +1,6 @@
 ---
-title: "STP after ten thousand steps: what changed, what signal we watched, and what stayed"
-description: "What the STP-style auxiliary loss can change once a run is past the early warmup window: the hidden-state straightness signal we monitor, why the main loss still dominates, and which parts of the baseline training recipe remain intentionally unchanged."
+title: "STP after ten thousand steps: what changed, what we watched, and what stayed the same"
+description: "What the STP-style auxiliary loss can change once a run is past the early warmup window: the hidden-state straightness signal we monitor, why the main loss still dominates, and which parts of the baseline recipe stay intentionally unchanged."
 date: "2026-04-18"
 tags: ["training", "stp", "trajectory-straightness", "auxiliary-loss", "representation-learning"]
 ---

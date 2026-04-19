@@ -1,6 +1,6 @@
 ---
-title: "The Adapter Stack: How LoRA, QLoRA, and Hot-Swap Compose MegaCpp Specialists"
-description: "The LoRA / QLoRA / DoRA / VeRA / DyLoRA family behind MegaCpp specialists, the registry and lifecycle that turn adapters into versioned releases, the hot-swap runtime, and the inference-facing API they power."
+title: "The adapter stack: how LoRA, QLoRA, and hot-swap compose MegaCpp specialists"
+description: "The LoRA, QLoRA, DoRA, VeRA, and DyLoRA family behind MegaCpp specialists, the registry and lifecycle that turn adapters into versioned releases, the hot-swap runtime, and the inference-facing API they power."
 date: "2026-04-18"
 tags: ["lora", "qlora", "adapters", "peft", "inference", "specialists"]
 ---

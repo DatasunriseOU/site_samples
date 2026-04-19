@@ -1,8 +1,8 @@
 ---
 title: "Unique additions and why they exist"
-description: "A grounded map of the additions that exist because hybrid NAM52 and NAM56R training asks for them: pattern-aware layout code, hybrid embedding surfaces, targeted plasticity tooling, recurrent mixers, and the runtime seams that keep them auditable."
+description: "A grounded map of the additions that exist because hybrid NAM52 and NAM56R training asks for them: pattern-aware layout code, hybrid embedding surfaces, targeted plasticity tooling, recurrent mixers, and runtime seams that keep them auditable."
 date: "2026-04-18"
-tags: ["architecture", "cppmega", "nam52", "nam56r", "hybrid-models", "megatron"]
+tags: ["architecture", "MegaCpp source repository", "nam52", "nam56r", "hybrid-models", "megatron"]
 ---
 
 The distinctive additions are not random experiments. The durable ones exist because the stack trains hybrid families instead of a single uniform decoder. In practice that means explicit pattern notation, model-family-aware layer specs, custom embedding surfaces, recurrent and Mamba mixers that are selected intentionally rather than implicitly, and a small set of optimization tools such as FIRE and STP that solve problems the base stack does not solve by itself. The useful question is not "what is unique?" but "which additions change the training contract in a way that stays legible under NAM52 and NAM56R?"
@@ -109,8 +109,8 @@ That is what makes the additions worth preserving. They do not just add capabili
 
 ## References
 
-- [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
-- [MegaCpp public sample pack](https://github.com/DatasunriseOU/site_samples)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
+- [MegaCpp sample pack](https://github.com/DatasunriseOU/site_samples)
 - [MegaCpp plasticity toolkit notes](../docs/plasticity-toolkit-notes.md)
 - [MegaCpp STP notes](../docs/stp-notes.md)
 - [MegaCpp hybrid layout notes](../docs/hybrid-layout-notes.md)

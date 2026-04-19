@@ -1,5 +1,5 @@
 ---
-title: "Flash Attention 4 in Practice: What We Shipped, What We Cut"
+title: "Flash Attention 4 in practice: what we shipped and what we cut"
 description: "Our hybrid stack's applicability matrix for Flash Attention 4, the Build4 validation profiles, the dense-full rollout gates, and the regressions that killed the first FA4 variants before they reached deployment."
 author: "David Gornshtein"
 date: "2026-04-18"

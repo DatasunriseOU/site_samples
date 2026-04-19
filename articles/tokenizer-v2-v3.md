@@ -1,9 +1,11 @@
 ---
-title: "Tokenizer Evolution for C++ Code: From v2 Proposal to v3 Shipped"
-description: "How the MegaCpp C++ tokenizer evolved from a 32K v1, through a 48K v2 proposal, to the 65K v3 shipped artifact — what we proposed, what corpus frequency analysis told us, and what the tokenizer ended up doing for downstream eval."
+title: "Tokenizer evolution for C++ code: from v2 proposal to v3 shipped"
+description: "How the MegaCpp C++ tokenizer evolved from a 32K v1 through a 48K v2 proposal to the 65K v3 shipped artifact: what we proposed, what corpus frequency analysis told us, and what it did for downstream eval."
 date: "2026-04-18"
 tags: ["tokenizer", "bpe", "c++", "vocab", "data"]
 ---
+
+# Tokenizer evolution for C++ code: from v2 proposal to v3 shipped
 
 The tokenizer is the part of the model nobody looks at until it is wrong. For a C++ specialist family that trains at 4K, 16K, and 64K context, "wrong" is expensive — a bad tokenizer wastes context, degrades the attention map, and silently inflates loss on the exact patterns the model is supposed to be best at. This is the story of how the MegaCpp tokenizer went from v1 (32K, mostly OK) through a v2 proposal (48K, never fully shipped) to v3 (65K, what we run today), and what the corpus frequency analysis taught us in between.
 
@@ -141,6 +143,6 @@ v3 is the current public baseline described here. A later iteration will likely 
 
 ## References
 
-- [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
-- [MegaCpp public sample pack](https://github.com/DatasunriseOU/site_samples)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
+- [MegaCpp sample pack](https://github.com/DatasunriseOU/site_samples)
 - Public data-preparation, tokenizer, and curriculum material linked from the MegaCpp repositories.

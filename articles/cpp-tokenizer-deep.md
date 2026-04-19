@@ -1,15 +1,15 @@
 ---
-title: "Inside the MegaCpp C++ Tokenizer: Fixed Vocab, BPE, and the Sub-Vocabs Per Specialist"
-description: "A deep look at the C++ tokenizer we ship: half hand-curated vocabulary, half learned BPE, what changed between v2 and v3 in actual token-frequency terms, where the vocabulary collisions live, and how per-specialist sub-vocabs fall out of the shared 131K layout."
+title: "Inside the MegaCpp C++ tokenizer: fixed vocab, BPE, and per-specialist sub-vocabs"
+description: "A deep look at the tokenizer we ship: half hand-curated vocabulary, half learned BPE, what changed between v2 and v3, where the collisions live, and how per-specialist sub-vocabs fall out of the shared 64K layout."
 date: "2026-04-18"
 tags: ["tokenizer", "bpe", "c++", "vocab"]
 ---
 
-The tokenizer story is usually told at the summary level: we grew from 32K to 48K to 65K to 131K, seeded some morphemes, shipped v3. That summary is accurate and almost useless for engineering. What actually mattered was the frequency analysis on the real corpus, the collisions between fixed and learned slots, and the per-specialist sub-vocab story — which is not a separate artifact but a discipline of BPE seeding and runtime ID masking.
+The tokenizer story is usually told at the summary level: we grew from 32K to 48K and then to a 64K-class v3 layout, seeded some morphemes, and locked the fixed-token bands. That summary is still almost useless for engineering. What actually mattered was the frequency analysis on the real corpus, the collisions between fixed and learned slots, and the per-specialist sub-vocab story — which is not a separate artifact but a discipline of BPE seeding and runtime ID masking.
 
 ## Why MegaCpp cares about this
 
-A bad tokenizer is the cheapest way to degrade a code model. It wastes context, shatters high-frequency patterns into multi-token sequences, confuses the attention map, and silently inflates loss on the identifiers the model should be best at. For specialists training at 4K, 16K, and 64K, every percentage point of expansion ratio costs real compute at 64K and real answer quality at 4K. The other reason: our model family is a set of specialists sharing one 131K vocabulary. Their practical working sets differ enough that "per-specialist sub-vocab" is a useful abstraction even when no separate artifact exists on disk.
+A bad tokenizer is the cheapest way to degrade a code model. It wastes context, shatters high-frequency patterns into multi-token sequences, confuses the attention map, and silently inflates loss on the identifiers the model should be best at. For specialists training at 4K, 16K, and 64K, every percentage point of expansion ratio costs real compute at 64K and real answer quality at 4K. The other reason: our model family is a set of specialists sharing one 64K vocabulary. Their practical working sets differ enough that "per-specialist sub-vocab" is a useful abstraction even when no separate artifact exists on disk.
 
 ## What we built in MegaCpp
 
@@ -26,11 +26,11 @@ The fixed half covers things BPE cannot be trusted to learn well:
 5. STL and stdlib identifiers at high frequency.
 6. Domain bands: GPU/accelerator tokens (CUDA runtime, cuBLAS, cuDNN, Thrust/CUB, CUTLASS, NCCL, atomics, graph API), ROCm/HIP mirrors, TPU/XLA op names (MHLO dialect, Pallas/Mosaic surface), SQL keywords, query/DB tokens, C++23/26 library surface, and testing/build-framework tokens (GTest, Catch2, Boost.Test).
 
-Each added token is registered through HuggingFace's added-tokens mechanism, which is what the tokenizer implementation uses to distinguish "this token is a full word" from "this token is a BPE fragment." That distinction drives the decoder's space-reconstruction heuristics, because a C++ identifier like `end_point` may arrive as `end` + `_` + `po` + `int` through the pre-tokenizer and has to decode without a stray space between `po` and `int`.
+Each added token is registered through HuggingFace's added-tokens mechanism, which is what the production tokenizer path uses to distinguish "this token is a full word" from "this token is a BPE fragment." That distinction drives the decoder's space-reconstruction heuristics, because a C++ identifier like `end_point` may arrive as `end` + `_` + `po` + `int` through the pre-tokenizer and has to decode without a stray space between `po` and `int`.
 
 ### The learned half
 
-The learned half is BPE, but it is BPE seeded aggressively on corpus-measured morphemes. The frequency analysis (`VOCAB_FREQUENCY_ANALYSIS.md`) ran a Rust analyzer (`tools/vocab_analyzer`, rayon parallel, 48 threads) across 1,435,084 C++ source files — 22.3 GB, 333 open-source projects — in 51.4 seconds. The headline number that shaped BPE seeding was morpheme dominance: 88.3M morpheme hits across 128 proposed morphemes, against 6.94M total hits for the 697 proposed fixed domain tokens. A 12.7x ratio, and it pointed directly at what to invest in.
+The learned half is BPE, but it is BPE seeded aggressively on corpus-measured morphemes. The frequency analysis ran a Rust analyzer (`tools/vocab_analyzer`, rayon parallel, 48 threads) across 1,435,084 C++ source files — 22.3 GB, 333 open-source projects — in 51.4 seconds. The headline number that shaped BPE seeding was morpheme dominance: 88.3M morpheme hits across 128 proposed morphemes, against 6.94M total hits for the 697 proposed fixed domain tokens. A 12.7x ratio, and it pointed directly at what to invest in.
 
 Morpheme classes seeded into BPE: common components (value/index/offset/node/ptr/buffer/count/context, 59.9M hits over 52 items), C++ stems (init/read/write/create/start/format/lock/parse/find/alloc/insert, 22.9M over 30), prefixes (proto, sub, non, multi, meta, mono; 4.2M over 24), and suffixes (1.2M over 22). Total ~99% coverage of the proposed morpheme set. Aggressive early merges (`init`, `read`, `write`, `buffer`, `value`, `index`, `node`, `ptr`) mean `initialize` tokenizes as `init` + `ialize`, not fragment soup. After seeding, BPE ran a standard merge schedule until the remaining budget filled.
 
@@ -38,7 +38,7 @@ One specific seeding decision paid off disproportionately: `std::` is 6.8M names
 
 ### v2 to v3: what actually changed in token-frequency terms
 
-`TOKENIZER_V2_PROPOSAL.md` proposed v2 (48K, 5,535 fixed, ~43,617 BPE) and v3 (65K, same fixed, ~58,336 BPE). The proposals looked clean on paper — 1,700 fixed slots for GPU/SQL/query/DB/C++23-26/testing domains, organized into neat bands from 5300 to 6999. We ran the frequency analysis before committing those slots, which is where things got uncomfortable.
+The internal v2 and v3 sizing proposals looked clean on paper — 1,700 fixed slots for GPU/SQL/query/DB/C++23-26/testing domains, organized into neat bands from 5300 to 6999. We ran the frequency analysis before committing those slots, which is where things got uncomfortable.
 
 The first uncomfortable finding was the **generic word problem**. Of 473 domain tokens found in the smaller 150K-doc analysis, 209 were generic C++ identifiers appearing in 2% to 30% of documents. Words like `query`, `Status`, `map`, `enum`, `chunk`, `expected`, `stride`, `transfer`, `receiver` — technically valid "domain" tokens under the original taxonomy, but wastes of fixed slots because BPE learns them perfectly well as merges. We cut them. The initial budget went from 1,700 down to ~216 on the 150K analysis, an 87% reduction.
 
@@ -60,9 +60,9 @@ Collisions between the hand-curated half and the learned half show up in two pla
 
 ### Per-specialist sub-vocabs
 
-We ship one 131K artifact, not per-specialist tokenizers. Each specialist has a characteristic distribution over that shared vocabulary, which is useful to think about as a sub-vocab. A systems-C specialist spikes on `__attribute__`, `__builtin_*`, `likely`/`unlikely`, byte-value hex literals, and the preprocessor band, with almost no hits on CUTLASS/CUDA. A template-heavy generic C++ specialist saturates STL and Boost, touches the number-pattern band lightly, and uses attributes more than CUDA. A GPU specialist spikes on `__global__`, `__device__`, `cudaMalloc`, `threadIdx`, `cublasSgemm`, and atomics; a TPU/Pallas specialist lights up `mhlo.*`, `pallas.program_id`, `BlockSpec`, and `GridSpec`.
+We ship one shared 64K artifact, not per-specialist tokenizers. The strongest checked-in evidence is the fixed-token manifest for the v3 C++ tokenizer, which declares `_total_vocab: 65536` and describes IDs `7200-65535` as the learned BPE band. Each specialist has a characteristic distribution over that shared vocabulary, which is useful to think about as a sub-vocab. A systems-C specialist spikes on `__attribute__`, `__builtin_*`, `likely`/`unlikely`, byte-value hex literals, and the preprocessor band, with almost no hits on CUTLASS/CUDA. A template-heavy generic C++ specialist saturates STL and Boost, touches the number-pattern band lightly, and uses attributes more than CUDA. A GPU specialist spikes on `__global__`, `__device__`, `cudaMalloc`, `threadIdx`, `cublasSgemm`, and atomics; a TPU/Pallas specialist lights up `mhlo.*`, `pallas.program_id`, `BlockSpec`, and `GridSpec`.
 
-Platform vocabulary is separate. A dedicated platform-vocabulary layer defines a 113-entry label-to-ID space consumed by an `nn.EmbeddingBag(mode='sum')` path, not by the text tokenizer. Six categories (OS, RTOS, GPU, architecture, compiler, C++ standard), up to 20 IDs per document. A prefix emitter can render the same info as a `// platform: ...` comment that does go through the tokenizer, but the ID-embedding path is primary.
+Platform vocabulary is separate. A dedicated platform-metadata layer defines a 113-entry label-to-ID space consumed by an `nn.EmbeddingBag(mode='sum')` path, not by the text tokenizer. Six categories (OS, RTOS, GPU, architecture, compiler, C++ standard), up to 20 IDs per document. A prefix emitter can render the same info as a `// platform: ...` comment that does go through the tokenizer, but the ID-embedding path is primary.
 
 The practical effect is that "per-specialist sub-vocab" is emergent from training mix and runtime ID masking, not from artifact duplication. We considered cold-freezing unused domain bands at inference (zeroing softmax over the CUDA band for a systems-C specialist, for example) but have not shipped it. The BPE band is shared, added-token IDs are stable across specialists, and the merge schedule is fixed, which keeps weight sharing and ensemble-time routing simpler than per-specialist tokenizers.
 
@@ -110,11 +110,10 @@ logits = logits + mask  # applied before softmax
 
 ## References
 
-- the tokenizer implementation
-- the platform-vocabulary layer
-- `TOKENIZER_V2_PROPOSAL.md`
-- `VOCAB_FREQUENCY_ANALYSIS.md`
-- the fixed-token configuration artifact
-- [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega/tree/main)
-- [Scaling Laws with Vocabulary: Larger Models Deserve Larger Vocabularies — Tao et al., NeurIPS 2024]
-- [Byte-Pair Encoding — Sennrich, Haddow, Birch, ACL 2016]
+- [Reference corpus and tokenizer pinning notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/reference-corpus-pins.md)
+- [Semantic indexing and compile-command notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/semantic-indexing-notes.md)
+- [Hybrid layout notes for platform and block metadata](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md)
+- [Compile-commands sample artifact](https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands.sample.json)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
+- [Scaling Laws with Vocabulary: Larger Models Deserve Larger Vocabularies](https://openreview.net/forum?id=j4e4SkA5Xq)
+- [Neural Machine Translation of Rare Words with Subword Units](https://aclanthology.org/P16-1162/)

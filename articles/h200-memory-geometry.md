@@ -103,4 +103,4 @@ That is the real meaning of memory geometry. It is not an aesthetic way to prese
 - [PyTorch `torch.utils.checkpoint`](https://pytorch.org/docs/stable/checkpoint.html)
 - [Megatron Core developer guide](https://docs.nvidia.com/megatron-core/developer-guide/latest/)
 - [Distributed debugging notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md)
-- [H200 training status summary sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/cppmega/training/training-on-h200-eight-gpu__production_status_summary__v1.md)
+- [H200 training status summary sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/MegaCpp source repository/training/training-on-h200-eight-gpu__production_status_summary__v1.md)

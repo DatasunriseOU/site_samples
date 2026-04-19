@@ -1,6 +1,6 @@
 ---
-title: "Fused MLA on Hopper and Blackwell: Projection, RoPE, and the KV-Cache That Actually Ships"
-description: "The NVIDIA-specific side of Multi-Latent Attention in the MegaCpp ensemble: a fused down/norm/up projection, a fused split+RoPE+concat Triton kernel, a compressed KV cache, and how it all lands on Megatron-Core."
+title: "Fused MLA on Hopper and Blackwell: projection, RoPE, and the KV cache that ships"
+description: "The NVIDIA side of Multi-Latent Attention in the MegaCpp ensemble: a fused down-norm-up projection, a fused split-RoPE-concat Triton kernel, a compressed KV cache, and how it all lands on Megatron-Core."
 date: "2026-04-18"
 tags: ["mla", "triton", "h200", "blackwell", "rope", "kv-cache", "fused-kernels"]
 ---

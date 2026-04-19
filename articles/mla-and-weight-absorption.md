@@ -1,6 +1,6 @@
 ---
-title: "MLA Weight Absorption: What We Kept, What We Dropped for the C++ Specialists"
-description: "Multi-Head Latent Attention in production: why DeepSeek's absorbed decode path is the right choice for KV-cache, why it is the wrong choice for training, and how the C++ specialist ensemble uses both."
+title: "MLA weight absorption: what we kept and what we dropped for the C++ specialists"
+description: "Multi-Head Latent Attention in production: why DeepSeek's absorbed decode path is the right choice for KV cache, why it is the wrong choice for training, and how the C++ specialist ensemble uses both."
 date: 2026-04-18
 author: "Boris Tamarkin"
 tags: ["mla", "attention", "deepseek", "flash-attention", "kv-cache", "training", "inference"]
@@ -105,6 +105,6 @@ For the C++ specialists specifically, the combination of MLA training + absorbed
 - `24-mla-weight-absorption-analysis.md`
 - `deepseek_mla_strategy.md`
 - `06-long-context.md`
-- public training notes in `site_samples`
+- public training notes in `MegaCpp sample pack`
 - `architecture_and_eval_en.md`
 - `v4_architecture.md`

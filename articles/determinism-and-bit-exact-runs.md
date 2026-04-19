@@ -1,6 +1,6 @@
 ---
-title: "Determinism and Bit-Exact Runs: What We Guard, and Where We Accept Drift"
-description: "A grounded account of GPU and TPU determinism on our stack: the fast path we run in production, the bitwise path we keep for regression testing, and the tests that fire when silent non-determinism creeps in."
+title: "Determinism and bit-exact runs: what we guard and where we accept drift"
+description: "A grounded account of GPU and TPU determinism on our stack: the fast path we run in production, the bitwise path we keep for regression testing, and the tests that fire when silent nondeterminism creeps in."
 date: "2026-04-18"
 tags: ["determinism", "reproducibility", "training-infra", "testing"]
 ---

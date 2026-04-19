@@ -128,5 +128,5 @@ Things that survived: the bridge itself as a thin CUDA-only module, the Mamba mi
 - https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html
 - https://github.com/NVIDIA/TransformerEngine
 - https://github.com/state-spaces/mamba
-- https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/cppmega/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py
+- https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/MegaCpp source repository/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py
 - https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md

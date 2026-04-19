@@ -1,5 +1,5 @@
 ---
-title: "Transformer Engine on H200 and Blackwell-Class GPUs: The Bridge We Use"
+title: "Transformer Engine on H200 and Blackwell-class GPUs: the bridge we use"
 description: "How MegaCpp wires NVIDIA Transformer Engine into the training stack on Hopper and Blackwell, where TE replaces native PyTorch layers, the FP8 interaction, and the fallback path that keeps non-NVIDIA lanes alive."
 date: "2026-04-18"
 tags: ["transformer-engine", "fp8", "h200", "blackwell", "nvidia", "training"]

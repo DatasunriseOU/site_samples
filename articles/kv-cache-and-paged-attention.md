@@ -97,7 +97,7 @@ def lookup_kv(block_table, slot, layer):
 
 ## Public references
 
-- [MegaCpp public repository](https://github.com/DatasunriseOU/cppmega)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
 - [Public sample pack](https://github.com/DatasunriseOU/site_samples)
 - [DeepSeek-V2 Multi-Head Latent Attention - DeepSeek-AI 2024]
 - [PolarQuant: Quantization-Friendly KV Cache Compression - Han et al., AISTATS 2026]

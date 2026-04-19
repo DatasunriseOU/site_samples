@@ -1,6 +1,6 @@
 ---
-title: "Why a 4B-8B Model Fills an H200 and Still OOMs"
-description: "A detailed accounting of where 141 GB of HBM goes when you train a 4B-8B hybrid Mamba 3 + Transformer + MoE specialist: parameters, gradients, optimizer state, activations, KV cache, MoE routing buffers, and allocator fragmentation."
+title: "Why a 4B-8B model fills an H200 and still OOMs"
+description: "A detailed accounting of where 141 GB of HBM goes when you train a 4B-8B hybrid Mamba 3, Transformer, and MoE specialist: parameters, gradients, optimizer state, activations, KV cache, MoE routing buffers, and allocator fragmentation."
 date: "2026-04-18"
 tags: ["memory", "h200", "moe", "mamba", "activations", "fsdp2", "training"]
 ---
