@@ -53,6 +53,9 @@ Near-copy runtime receipts:
 - `megatron_flce_hopper_nearcopy.py`: heavier near-copy output-layer contract sample for Hopper-ready fused linear cross entropy
 - `author_mamba3_spec_nearcopy.py`: heavier near-copy author-integration sample for the explicit RMSNorm seam in Mamba3
 - `index_cache_patch_nearcopy.py`: heavier near-copy cache-lifecycle sample for full/shared DSA index reuse
+- `nam56r_megatron_recipe_nearcopy.py`: heavier near-copy translation plan for fail-closed NAM56R -> Megatron pattern mapping
+- `nam56r_launch_recipe_nearcopy.py`: heavier near-copy launcher split between generated args and fixed runtime policy
+- `mamba3_psiv_cache_scaffold.py`: scaffold-style near-copy example for the fail-closed PsiV cache gate
 
 What problem these files solve:
 - they keep the public model description tied to real recipe and launcher surfaces
@@ -74,6 +77,8 @@ What problem these files solve:
   public contracts instead of treating them as invisible kernel details
 - they make author-model seams and sparse-index cache lifecycle rules visible
   instead of hiding them inside one integration patch
+- they also make the NAM56R translation and launch contract explicit, and show
+  that unfinished cache features are published as scaffolds rather than as fake optimizations
 
 Where this fits in the model:
 - these are the top-level recipe, layout, and launch adapters for the training stack

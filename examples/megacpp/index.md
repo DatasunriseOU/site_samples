@@ -49,6 +49,9 @@ Near-copy runtime receipts:
 - `megatron_flce_hopper_nearcopy.py`
 - `author_mamba3_spec_nearcopy.py`
 - `index_cache_patch_nearcopy.py`
+- `nam56r_megatron_recipe_nearcopy.py`
+- `nam56r_launch_recipe_nearcopy.py`
+- `mamba3_psiv_cache_scaffold.py`
 
 In simple words: this directory is the bridge between the public NAM56R model
 story and the smaller contracts that make the recipe, runtime, and kernel
