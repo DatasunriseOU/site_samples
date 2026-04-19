@@ -17,6 +17,8 @@ Files in this directory:
 - `attention_backend_variants_sample.py`: the real sparse-attention backend and helper-choice surface.
 - `mhc_stream_residual_sample.py`: the real config knobs around mHC, FP32 residual, and AttnRes conflicts.
 - `mod_routing_surface_sample.py`: the real MoD routing modes and their gather-vs-gate tradeoffs.
+- `modr_recurrent_lora_wiring_sample.py`: the recurrent shared-core + LoRA-branch wiring contract used by MoDr.
+- `modr_router_bookkeeping_sample.py`: the branch-routing bookkeeping and optional auxiliary-loss contract used by MoDr.
 - `adapter_lora_runtime_sample.py`: the runtime adapter metadata contract for LoRA, DoRA, VeRA, QLoRA, and DyLoRA.
 - `deltanet_hyperconnection_sample.py`: the block-selection receipt for DeltaNet and multi-stream hyper-connections.
 - `block_taxonomy_sample.py`: simple public taxonomy for A/M/D/E/R/C block labels.
@@ -26,6 +28,7 @@ How this plugs into the model:
 - The superblock constructor decides how many hidden-state streams exist and whether hyper-connections are static or dynamic.
 - GPT-level config controls whether mHC owns cross-layer stream mixing and whether other residual helpers can stay active.
 - MoD config decides whether tokens are top-k routed, threshold routed, or softly gated without gather/scatter.
+- MoDr keeps one recurrent shared block and reuses small LoRA branches to explore different reasoning paths without cloning the whole block.
 - The adapter stack preserves enough LoRA metadata for safe runtime composition and online adaptation.
 
 In simple words:
