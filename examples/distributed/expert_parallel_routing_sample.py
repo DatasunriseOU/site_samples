@@ -1,4 +1,9 @@
-"""Public-safe expert-parallel routing planning excerpt."""
+"""Expert-parallel routing capacity sample.
+
+This example keeps the basic planning math from the MegaCpp POC. The problem
+it solves is buffer sizing: expert-parallel routing needs predictable capacity
+before the dispatcher can pack and exchange token slices.
+"""
 
 from __future__ import annotations
 

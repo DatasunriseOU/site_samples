@@ -1,0 +1,26 @@
+# Hybrid Examples
+
+This directory shows how the MegaCpp POC combines different sequence-mixing and
+memory branches inside one model family.
+
+These files are here to answer simple practical questions:
+- Which attention-like paths can live inside an A-block?
+- Which sparse-attention backend knobs actually change runtime behavior?
+- How do mHC and residual-related options interact?
+
+Files in this directory:
+- `hybrid_pattern_sample.py`: grounded summary of the unified A-block and superblock wiring.
+- `attention_backend_variants_sample.py`: the real sparse-attention backend and helper-choice surface.
+- `mhc_stream_residual_sample.py`: the real config knobs around mHC, FP32 residual, and AttnRes conflicts.
+
+How this plugs into the model:
+- The A-block constructor decides whether dense attention, sparse attention, and Engram are present.
+- The superblock constructor decides how many hidden-state streams exist and whether hyper-connections are static or dynamic.
+- GPT-level config controls whether mHC owns cross-layer stream mixing and whether other residual helpers can stay active.
+
+In simple words:
+- Dense attention is the normal full-context path.
+- Sparse attention is the cheaper selective path.
+- Engram is an extra learned memory branch.
+- mHC mixes several hidden-state streams instead of carrying only one stream forward.
+

@@ -1,11 +1,16 @@
-"""This example translates a NAM-style hybrid layer pattern into a public-safe Megatron pattern.
+"""Unified block choice sample grounded in the MegaCpp POC hybrid stack.
 
-Why it exists: the model mixes attention, Mamba, and routed layers in one
-depth schedule, so launch code needs a deterministic translation step.
+What it is: a public-safe excerpt of the logic that decides which parallel
+attention-like branches live inside an A-block and how a superblock is built.
 
-What problem it solves: it makes the pattern explicit and fails closed on
-symbols that still need custom runtime support instead of silently remapping
-them.
+Why it exists: the model does not use one universal attention path. Standard
+causal attention, sparse attention, Engram memory, and multi-stream mixing are
+all optional surfaces, and the block constructor has to wire them together in a
+predictable way.
+
+What problem it solves: it makes the block menu explicit so readers can see
+which features are enabled for a given layer instead of guessing from preset
+names.
 """
 
 from __future__ import annotations
@@ -13,130 +18,83 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
-_SUPPORTED_SYMBOLS = frozenset({"A", "M", "D", "E", "G", "R", "|"})
-_NEMOTRON_TO_MEGATRON = {
-    "A": "*",
-    "M": "M",
-    "D": "G",
-    "E": "E",
-}
+@dataclass(frozen=True)
+class AttentionBranchPlan:
+    use_dense_attention: bool
+    use_sparse_attention: bool
+    use_engram: bool
+    dense_gate_bias: float
+    sparse_gate_bias: float
+    engram_gate_bias: float
 
 
 @dataclass(frozen=True)
-class TranslationIssue:
-    symbol: str
-    message: str
+class SuperBlockPlan:
+    n_streams: int
+    sinkhorn_iters: int
+    dynamic_hyper_connections: bool
+    dynamic_mode: str
+    uses_fused_hc_ops: bool
+    branch_plan: AttentionBranchPlan
 
 
-@dataclass(frozen=True)
-class HybridPlan:
-    source_pattern: str
-    translated_pattern: str
-    requires_custom_mamba3: bool
-    requires_custom_m2rnn: bool
-    requires_mtp_suffix: bool
-    issues: tuple[TranslationIssue, ...]
+def build_attention_branch_plan(*, use_engram: bool, use_dsa: bool) -> AttentionBranchPlan:
+    """Mirror the warm-start gate policy from the hybrid A-block.
 
-    @property
-    def is_fully_native(self) -> bool:
-        return (
-            not self.requires_custom_mamba3
-            and not self.requires_custom_m2rnn
-            and not self.issues
-        )
-
-
-def parse_nem_pattern(pattern: str, depth: int) -> list[str]:
-    """Match the MegaCpp POC tiling rules for NAM-style layer patterns."""
-
-    if not pattern:
-        raise ValueError("pattern must be non-empty")
-    upper = pattern.upper()
-    invalid = sorted({ch for ch in upper if ch not in _SUPPORTED_SYMBOLS})
-    if invalid:
-        raise ValueError(
-            f"invalid pattern chars {invalid!r}; supported symbols are A, M, D, E, G, R and |"
-        )
-
-    if "|" in upper:
-        segments = upper.split("|")
-        flat = "".join(segments)
-        if len(flat) != depth:
-            raise ValueError(
-                f"pipe-delimited pattern expands to {len(flat)} layers, expected depth={depth}"
-            )
-        return list(flat)
-
-    return [upper[i % len(upper)] for i in range(depth)]
-
-
-def count_layer_types(pattern: str, depth: int) -> dict[str, int]:
-    counts: dict[str, int] = {}
-    for symbol in parse_nem_pattern(pattern, depth):
-        counts[symbol] = counts.get(symbol, 0) + 1
-    return counts
-
-
-def translate_pattern(
-    *,
-    pattern: str,
-    depth: int,
-    mtp_depths: int = 0,
-    force_author_mamba3: bool = True,
-) -> HybridPlan:
-    """Translate a NAM-style pattern into Megatron hybrid syntax.
-
-    The important MegaCpp POC contract is that `R` does not get silently remapped,
-    and `M` can still require a custom Mamba3-backed runtime even when the
-    textual Megatron symbol is available.
+    The MegaCpp POC constructor always keeps dense attention present, always
+    instantiates the sparse branch, and then biases the learned gates so the
+    expected path dominates on day one.
     """
 
-    translated: list[str] = []
-    issues: list[TranslationIssue] = []
-    requires_custom_m2rnn = False
-    requires_custom_mamba3 = False
-
-    for symbol in parse_nem_pattern(pattern, depth):
-        if symbol == "R":
-            requires_custom_m2rnn = True
-            issues.append(
-                TranslationIssue(
-                    symbol="R",
-                    message=(
-                        "R has no native Megatron equivalent in this public sample; "
-                        "custom runtime support is still required"
-                    ),
-                )
-            )
-            translated.append("R")
-            continue
-
-        translated_symbol = _NEMOTRON_TO_MEGATRON.get(symbol)
-        if translated_symbol is None:
-            issues.append(
-                TranslationIssue(
-                    symbol=symbol,
-                    message=f"no translation rule is defined for symbol {symbol!r}",
-                )
-            )
-            translated.append(symbol)
-            continue
-
-        if symbol == "M" and force_author_mamba3:
-            requires_custom_mamba3 = True
-
-        translated.append(translated_symbol)
-
-    translated_pattern = "".join(translated)
-    requires_mtp_suffix = mtp_depths > 0
-    if requires_mtp_suffix:
-        translated_pattern = translated_pattern + "/" + "/".join("*-" for _ in range(mtp_depths))
-
-    return HybridPlan(
-        source_pattern=pattern,
-        translated_pattern=translated_pattern,
-        requires_custom_mamba3=requires_custom_mamba3,
-        requires_custom_m2rnn=requires_custom_m2rnn,
-        requires_mtp_suffix=requires_mtp_suffix,
-        issues=tuple(issues),
+    return AttentionBranchPlan(
+        use_dense_attention=True,
+        use_sparse_attention=True,
+        use_engram=use_engram,
+        dense_gate_bias=2.0 if not use_dsa else -2.0,
+        sparse_gate_bias=2.0 if use_dsa else -2.0,
+        engram_gate_bias=2.0 if use_engram else -2.0,
     )
+
+
+def build_superblock_plan(config: object, *, use_engram: bool, use_dsa: bool) -> SuperBlockPlan:
+    """Summarize the hybrid superblock choices with the same config knobs.
+
+    Grounded source surfaces:
+    - `mhc_n_streams`
+    - `mhc_sinkhorn_iters`
+    - `mhc_dynamic`
+    - `mhc_dynamic_mode`
+    - `mhc_fused_ops`
+    """
+
+    return SuperBlockPlan(
+        n_streams=int(getattr(config, "mhc_n_streams", 4)),
+        sinkhorn_iters=int(getattr(config, "mhc_sinkhorn_iters", 5)),
+        dynamic_hyper_connections=bool(getattr(config, "mhc_dynamic", False)),
+        dynamic_mode=str(getattr(config, "mhc_dynamic_mode", "maxtext")),
+        uses_fused_hc_ops=bool(getattr(config, "mhc_fused_ops", False)),
+        branch_plan=build_attention_branch_plan(use_engram=use_engram, use_dsa=use_dsa),
+    )
+
+
+def summarize_ablock_choices(config: object, *, use_engram: bool, use_dsa: bool) -> dict[str, object]:
+    """Return a compact public receipt of the grounded block-choice contract."""
+
+    plan = build_superblock_plan(config, use_engram=use_engram, use_dsa=use_dsa)
+    return {
+        "superblock": {
+            "n_streams": plan.n_streams,
+            "sinkhorn_iters": plan.sinkhorn_iters,
+            "dynamic_hyper_connections": plan.dynamic_hyper_connections,
+            "dynamic_mode": plan.dynamic_mode,
+            "uses_fused_hc_ops": plan.uses_fused_hc_ops,
+        },
+        "ablock": {
+            "dense_attention": plan.branch_plan.use_dense_attention,
+            "sparse_attention": plan.branch_plan.use_sparse_attention,
+            "engram": plan.branch_plan.use_engram,
+            "dense_gate_bias": plan.branch_plan.dense_gate_bias,
+            "sparse_gate_bias": plan.branch_plan.sparse_gate_bias,
+            "engram_gate_bias": plan.branch_plan.engram_gate_bias,
+        },
+    }
