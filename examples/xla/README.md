@@ -9,12 +9,14 @@ What is here:
 - startup, retry, and calibration helpers
 - backend selection receipts
 - runtime probes, graph barriers, and fallback policies
+- clustered sparse forward-cache helpers for multi-phase TPU sparse attention
 
 What these files are for:
 - showing which TPU backend gets picked for which mask or softcap shape
 - showing how sparse token routing is normalized before a TPU kernel call
 - showing how TPU startup and retry logic is kept deterministic enough for long runs
 - showing how runtime probing and XLA graph splitting are kept explicit
+- showing how clustered sparse TPU caching keeps static mask semantics separate from per-batch tensors
 
 For this pass, the most relevant files are:
 - `xla_backend_dispatch.py`

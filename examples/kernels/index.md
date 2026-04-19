@@ -12,6 +12,7 @@
 - `triton_row_gather_sample.py`: gathers one contiguous `(N, H, D)` tensor by row index.
 - `triton_row_gather_pair_sample.py`: gathers matching K/V rows under one contract.
 - `moba_block_sparse_decode_sample.py`: resolves requested vs actual backend for blockized sparse decode.
+- `union_selection_query_mask_sample.py`: clustered sparse Phase-2 union-map contract.
 - `clustered_sparse_three_phase_sample.py`: separates importance scoring, union selection, and clustered sparse attention.
 - `exact_mask_contract_cache_sample.py`: cache only static exact-mask semantics, not per-batch tensors.
 

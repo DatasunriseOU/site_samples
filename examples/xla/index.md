@@ -65,6 +65,7 @@ mask shape, and interop signatures must stay aligned with the kernel surface.
 Relevant examples:
 
 - `clustered_sparse_jax_interop.py`
+- `clustered_sparse_forward_cache_sample.py`
 - `graph_safe_batch_warmup_sample.py`
 
 ## Model/runtime placement in simple words

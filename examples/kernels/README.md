@@ -18,6 +18,7 @@ What is here:
 - `fused_rope_qk_sample.py`: fused rotary application for Q/K attention ingress.
 - `mhc_fused_static_sample.py`: static 4-stream fused mixing surface for mHC fast paths.
 - `moba_block_sparse_decode_sample.py`: requested-vs-actual backend receipt for blockized sparse decode.
+- `union_selection_query_mask_sample.py`: Phase-2 union-map and query-legality contract for clustered sparse TPU attention.
 - `clustered_sparse_three_phase_sample.py`: clustered sparse TPU pipeline split into routing and attention stages.
 - `triton_row_gather_sample.py`: single-tensor sparse row gather staging.
 - `triton_row_gather_pair_sample.py`: paired K/V sparse row gather staging.
@@ -34,6 +35,8 @@ How these fit into the model/runtime:
   JAX closure key.
 - Blockized sparse decode: the MoBA-style resolver records when a FLASH-style
   sparse request had to execute as Triton instead.
+- Sparse TPU staging: union selection converts top-k block picks into compact
+  union maps and optional dense debug masks before the clustered sparse kernel runs.
 - Clustered sparse TPU: the three-phase sample shows how routing and sparse
   attention are separated in the clustered Pallas pipeline.
 - Block boundaries: residual + RMSNorm fusion and bias-dropout-add cut repeated
