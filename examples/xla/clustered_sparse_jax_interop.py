@@ -1,22 +1,96 @@
-"""Clustered sparse TPU JAX/Pallas interop surface.
+"""Clustered sparse JAX interop contract sample.
 
-This example shows the helper layer around the experimental clustered-sparse
-TPU path. It exists to keep JAX/Pallas dependency loading, exact mask metadata,
-and `call_jax` probing confined to one place instead of leaking throughout the
-model code.
-
-The donor implementation improved this path by normalizing local-window and
-document-mask contracts before phase selection, which reduced shape drift across
-the importance-scoring and sparse-attention kernels.
+What it is: a donor-based excerpt of the narrow helper layer that prepares a
+clustered sparse TPU path to call JAX/Pallas kernels from a PyTorch model.
+Why it exists: the sparse pipeline evolved across multiple kernel signatures,
+so the wrapper had to detect which exact-mask, doc-id, and valid-prefix kwargs
+were actually supported instead of assuming every phase accepted the same API.
+What problem it solves: it keeps the bridge tolerant to narrow interop changes
+without silently claiming support for mask contracts that the downstream kernel
+does not really implement.
 """
 
 from __future__ import annotations
 
 import importlib
-from collections.abc import Callable
+import inspect
+from dataclasses import dataclass
+from types import ModuleType
 
 
-MASK_CONTRACT_PARAM_NAMES = (
+def _import_optional_module(module_name: str) -> ModuleType:
+    return importlib.import_module(module_name)
+
+
+def _supports_kwarg(fn, kwarg: str) -> bool:
+    try:
+        params = inspect.signature(fn).parameters
+    except (TypeError, ValueError):
+        return False
+    return kwarg in params or any(
+        p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()
+    )
+
+
+def _explicit_param_names(fn) -> set[str]:
+    try:
+        params = inspect.signature(fn).parameters
+    except (TypeError, ValueError):
+        return set()
+    return {
+        name
+        for name, param in params.items()
+        if param.kind != inspect.Parameter.VAR_KEYWORD
+    }
+
+
+def _first_explicit_kwarg(fn, names: tuple[str, ...]) -> str | None:
+    params = _explicit_param_names(fn)
+    for name in names:
+        if name in params:
+            return name
+    return None
+
+
+def _call_with_optional_kwargs(fn, *args, **kwargs):
+    filtered = {
+        key: value for key, value in kwargs.items() if _supports_kwarg(fn, key)
+    }
+    return fn(*args, **filtered)
+
+
+def _ensure_jax():
+    """Lazy-load JAX and return (jax, jnp) or raise ImportError."""
+    try:
+        import jax
+
+        jnp = _import_optional_module("jax.numpy")
+        return jax, jnp
+    except ImportError as exc:
+        raise ImportError(
+            "JAX is required for the clustered sparse TPU bridge. "
+            "Install jax and jaxlib for this path."
+        ) from exc
+
+
+def _ensure_sparse_pallas():
+    """Lazy-load sparse-pallas pipeline functions or raise ImportError."""
+    raise ImportError(
+        "The donor bridge expected a sparse-pallas package on the Python path. "
+        "This public sample documents the contract only and does not ship that package."
+    )
+
+
+def _ensure_call_jax():
+    """Lazy-load call_jax from torch_xla or return None for fallback paths."""
+    try:
+        xla_builder = _import_optional_module("torch_xla.core.xla_builder")
+        return getattr(xla_builder, "call_jax")
+    except ImportError:
+        return None
+
+
+_MASK_CONTRACT_PARAM_NAMES = (
     "exact_mask_contract",
     "mask_contract",
     "attention_mask_contract",
@@ -24,8 +98,8 @@ MASK_CONTRACT_PARAM_NAMES = (
     "mask_meta",
     "exact_mask",
 )
-WINDOW_PARAM_NAMES = ("window_size", "local_window")
-DOC_IDS_PARAM_NAMES = (
+_WINDOW_PARAM_NAMES = ("window_size", "local_window")
+_DOC_IDS_PARAM_NAMES = (
     "doc_ids",
     "q_doc_ids",
     "kv_doc_ids",
@@ -33,7 +107,7 @@ DOC_IDS_PARAM_NAMES = (
     "q_segment_ids",
     "kv_segment_ids",
 )
-VALID_PREFIX_PARAM_NAMES = (
+_VALID_PREFIX_PARAM_NAMES = (
     "valid_token_counts",
     "q_valid_token_counts",
     "kv_valid_token_counts",
@@ -41,83 +115,92 @@ VALID_PREFIX_PARAM_NAMES = (
 )
 
 
-def ensure_jax_modules() -> tuple[object, object]:
-    jax = importlib.import_module("jax")
-    jnp = importlib.import_module("jax.numpy")
-    return jax, jnp
-
-
-def expected_sparse_pallas_symbols() -> tuple[str, ...]:
-    """Return the donor-side sparse kernel symbols the TPU bridge expects."""
-
-    return (
-        "KernelConfig",
-        "importance_scoring_pipeline",
-        "importance_scoring_pipeline_fused",
-        "union_selection_pipeline",
-        "sparse_attention",
-        "UnionMaps",
+def _phase_supports_local_window(fn) -> bool:
+    return _first_explicit_kwarg(fn, _MASK_CONTRACT_PARAM_NAMES) is not None or (
+        _first_explicit_kwarg(fn, _WINDOW_PARAM_NAMES) is not None
     )
 
 
-def ensure_sparse_pallas_loader() -> tuple[str, tuple[str, ...]]:
-    """Keep the import contract explicit without depending on private packages here."""
-
-    return ("experiments.sparse_pallas", expected_sparse_pallas_symbols())
-
-
-def ensure_call_jax() -> Callable | None:
-    try:
-        xla_builder = importlib.import_module("torch_xla.core.xla_builder")
-    except ImportError:
-        return None
-    return getattr(xla_builder, "call_jax")
-
-
-def phase_supports_local_window(explicit_kwargs: set[str]) -> bool:
-    return any(name in explicit_kwargs for name in MASK_CONTRACT_PARAM_NAMES) or any(
-        name in explicit_kwargs for name in WINDOW_PARAM_NAMES
+def _phase_supports_doc_ids(fn) -> bool:
+    return _first_explicit_kwarg(fn, _MASK_CONTRACT_PARAM_NAMES) is not None or (
+        _first_explicit_kwarg(fn, _DOC_IDS_PARAM_NAMES) is not None
     )
 
 
-def phase_supports_doc_ids(explicit_kwargs: set[str]) -> bool:
-    return any(name in explicit_kwargs for name in MASK_CONTRACT_PARAM_NAMES) or any(
-        name in explicit_kwargs for name in DOC_IDS_PARAM_NAMES
+def _phase_supports_valid_prefix(fn) -> bool:
+    return _first_explicit_kwarg(fn, _MASK_CONTRACT_PARAM_NAMES) is not None or (
+        _first_explicit_kwarg(fn, _VALID_PREFIX_PARAM_NAMES) is not None
     )
 
 
-def normalize_local_window(window_size: object) -> int:
-    if isinstance(window_size, tuple):
-        if len(window_size) != 2:
-            raise TypeError("window_size must be a 2-tuple")
-        return int(window_size[0])
-    if window_size is None:
+def _normalize_local_window(window_size) -> int:
+    if not isinstance(window_size, (tuple, list)) or len(window_size) != 2:
         return 0
-    return int(window_size)
+    left, right = window_size
+    if right is not None and int(right) > 0:
+        return max(int(left), 0) if left is not None else 0
+    if left is None:
+        return 0
+    return max(int(left), 0)
 
 
-def mask_contract_summary(mask_contract: dict[str, object]) -> dict[str, object]:
-    """Mirror the donor-side exact-mask summary used before phase dispatch."""
-
-    return {
-        "window_size": normalize_local_window(mask_contract.get("window_size")),
-        "local_window": int(mask_contract.get("local_window", 0) or 0),
-        "has_doc_ids": bool(mask_contract.get("has_doc_ids", False)),
-        "has_valid_token_counts": bool(mask_contract.get("has_valid_token_counts", False)),
-    }
-
-
-def choose_clustered_sparse_backend(*, torch_xla_active: bool, jax_kernel_available: bool) -> str:
-    if torch_xla_active and jax_kernel_available:
-        return "torch_xla_plus_call_jax"
-    if torch_xla_active:
-        return "xla_dense_fallback"
-    return "non_xla_fallback"
+@dataclass(frozen=True)
+class ThreePhaseExactMaskSupport:
+    local_window: bool = False
+    general_doc_ids: bool = False
+    valid_prefix: bool = False
+    phase1_has_contract: bool = False
+    phase2_has_contract: bool = False
+    phase3_has_contract: bool = False
 
 
-def interop_summary() -> list[str]:
-    return [
-        "Confine JAX/Pallas loading to the clustered-sparse helper boundary.",
-        "Normalize local-window, segment-id, and valid-prefix metadata before phase selection.",
-        "Prefer the TPU bridge only when both torch_xla and the sparse JAX kernels are available.",
-    ]
+def get_three_phase_exact_mask_support(*, use_fused_scoring: bool) -> ThreePhaseExactMaskSupport:
+    """Inspect sparse-phase signatures and only trust explicit support."""
+    try:
+        sparse_pallas = _ensure_sparse_pallas()
+    except ImportError:
+        return ThreePhaseExactMaskSupport()
+
+    importance_scoring_pipeline = sparse_pallas[1]
+    importance_scoring_pipeline_fused = sparse_pallas[2]
+    union_selection_pipeline = sparse_pallas[3]
+    sparse_attention_fn = sparse_pallas[4]
+    phase1_fn = (
+        importance_scoring_pipeline_fused
+        if use_fused_scoring
+        else importance_scoring_pipeline
+    )
+
+    phase1_has_contract = _first_explicit_kwarg(phase1_fn, _MASK_CONTRACT_PARAM_NAMES) is not None
+    phase2_has_contract = _first_explicit_kwarg(
+        union_selection_pipeline, _MASK_CONTRACT_PARAM_NAMES
+    ) is not None
+    phase3_has_contract = _first_explicit_kwarg(
+        sparse_attention_fn, _MASK_CONTRACT_PARAM_NAMES
+    ) is not None
+
+    return ThreePhaseExactMaskSupport(
+        local_window=_phase_supports_local_window(phase1_fn)
+        and _phase_supports_local_window(sparse_attention_fn),
+        general_doc_ids=_phase_supports_doc_ids(phase1_fn)
+        and _phase_supports_doc_ids(sparse_attention_fn),
+        valid_prefix=_phase_supports_valid_prefix(phase1_fn)
+        and _phase_supports_valid_prefix(sparse_attention_fn),
+        phase1_has_contract=phase1_has_contract,
+        phase2_has_contract=phase2_has_contract,
+        phase3_has_contract=phase3_has_contract,
+    )
+
+
+def is_effectively_global_causal_window(window_size, seq_len: int) -> bool:
+    """Treat only full-context causal windows as sparse-path-safe."""
+    if window_size is None:
+        return True
+    if not isinstance(window_size, (tuple, list)) or len(window_size) != 2:
+        return False
+    left, right = window_size
+    full_left_context = (
+        left is None or int(left) < 0 or int(left) >= max(int(seq_len) - 1, 0)
+    )
+    no_future_window = right is None or int(right) <= 0
+    return full_left_context and no_future_window
