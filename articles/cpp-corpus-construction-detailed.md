@@ -110,5 +110,5 @@ That is the detailed corpus-construction story the public files support. It is n
 - https://github.com/DatasunriseOU/site_samples/blob/main/docs/data-prep-notes.md
 - https://github.com/DatasunriseOU/site_samples/blob/main/docs/reference-corpus-pins.md
 - https://github.com/DatasunriseOU/site_samples/blob/main/docs/semantic-indexing-notes.md
-- https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands.sample.json
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands_fixture.json
 - https://clang.llvm.org/docs/JSONCompilationDatabase.html

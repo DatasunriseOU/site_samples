@@ -134,5 +134,5 @@ The main conclusion is simple. H200 training speed is determined by the executed
 - [NVIDIA H200 Tensor Core GPU](https://www.nvidia.com/en-us/data-center/h200/)
 - [PyTorch compiler documentation](https://pytorch.org/docs/stable/torch.compiler.html)
 - [Megatron Core developer guide](https://docs.nvidia.com/megatron-core/developer-guide/latest/)
-- [Training on H200: public status summary sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/MegaCpp source repository/training/training-on-h200-eight-gpu__production_status_summary__v1.md)
+- [Training on H200: public status summary sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/cppmega/training/training-on-h200-eight-gpu__production_status_summary__v1.md)
 - [Public distributed debugging notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md)

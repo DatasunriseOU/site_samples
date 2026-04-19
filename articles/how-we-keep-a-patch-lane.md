@@ -104,7 +104,7 @@ What we kept is the part that compounds: pinned environments, a small set of loc
 
 ## References
 
-- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/cppmega)
 - [MegaCpp sample pack](https://github.com/DatasunriseOU/site_samples)
 - [PyTorch previous versions guide](https://pytorch.org/get-started/previous-versions/)
 - [PyPA packaging guide](https://packaging.python.org/en/latest/)

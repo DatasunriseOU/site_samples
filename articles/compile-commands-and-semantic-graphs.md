@@ -130,6 +130,6 @@ indexing problem.
 ## References
 
 - [Semantic indexing note](https://github.com/DatasunriseOU/site_samples/blob/main/docs/semantic-indexing-notes.md)
-- [Sample `compile_commands.json`](https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands.sample.json)
+- [Sample `compile_commands.json`](https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands_fixture.json)
 - [Clang JSON Compilation Database](https://clang.llvm.org/docs/JSONCompilationDatabase.html)
 - [clang-doc](https://clang.llvm.org/extra/clang-doc.html)

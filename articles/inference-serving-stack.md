@@ -122,6 +122,6 @@ The boundary between routing, scheduling, and KV management is the only thing ke
 
 ## Public references
 
-- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/cppmega)
 - [vLLM documentation](https://docs.vllm.ai/)
 - [FlashAttention repository](https://github.com/Dao-AILab/flash-attention)

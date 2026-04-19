@@ -146,7 +146,7 @@ explaining the contract that ties them together.
 
 ## References
 
-- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/cppmega)
 - [MegaCpp article samples](https://megacpp.com/blog)
 
 - [The Stack paper](https://arxiv.org/abs/2211.15533)

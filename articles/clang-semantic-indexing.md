@@ -107,6 +107,6 @@ Minimal semantic-index invocation shape:
 - [Semantic indexing notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/semantic-indexing-notes.md)
 - [Data preparation notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/data-prep-notes.md)
 - [Reference corpus pins](https://github.com/DatasunriseOU/site_samples/blob/main/docs/reference-corpus-pins.md)
-- [Sample `compile_commands.json`](https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands.sample.json)
+- [Sample `compile_commands.json`](https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands_fixture.json)
 - [JSON Compilation Database Format Specification](https://clang.llvm.org/docs/JSONCompilationDatabase.html)
 - [Libclang tutorial and API index](https://clang.llvm.org/docs/LibClang.html)

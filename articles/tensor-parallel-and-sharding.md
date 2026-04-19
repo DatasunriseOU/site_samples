@@ -16,11 +16,11 @@ description: >
 
 # Tensor Parallel and Sharding: What Actually Splits, What Still Stays Global
 
-Tensor parallelism works best when you treat it as a narrow contract around matrix dimensions and communication points. It reduces per-rank parameter and activation pressure for the surfaces it shards, but it does not automatically solve expert routing, latent-cache residency, recurrent-state costs, or pipeline imbalance. The contract is visible in [this Mamba3 TP partition-size sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/MegaCpp source repository/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py).
+Tensor parallelism works best when you treat it as a narrow contract around matrix dimensions and communication points. It reduces per-rank parameter and activation pressure for the surfaces it shards, but it does not automatically solve expert routing, latent-cache residency, recurrent-state costs, or pipeline imbalance. The contract is visible in [this Mamba3 TP partition-size sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/cppmega/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py).
 
 ## Code and notes
 
-- [Mamba3 TP partition-size sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/MegaCpp source repository/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py)
+- [Mamba3 TP partition-size sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/cppmega/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py)
 - [PyTorch DTensor docs](https://pytorch.org/docs/stable/distributed.tensor.html)
 - [PyTorch tensor-parallel docs](https://pytorch.org/docs/stable/distributed.tensor.parallel.html)
 
@@ -138,7 +138,7 @@ That discipline is what turns TP from a folklore knob into an engineering tool. 
 
 ## References
 
-- [Mamba3 TP partition-size sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/MegaCpp source repository/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py)
+- [Mamba3 TP partition-size sample](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/cppmega/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py)
 - [Hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md)
 - [Distributed debugging notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md)
 - [PyTorch DTensor docs](https://pytorch.org/docs/stable/distributed.tensor.html)

@@ -134,6 +134,6 @@ The through-line, as elsewhere in the stack, is that ensembles resist shared com
 
 ## Public references
 
-- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/cppmega)
 - [Speculative Decoding](https://arxiv.org/abs/2211.17192)
 - [vLLM documentation](https://docs.vllm.ai/)

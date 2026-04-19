@@ -134,7 +134,7 @@ That is the real advantage of this training stack. It is not that it found one m
 
 ## References
 
-- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/cppmega)
 - [MegaCpp sample pack](https://github.com/DatasunriseOU/site_samples/tree/main)
 - [STP after ten thousand steps](https://megacpp.com/blog/stp-after-ten-thousand-steps.md)
 - [STP geodesic regularizer](https://megacpp.com/blog/stp-geodesic-regularizer.md)

@@ -107,6 +107,6 @@ The public `MegaCpp sample pack` corpus notes support exactly that narrower clai
 - https://github.com/DatasunriseOU/site_samples/blob/main/docs/data-prep-notes.md
 - https://github.com/DatasunriseOU/site_samples/blob/main/docs/semantic-indexing-notes.md
 - https://github.com/DatasunriseOU/site_samples/blob/main/docs/reference-corpus-pins.md
-- https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands.sample.json
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands_fixture.json
 - https://arrow.apache.org/docs/format/Columnar.html
 - https://parquet.apache.org/docs/

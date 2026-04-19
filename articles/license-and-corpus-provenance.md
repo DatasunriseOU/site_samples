@@ -57,7 +57,7 @@ Software Heritage identifiers are useful here as a second anchor. They do not re
 
 ## 5. Build metadata needs provenance too
 
-The compile-command sample in `examples/data/compile_commands.sample.json` is small, but it shows an important part of provenance work that is often missed: build context is data. Include paths, language mode flags, and the compilation unit path are all part of what later structure-aware stages may consume.
+The compile-command sample in `examples/data/compile_commands_fixture.json` is small, but it shows an important part of provenance work that is often missed: build context is data. Include paths, language mode flags, and the compilation unit path are all part of what later structure-aware stages may consume.
 
 If build context is used during chunking or metadata extraction, it should be pinned and versioned like any other source input. Otherwise a corpus can drift even when the source repository revision stays fixed.
 
@@ -83,7 +83,7 @@ The useful public claim is therefore narrow and defensible: the corpus is descri
 
 - https://github.com/DatasunriseOU/site_samples/blob/main/docs/data-prep-notes.md
 - https://github.com/DatasunriseOU/site_samples/blob/main/docs/reference-corpus-pins.md
-- https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands.sample.json
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands_fixture.json
 - https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions/
 - https://scancode-toolkit.readthedocs.io/
 - https://docs.softwareheritage.org/devel/swh-model/persistent-identifiers.html

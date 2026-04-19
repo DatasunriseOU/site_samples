@@ -72,5 +72,5 @@ The payoff was real, but narrower than the marketing version. FSDP2 helps when i
 
 - https://docs.pytorch.org/docs/stable/distributed.fsdp.fully_shard.html
 - https://docs.pytorch.org/docs/stable/fsdp.html
-- https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/MegaCpp source repository/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py
-- https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/MegaCpp source repository/training/training-on-h200-eight-gpu__production_status_summary__v1.md
+- https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/cppmega/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py
+- https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/docs/cppmega/training/training-on-h200-eight-gpu__production_status_summary__v1.md

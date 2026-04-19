@@ -98,7 +98,7 @@ Single-stage rerun example:
 
 ## References
 
-- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/cppmega)
 - [MegaCpp article samples](https://megacpp.com/blog)
 
 - [Data pipeline story](https://megacpp.com/blog/data-pipeline-story.md)

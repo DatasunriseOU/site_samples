@@ -39,8 +39,8 @@ a canonical public inventory of every pinned source.
 
 ## Public-safe artifact families
 
-- `examples/data/compile_commands.sample.json` shows the build-database shape we rely on for semantic indexing without exposing any real workstation or CI paths.
-- `examples/data/masking_pipeline_sample.py` shows how masking and lightweight enrichment can be expressed as explicit stages rather than hidden preprocessing magic.
+- `examples/data/compile_commands_fixture.json` shows the build-database shape we rely on for semantic indexing without exposing any real workstation or CI paths.
+- `examples/data/masking_pipeline_excerpt.py` shows how masking and lightweight enrichment can be expressed as explicit stages rather than hidden preprocessing magic.
 - `docs/reference-corpus-pins.md` describes the policy for pinning public upstream inputs by revision, tag, or release line.
 - `docs/semantic-indexing-notes.md` explains why compile-aware structure is higher trust than syntax-only extraction when the build graph is available.
 
@@ -61,7 +61,7 @@ a canonical public inventory of every pinned source.
 
 ## Related public files
 
-- `examples/data/compile_commands.sample.json`
-- `examples/data/masking_pipeline_sample.py`
+- `examples/data/compile_commands_fixture.json`
+- `examples/data/masking_pipeline_excerpt.py`
 - `docs/reference-corpus-pins.md`
 - `docs/semantic-indexing-notes.md`

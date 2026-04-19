@@ -70,6 +70,6 @@ That is not a marketing sentence. It is a reproducibility sentence. And for this
 - [GB10-parity Modal serving app](https://github.com/DatasunriseOU/bench/blob/main/modal_vllm_gb10stack.py)
 - [vLLM build and push notes](https://github.com/DatasunriseOU/bench/blob/main/vllm_repo/BUILD_AND_PUSH.md)
 - [Modal registry-backed smoke app](https://github.com/DatasunriseOU/bench/blob/main/modal_vllm_from_ghcr.py)
-- [MegaCpp GB10 single-device training launcher](https://github.com/DatasunriseOU/MegaCpp source repository/blob/main/scripts/remote_train_gb10_nam56r_single.sh)
+- [MegaCpp GB10 single-device training launcher](https://github.com/DatasunriseOU/cppmega/blob/main/scripts/remote_train_gb10_nam56r_single.sh)
 - [PyTorch nightly CUDA 13.2 index](https://download.pytorch.org/whl/nightly/cu132)
 - [vLLM project repository](https://github.com/vllm-project/vllm)

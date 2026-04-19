@@ -143,6 +143,6 @@ v3 is the current public baseline described here. A later iteration will likely 
 
 ## References
 
-- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/cppmega)
 - [MegaCpp sample pack](https://github.com/DatasunriseOU/site_samples)
 - Public data-preparation, tokenizer, and curriculum material linked from the MegaCpp repositories.

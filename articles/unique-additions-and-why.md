@@ -109,7 +109,7 @@ That is what makes the additions worth preserving. They do not just add capabili
 
 ## References
 
-- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/cppmega)
 - [MegaCpp sample pack](https://github.com/DatasunriseOU/site_samples)
 - [MegaCpp plasticity toolkit notes](../docs/plasticity-toolkit-notes.md)
 - [MegaCpp STP notes](../docs/stp-notes.md)

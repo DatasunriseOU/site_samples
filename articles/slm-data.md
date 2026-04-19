@@ -81,7 +81,7 @@ A third is resume compatibility in the broad sense: when a dataset snapshot evol
 | floating inputs | `docs/reference-corpus-pins.md` forbids floating revisions | prevents irreproducible corpora |
 | mixed metadata shapes | `docs/semantic-indexing-notes.md` treats structure metadata as explicit export data | avoids consumer ambiguity |
 | lossy preprocessing | `docs/data-prep-notes.md` separates normalization, dedup, and metadata extraction | keeps transformations inspectable |
-| build-context drift | `examples/data/compile_commands.sample.json` shows typed build inputs | keeps structure features reproducible |
+| build-context drift | `examples/data/compile_commands_fixture.json` shows typed build inputs | keeps structure features reproducible |
 
 ## What a robust SLM data pipeline should preserve
 
@@ -102,6 +102,6 @@ That is the useful summary. The important claim is not “this project uses Parq
 - https://github.com/DatasunriseOU/site_samples/blob/main/docs/data-prep-notes.md
 - https://github.com/DatasunriseOU/site_samples/blob/main/docs/semantic-indexing-notes.md
 - https://github.com/DatasunriseOU/site_samples/blob/main/docs/reference-corpus-pins.md
-- https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands.sample.json
-- https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/masking_pipeline_sample.py
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands_fixture.json
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/masking_pipeline_excerpt.py
 - https://parquet.apache.org/docs/

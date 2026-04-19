@@ -126,7 +126,7 @@ The codebase earns the sharper interpretation because it records the costs as we
 
 ## References
 
-- [MegaCpp source repository](https://github.com/DatasunriseOU/MegaCpp source repository)
+- [MegaCpp source repository](https://github.com/DatasunriseOU/cppmega)
 - [Expert-parallel and MoE sharding](https://megacpp.com/blog/expert-parallel-and-moe-sharding.md)
 - [Sequence, context, and expert split taxonomy](https://megacpp.com/blog/sequence-context-expert-splits.md)
 - [What Megatron can and cannot split](https://megacpp.com/blog/what-megatron-can-and-cannot-split.md)
