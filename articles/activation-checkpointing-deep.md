@@ -2,7 +2,7 @@
 title: "Activation checkpointing deep dive: why per-block policies beat one global switch"
 description: "Full, selective, and narrow recompute across attention, MoE, Mamba-style, and recurrent blocks: what saves memory, what costs too much compute, and why a per-block policy usually wins."
 date: "2026-04-18"
-tags: ["activation-checkpointing", "selective-recompute", "mamba", "moe", "mla", "h200", "ablation"]
+tags: ["activation-checkpointing", "selective-recompute", "mamba", "moe", "mla", "H200", "ablation"]
 ---
 
 This post covers the ablation history behind a practical checkpointing policy. Full checkpointing everywhere was too expensive. Per-operator selective activation checkpointing helped in a few places but became hard to reason about at system level. What held up was a per-block policy: attention blocks use full-block or framework-level selective recompute, MoE blocks recompute expert GEMMs only, Mamba-style blocks avoid full checkpointing and keep a narrow conv-plus-projection recompute, and recurrent blocks use full checkpointing plus a small in-module recompute.

@@ -2,7 +2,7 @@
 title: "libtpu, PJRT, JAX, and ownership boundaries"
 description: "Why a shared TPU substrate still leaves distinct ownership lines across PJRT, torch_xla, JAX, and libtpu, and where MegaCpp saw the real failure boundaries."
 date: "2026-04-19"
-tags: ["libtpu", "pjrt", "jax", "torch-xla", "tpu", "megacpp"]
+tags: ["libtpu", "pjrt", "jax", "torch-xla", "tpu", "MegaCpp"]
 ---
 
 The easy story is that TPU software is one stack, so mixed tooling should behave like one system. The local evidence says otherwise. MegaCpp's TPU work repeatedly converged on a stricter rule: `libtpu` may be shared substrate, but frontend ownership, runtime policy, cache policy, and backend proof still need to stay separate.

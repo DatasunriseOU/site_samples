@@ -2,7 +2,7 @@
 title: "Activation Checkpointing Policy: The Per-Block Pareto That Held Up"
 description: "Selective versus full activation checkpointing across attention, MoE, Mamba-style, and recurrent blocks, and why the best policy depends on where each block actually spends memory and compute."
 date: "2026-04-18"
-tags: ["activation-checkpointing", "training", "h200", "tpu", "moe", "mamba"]
+tags: ["activation-checkpointing", "training", "H200", "tpu", "moe", "mamba"]
 ---
 
 # Activation Checkpointing Policy

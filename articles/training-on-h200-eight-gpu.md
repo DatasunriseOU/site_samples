@@ -2,7 +2,7 @@
 title: "Training on 8x H200 SXM: the operator playbook"
 description: "End-to-end operator notes for driving an 8x H200 SXM node: topology, NCCL tuning, storage layout, and the invariants that keep a run from silently drifting."
 date: "2026-04-18"
-tags: ["h200", "nccl", "nvlink", "fsdp2", "torchrun", "training", "operations"]
+tags: ["H200", "nccl", "nvlink", "fsdp2", "torchrun", "training", "operations"]
 ---
 
 An 8x H200 SXM node is a practical unit for training a mid-sized specialist model from scratch. On paper it looks like a larger-memory Hopper system. In practice the gap between a fresh machine and steady-state high-throughput training with reliable checkpoints is a sequence of small operational choices that, taken in the wrong order, cost days. This post focuses on that operator surface: how to drive the node, what the topology forces on the launch flow, which NCCL settings are worth making explicit, and how we keep receipts comparable.

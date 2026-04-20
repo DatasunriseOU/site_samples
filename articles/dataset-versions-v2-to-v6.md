@@ -2,7 +2,7 @@
 title: "v2 to v6: Four Generations of the C++ Dataset, and Why We Kept Them All"
 description: "What changed between v2, v3, v4, v5, and v6 of the C++ training corpus, why each step happened, why we kept the older formats backwards-compatible, and the val-bpb each one bought us."
 date: "2026-04-18"
-tags: ["data", "dataset", "c++", "versioning", "curriculum"]
+tags: ["data", "dataset", "C++", "versioning", "curriculum"]
 ---
 
 The data side of MegaCpp has accumulated five labeled generations: `v2`, `v3`, `v4`, `v5`, and `v6`. None replaced the previous. They live next to each other in the object-store layout, share the same raw corpus, and are loaded by the same training loader because every step was deliberately additive at the schema level. This post is the engineering story of that progression — what each version is, what problem it solved, and why we are paying the storage and operational cost of keeping all of them. They are not model versions; they are *producer* versions over the same C++ corpus, and the decision to make them coexist instead of migrate-and-delete is the single thing that has saved us the most engineering pain across the curriculum work.

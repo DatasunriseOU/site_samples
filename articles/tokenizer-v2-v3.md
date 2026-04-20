@@ -2,7 +2,7 @@
 title: "Tokenizer evolution for C++ code: from v2 proposal to v3 shipped"
 description: "How the MegaCpp C++ tokenizer evolved from a 32K v1 through a 48K v2 proposal to the 65K v3 shipped artifact: what we proposed, what corpus frequency analysis told us, and what it did for downstream eval."
 date: "2026-04-18"
-tags: ["tokenizer", "bpe", "c++", "vocab", "data"]
+tags: ["tokenizer", "bpe", "C++", "vocab", "data"]
 ---
 
 # Tokenizer evolution for C++ code: from v2 proposal to v3 shipped

@@ -63,5 +63,9 @@ a canonical public inventory of every pinned source.
 
 - `examples/data/compile_commands_fixture.json`
 - `examples/data/masking_pipeline_excerpt.py`
+- `examples/data/packed_row.sample.json`
+- `examples/data/enriched_record.sample.json`
+- `examples/long_context/doc_mask_segment_ids_sample.py`
+- `examples/long_context/fim_long_context_metadata_sample.py`
 - `docs/reference-corpus-pins.md`
 - `docs/semantic-indexing-notes.md`

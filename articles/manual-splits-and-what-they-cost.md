@@ -128,4 +128,7 @@ The right habit is to treat manual splits as versioned architecture, not a tempo
 
 - https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md
 - https://github.com/DatasunriseOU/site_samples/blob/main/examples/hybrid/hybrid_pattern_sample.py
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/nam56r_feature_placement_sample.py
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/compile/regional_compile_ordering_sample.py
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/compile/cuda_graph_block_validation_sample.py
 - https://docs.nvidia.com/megatron-core/developer-guide/latest/api-guide/pipeline_parallel.html

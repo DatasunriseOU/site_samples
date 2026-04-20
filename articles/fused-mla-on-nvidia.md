@@ -2,7 +2,7 @@
 title: "Fused MLA on Hopper and Blackwell: projection, RoPE, and the KV cache that ships"
 description: "The NVIDIA side of Multi-Latent Attention in the MegaCpp ensemble: a fused down-norm-up projection, a fused split-RoPE-concat Triton kernel, a compressed KV cache, and how it all lands on Megatron-Core."
 date: "2026-04-18"
-tags: ["mla", "triton", "h200", "blackwell", "rope", "kv-cache", "fused-kernels"]
+tags: ["mla", "triton", "H200", "Blackwell", "rope", "kv-cache", "fused-kernels"]
 ---
 
 The cross-path MLA story (which parts of DeepSeek-V3 we trained with, why weight absorption is the wrong choice for the training path, what survived into inference) is already covered in our [MLA Weight Absorption](/blog/mla-and-weight-absorption) post. This one is narrower: how MLA runs on NVIDIA once you care about kernels. Fused down-projection / RMSNorm / up-projection. Fused split / RoPE / concat in one Triton kernel. A compressed KV cache that stores `c_kv` plus a single RoPE'd key row instead of full `K`/`V`. And the Blackwell tensor-core path through TransformerEngine. Everything here is the part of MLA that only matters if you are pointing it at H200 or GB10.

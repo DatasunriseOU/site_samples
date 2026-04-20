@@ -15,7 +15,7 @@ the shared randomness utilities sets the global seeds during device init:
 
 ```python
 torch.manual_seed(42)
-if device_type == "cuda":
+if device_type == "CUDA":
     torch.cuda.manual_seed(42)
 ```
 

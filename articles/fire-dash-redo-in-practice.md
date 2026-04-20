@@ -120,6 +120,10 @@ That is what makes the module practically useful. It does not promise magic. It 
 
 ## References
 
+- [FIRE sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/fire/fire_sample.py)
+- [DASH sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/fire/dash_sample.py)
+- [ReDo sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/fire/redo_sample.py)
+- [Plasticity phase schedule sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/fire/plasticity_phase_schedule_sample.py)
 - [FIRE: Functional Interpolation for Relative Entropy Minimization](https://arxiv.org/abs/2602.08040)
 - [DASH: Dynamic Adaptation via Shrinkage of High-Alignment Directions](https://arxiv.org/abs/2410.23495)
 - [ReDo: Rethinking Dead Neurons in Neural Networks](https://arxiv.org/abs/2302.12902)

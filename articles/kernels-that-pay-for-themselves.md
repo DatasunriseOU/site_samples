@@ -116,3 +116,8 @@ One more practical filter is readability of the contract. `fused_rope_qk` and ML
 - [Triton language documentation](https://triton-lang.org/main/index.html)
 - [PyTorch compile documentation](https://pytorch.org/docs/stable/torch.compiler.html)
 - [MegaCpp source repository](https://github.com/DatasunriseOU/cppmega)
+- [Dense FA4 execute proof sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/kernels/dense_fa4_execute_proof_sample.py)
+- [Fused MLA projection sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/kernels/fused_mla_projection_sample.py)
+- [Fused residual add RMSNorm sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/kernels/fused_residual_add_rms_norm_sample.py)
+- [Fused RoPE QK sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/kernels/fused_rope_qk_sample.py)
+- [mHC fused static sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/kernels/mhc_fused_static_sample.py)

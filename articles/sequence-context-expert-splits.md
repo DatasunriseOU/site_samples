@@ -59,7 +59,7 @@ the distributed parallelism module also makes the application order do real expl
 ```python
 config = ParallelismConfig(pp=..., dp=..., tp=..., ep=...)
 validate_3d_config(config, model_config)
-meshes = build_3d_mesh(config, device_type="cuda")
+meshes = build_3d_mesh(config, device_type="CUDA")
 result = apply_3d_parallelism(model, config, meshes, device=device)
 
 # ownership order in the runtime:

@@ -2,7 +2,7 @@
 title: "Torch 2.12 TPU/XLA breakage matrix: wheel pain, cache misses, and the workarounds that actually mattered"
 description: "A repo-grounded account of where the TPU/XLA stack broke, which failures needed upstream-facing patches, and which ones were better handled as explicit MegaCpp runtime policy."
 date: "2026-04-19"
-tags: ["pytorch", "torch-2-12", "xla", "tpu", "wheels", "pjrt"]
+tags: ["PyTorch", "torch-2-12", "xla", "tpu", "wheels", "pjrt"]
 summary: >
   Torch 2.12-class TPU/XLA work was less about a clean version upgrade and more
   about surviving a breakage matrix: wheel and ABI drift, broken persistent

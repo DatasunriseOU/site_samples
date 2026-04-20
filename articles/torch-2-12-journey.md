@@ -2,7 +2,7 @@
 title: "The Torch 2.12 journey: compile policy, runtime truth, and why version bumps were the easy part"
 description: "Why framework upgrades in a hybrid training stack are really about re-validating compile behavior, sharding contracts, and backend-specific assumptions."
 date: "2026-04-18"
-tags: ["pytorch", "torch-2-12", "compile", "distributed", "runtime", "xla"]
+tags: ["PyTorch", "torch-2-12", "compile", "distributed", "runtime", "xla"]
 ---
 
 Framework upgrades look simple only at the package-manager layer. In practice, a Torch 2.12-class upgrade is a contract audit: compile behavior, distributed ownership, dynamic-shape assumptions, and backend-specific policies all need to be re-checked on the lanes that actually matter.
@@ -83,5 +83,7 @@ For a Torch 2.12-class migration, that is more useful than an all-at-once compat
 - https://docs.pytorch.org/docs/stable/fsdp.html
 - https://docs.pytorch.org/xla/master/runtime.html
 - https://docs.pytorch.org/xla/master/perf/recompilation.html
-- https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/research/fire/fire-plasticity-toolkit__fire_dash_redo_surface__v1.py
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/compile/compile_warmup_policy_sample.py
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/compile/compiled_adamw_policy_sample.py
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/compile/regional_compile_ordering_sample.py
 - https://github.com/DatasunriseOU/site_samples/blob/main/examples/xla/xla_flag_profile.py

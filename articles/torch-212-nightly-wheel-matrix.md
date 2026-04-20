@@ -2,7 +2,7 @@
 title: "Torch 2.1.2 Nightly Wheel Matrix: What Actually Matters"
 date: 2026-04-18
 author: Engineering
-tags: [pytorch, wheels, cuda, nightly, build-systems]
+tags: [PyTorch, wheels, CUDA, nightly, build-systems]
 summary: >
   A useful wheel matrix is really a runtime compatibility matrix: PyTorch,
   Triton, ptxas, architecture support, and the workloads that were actually

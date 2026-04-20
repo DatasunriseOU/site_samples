@@ -13,11 +13,11 @@ Use these samples when you want the model-assembly view rather than one kernel.
 - Read `block_taxonomy_sample.py` for the public block-name glossary.
 
 Main source surfaces for this directory:
-- `unified_superblock.py` from the MegaCpp POC repo
-- `gpt.py` from the MegaCpp POC repo
-- `mod.py` from the MegaCpp POC repo
-- `gated_deltanet.py` from the MegaCpp POC repo
-- `hyper_connections.py` from the MegaCpp POC repo
-- `multi_adapter.py` and `lora.py` from the MegaCpp POC repo
+- `unified_superblock.py` from the MegaCpp public samples
+- `gpt.py` from the MegaCpp public samples
+- `mod.py` from the MegaCpp public samples
+- `gated_deltanet.py` from the MegaCpp public samples
+- `hyper_connections.py` from the MegaCpp public samples
+- `multi_adapter.py` and `lora.py` from the MegaCpp public samples
 - `adapter.py` from the native-sparse experiment pack
 - `README.md` from the native-sparse experiment pack

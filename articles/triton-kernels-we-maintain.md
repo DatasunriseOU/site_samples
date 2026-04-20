@@ -103,3 +103,8 @@ The list above is the current state. It will move; the rules will not. Profile-c
 - Public Triton kernel pack and fused residual helpers in the MegaCpp repo
 - Public mHC, MLA rotary, Mamba3 trapezoidal, MoE, and fused-ReLU helper modules in MegaCpp
 - Public backend-dispatch and change-note documentation in the MegaCpp repo
+- [Fused residual add RMSNorm sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/kernels/fused_residual_add_rms_norm_sample.py)
+- [Fused RoPE QK sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/kernels/fused_rope_qk_sample.py)
+- [Fused MLA projection sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/kernels/fused_mla_projection_sample.py)
+- [mHC fused static sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/kernels/mhc_fused_static_sample.py)
+- [Dense FA4 execute proof sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/kernels/dense_fa4_execute_proof_sample.py)

@@ -142,6 +142,9 @@ That matters for pipeline work too. A stage with several `E` positions in close 
 
 - [Hybrid pattern sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/hybrid/hybrid_pattern_sample.py)
 - [Hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md)
+- [NAM56R pattern composition sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/nam56r_pattern_composition_sample.py)
+- [Block taxonomy sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/core_blocks/block_taxonomy_sample.py)
+- [Residual paths sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/core_blocks/residual_paths_sample.py)
 - [Model glossary](https://megacpp.com/blog/megacpp-model-glossary/)
 - [Megatron Core parallelism guide](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html)
 - [Megatron Core MoE guide](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/features/moe.html)

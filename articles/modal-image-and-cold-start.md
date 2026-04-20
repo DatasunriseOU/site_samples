@@ -2,7 +2,7 @@
 title: "Modal image construction and the cold-start tax we actually pay"
 description: "How we layer the Modal training image, why every wheel is pinned to the training stack, how persistent volumes absorb the inductor-cache hit, and the 30-90 second startup tax we accept as the price of burst compute."
 date: "2026-04-18"
-tags: ["modal", "docker", "cold-start", "inductor-cache", "triton", "h200"]
+tags: ["modal", "docker", "cold-start", "inductor-cache", "triton", "H200"]
 ---
 
 A Modal container is only "fast" if you already paid for everything expensive somewhere else. For a 4B hybrid training image built on a torch nightly plus Triton plus Mamba SSM plus Flash Attention plus FA4 CuTe plus Cut Cross Entropy, "somewhere else" is a registry-hosted base image and a small set of persistent volumes. This post walks through how MegaCpp constructs that image, why every wheel is pinned to the training stack, how the inductor cache volume turns a 27-minute cold start into a 2-minute warm one, and which parts of the 30-90 second residual startup tax we accept.

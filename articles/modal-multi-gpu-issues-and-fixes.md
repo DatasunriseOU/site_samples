@@ -2,7 +2,7 @@
 title: "Modal Multi-GPU Pain and the Fixes That Actually Landed"
 description: "NCCL topology, GPU isolation, eviction and OOM-kill behavior, observability gaps, and the guide we follow when a Modal multi-GPU job hangs on the first forward pass."
 date: "2026-04-18"
-tags: ["modal", "multi-gpu", "nccl", "fsdp2", "h200", "b200", "runbook"]
+tags: ["modal", "multi-gpu", "nccl", "fsdp2", "H200", "B200", "runbook"]
 ---
 
 Single-GPU Modal is boring: pick an H100, H200, or B200, warm the inductor cache, and launch. Multi-GPU Modal is where the interesting failure modes live. Our experience is captured plainly in a Modal multi-GPU status note: the full pytest suite passes on Modal H100, single-GPU training on H100, H200, and B200 runs our depth-52 hybrid preset end-to-end, and B200 is roughly 1.55x faster than H100 on the same preset. But 8-GPU FSDP2 with regional `torch.compile` hangs during the first forward pass. This post is about why it hangs, what we changed in the main training entrypoint to stop it hanging in most cases, what we still cannot fix from userspace, and the guide we follow when a multi-GPU job goes silent.

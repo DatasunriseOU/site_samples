@@ -35,4 +35,7 @@ benchmark notes.
 ## Related public files
 
 - https://github.com/DatasunriseOU/site_samples/blob/main/examples/hybrid/hybrid_pattern_sample.py
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/core_blocks/block_taxonomy_sample.py
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/nam56r_block_taxonomy_sample.py
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/nam56r_pattern_composition_sample.py
 - https://megacpp.com/blog/megacpp-model-glossary/

@@ -43,7 +43,7 @@ shared runtime bootstrap:
 
 ```python
 torch.manual_seed(42)
-if device_type == "cuda":
+if device_type == "CUDA":
     torch.cuda.manual_seed(42)
 # skipping full reproducibility for now, possibly investigate slowdown later
 # torch.use_deterministic_algorithms(True)

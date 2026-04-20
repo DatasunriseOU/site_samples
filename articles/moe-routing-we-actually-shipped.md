@@ -1,6 +1,6 @@
 ---
 title: "The MoE Routing We Actually Shipped"
-description: "Token Choice vs Expert Choice, null-expert debugging, gating stability, and the production routing decisions behind the MegaCpp SLM ensemble."
+description: "Token Choice vs Expert Choice, null-expert debugging, gating stability, and the production routing decisions behind the MegaCpp SLM Ensemble."
 author: "Boris Tamarkin"
 date: "2026-04-18"
 tags: ["MoE", "Token Choice", "Null Experts", "Routing", "SLM", "C++ Codegen"]
@@ -12,7 +12,7 @@ readTime: "12 min read"
 Mixture-of-experts routing has a literature problem. A lot of recent
 papers describe routers that are elegant at batch size 1024 and broken at
 batch size 1, and a lot of production writeups bury which variant they
-actually serve behind. For the MegaCpp SLM ensemble, we had to pick one
+actually serve behind. For the MegaCpp SLM Ensemble, we had to pick one
 router, debug it under load, and keep it stable across training, eval, and
 autoregressive inference on a code model that sees long, boilerplate-heavy
 C++ tokens. This is the routing we shipped, the variants we ran against

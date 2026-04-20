@@ -2,7 +2,7 @@
 title: "NVFP4 Inference for the MegaCpp SLM Ensemble"
 description: "Why we train in FP16/BF16 and ship in NVFP4, what Blackwell and GB10 actually give us, and which kernels survive the trip from B200 to DGX Spark."
 date: "2026-04-18"
-tags: ["nvfp4", "blackwell", "gb10", "inference", "quantization", "cutlass"]
+tags: ["nvfp4", "Blackwell", "GB10", "inference", "quantization", "cutlass"]
 ---
 
 We train the SLM ensemble in FP16/BF16 on H200 and B200 and serve it in NVFP4 on Blackwell-class hardware. This post walks the inference path: how a BF16 master checkpoint becomes an NVFP4 deployment artifact, which Blackwell features the kernels actually rely on, and where GB10 (DGX Spark, sm_121a) silicon forces us to diverge from B200 (sm_100a). It is written for engineers who already know what `mma.sync` is and want to know what to build, not what to read.

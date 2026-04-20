@@ -2,7 +2,7 @@
 title: "The Clang semantic indexer: translation units, call graphs, and the perf wall"
 description: "How the libclang-based semantic indexer feeds `v6_enriched` parquet: compile_commands handling, the per-file translation-unit graph, call and type edges, the failure modes we hit, and the wall-clock cost of ground-truth semantics."
 date: "2026-04-18"
-tags: ["clang", "data", "indexer", "c++", "pipeline"]
+tags: ["clang", "data", "indexer", "C++", "pipeline"]
 ---
 
 The cheap way to extract structure from a C++ corpus is to throw tree-sitter at it and call the resulting AST a graph. That is what lives behind the approximate semantic lanes: fast, embarrassingly parallel, never blocked on a build system. The expensive way is to drive an actual C++ frontend, parse with full semantic analysis, resolve overloads through the libclang AST, and spend an afternoon per repository when nobody is paying attention. That second path produces the clang-resolved semantic lanes and the enriched long-context surface. This post is how that indexer is built, what it costs, and where it falls down.

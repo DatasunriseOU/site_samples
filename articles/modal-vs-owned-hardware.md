@@ -2,7 +2,7 @@
 title: "Modal vs Owned H200:8 vs TPU: Which Surface We Use and Why"
 description: "How we decide between Modal, reserved H200:8 hosts, and TPU slices based on operator overhead, latency to first useful step, benchmark hygiene, and failure isolation."
 date: "2026-04-18"
-tags: ["modal", "h200", "tpu", "infrastructure", "benchmarks"]
+tags: ["modal", "H200", "tpu", "infrastructure", "benchmarks"]
 ---
 
 We do not treat Modal, reserved H200:8 hosts, and TPU slices as interchangeable compute. They are three different operating surfaces with different strengths. Modal wins when we need a clean detached launch, fast operator turnaround, or many isolated benchmark jobs. Owned H200:8 wins when we need repeatable multi-GPU training, warm compile caches, and direct control over topology and resident state. TPU slices win when the work is already aligned with the XLA path and we care more about stable large-scale training economics than about CUDA-path kernel experiments.

@@ -3,7 +3,7 @@ title: "vLLM on GB10: the overlay, the registration fixes, and the paths we kept
 description: "How MegaCpp stabilized a GB10-oriented vLLM lane with an on-disk overlay, text-only model registration, and a deliberate keep-disabled list for serving paths that were not yet honest."
 date: "2026-04-19"
 author: "David Gornshtein"
-tags: ["vllm", "gb10", "serving", "inference", "overlays", "blackwell"]
+tags: ["vllm", "GB10", "serving", "inference", "overlays", "Blackwell"]
 ---
 
 vLLM support for the MegaCpp serving lane on GB10 was not one bug and one fix. It was a bundle of compatibility cuts: a packaging decision, a model-registration decision, a checkpoint-loading decision, and a few deliberate non-decisions where the honest answer was "leave this path off until it is actually correct." This post records that state from the bench lane itself.

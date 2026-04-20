@@ -54,4 +54,5 @@ The TPU optimizer story is not really about one exotic optimizer trick. It is ab
 - https://docs.pytorch.org/xla/master/perf/recompilation.html
 - https://openxla.org/xla/oom_debugging
 - https://cloud.google.com/tpu/docs/v6e
+- https://github.com/DatasunriseOU/site_samples/blob/main/examples/xla/xla_safe_adamw.py
 - https://github.com/DatasunriseOU/site_samples/blob/main/examples/xla/xla_flag_profile.py

@@ -2,7 +2,7 @@
 title: "The C/C++ Data Preparation Pipeline, End to End"
 description: "Every stage of the MegaCpp data preparation pipeline: ingest, dedup, license filtering, document masking, tokenization, packed rows, and the checks that keep dataset snapshots trustworthy."
 date: "2026-04-18"
-tags: ["data", "pipeline", "c++", "operations", "tokenizer"]
+tags: ["data", "pipeline", "C++", "operations", "tokenizer"]
 ---
 
 This is the implementation-focused view of how raw C/C++ source becomes packed training rows for MegaCpp. It is the sibling post to [Building the C++ Training Data Pipeline: What Worked, What Broke](https://megacpp.com/blog/data-pipeline-story.md): that one frames the design decisions, this one walks through the stages and the checks that keep them stable.

@@ -3,7 +3,7 @@ title: "FP8 in the training stack: what shipped and what we rolled back"
 description: "An engineer's account of rolling FP8 through the training stack: DeepGEMM block-scaled GEMMs, torchao Float8Linear, TransformerEngine FP8-aware activation checkpointing, and the parts that looked good on paper but lost the benchmark."
 date: "2026-04-18"
 author: "David Gornshtein"
-tags: ["fp8", "training", "deepgemm", "torchao", "transformer-engine", "h200", "gb10"]
+tags: ["fp8", "training", "deepgemm", "torchao", "transformer-engine", "H200", "GB10"]
 ---
 
 # FP8 in the training stack: what shipped and what we rolled back

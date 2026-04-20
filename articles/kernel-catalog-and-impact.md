@@ -2,7 +2,7 @@
 title: "Kernel Catalog and Impact: Why the Runtime Needed a Real Map"
 date: 2026-04-18
 author: MegaCpp Engineering
-tags: [kernels, h200, moe, attention, triton, systems]
+tags: [kernels, H200, moe, attention, triton, systems]
 summary: >
   The MegaCpp codebases do not use one magical fast kernel. They use a
   growing catalog of kernels and backend seams, and performance only made sense

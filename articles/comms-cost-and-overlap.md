@@ -2,12 +2,12 @@
 title: "Communication cost and overlap: NCCL on H200, XLA collectives on TPU v6e"
 description: "How MegaCpp budgets all-reduce, reduce-scatter, and all-gather against compute on the hybrid stack, including bucket sizing, launch coalescing, alignment, and the overlap windows that actually matter."
 date: "2026-04-18"
-tags: ["nccl", "xla", "fsdp", "performance", "h200", "tpu-v6e"]
+tags: ["nccl", "xla", "fsdp", "performance", "H200", "tpu-v6e"]
 ---
 
 Distributed training on a hybrid CUDA and TPU stack is a communication problem first and a compute problem second. Dense and MoE configurations live well inside the regime where a careless bucket boundary can erase a large share of step throughput, and where one mis-tuned communication setting on a multi-host H200 lane decides whether a reduce-scatter overlaps the backward pass or stalls it. This post focuses on what the communication cost looks like on the two backends, how bucket sizing and launch coalescing affect overlap, what alignment buys in practice, and which ideas survive the move from research-stack to production.
 
-## Why MegaCPP cares about this
+## Why MegaCpp cares about this
 
 Our hybrid stack runs on two very different fabrics. On NVIDIA we target H200:8 single-host with NVLink/NVSwitch as the bread-and-butter rung, and 4xH200:8 multi-host as the upper bound for any preset that does not already burn its budget on memory. On Google we target TPU v6e-8 and v6e-32, where collectives are issued by the XLA SPMD compiler and the unit of optimization is graph shape rather than NCCL call ordering. The dense path is comms-bound past dp=8 with bf16 grads. The MoE path is comms-bound from the very first step because expert parallelism adds an AlltoAll on top of the AllReduce/ReduceScatter we already pay for FSDP-style sharding.
 

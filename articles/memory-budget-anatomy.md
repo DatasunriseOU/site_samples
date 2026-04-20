@@ -2,7 +2,7 @@
 title: "A Memory-Budget Anatomy for One Specialist on H200:8"
 description: "Line-by-line breakdown of weights, gradients, Muon+AdamW state, activations, KV cache, communication buffers, allocator overhead, and fragmentation for a single specialist trained on 8x H200, with the GB10 contrast."
 date: "2026-04-18"
-tags: ["memory", "h200", "gb10", "fp8", "nvfp4", "muon", "adamw", "training"]
+tags: ["memory", "H200", "GB10", "fp8", "nvfp4", "muon", "adamw", "training"]
 ---
 
 This system is an ensemble of specialist SLMs trained independently. The unit of capacity planning is therefore not "the full ensemble" but "one specialist on one 8x H200 node". This post walks that unit's per-device HBM budget line by line: weights, gradients, Muon+AdamW state, activations under the current per-block recompute policy, KV cache during eval and serving, communication scratch, allocator overhead, and the fragmentation tail. Numbers are anchored in an analytical memory estimator and repeated H200/GB10 calibration runs.

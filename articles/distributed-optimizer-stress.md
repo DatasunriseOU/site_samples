@@ -2,7 +2,7 @@
 title: "Distributed Optimizer Stress: Drift, All-Gather vs Reduce-Scatter, and Muon Gotchas"
 date: "2026-04-18"
 author: MegaCpp Engineering
-tags: [optimizer, muon, adamw, distributed, numerical-stability, tpu, h200]
+tags: [optimizer, muon, adamw, distributed, numerical-stability, tpu, H200]
 summary: >
   What we learned stress-testing DistAdamW and DistMuon on the MegaCpp trainer:
   numerical drift at grad-none asymmetry, the all-gather vs reduce-scatter

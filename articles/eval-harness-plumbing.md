@@ -2,7 +2,7 @@
 title: "Eval Harness Plumbing: The Parts That Are Not the Benchmark"
 description: "The four-axis eval harness plumbing under our C++ benchmarks: sandboxing, compile walls, timeouts, parallel runners, flake isolation, and the contract tests a new benchmark has to pass before it goes into CI."
 date: "2026-04-18"
-tags: ["evaluation", "testing", "infra", "c++"]
+tags: ["evaluation", "testing", "infra", "C++"]
 ---
 
 This post is not about eval results. It is about the mechanics that sit under every eval number we publish: how a model completion gets from tokenizer output to an exit-coded pass/fail, what isolates that from everything else running on the box, and why adding a new benchmark is not "write a scorer and point it at the checkpoints." Most eval regressions we see are harness regressions, not model regressions, and the plumbing here exists so that distinction can be made fast.

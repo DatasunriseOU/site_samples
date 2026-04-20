@@ -2,7 +2,7 @@
 title: "Document masking and the curriculum: what to feed each specialist first"
 description: "Why MegaCpp masks documents inside packed sequences, how the four-phase curriculum runs from 4K syntax to 64K repository graphs, and what the ablations told us about the right starting diet for each specialist."
 date: "2026-04-18"
-tags: ["curriculum", "doc-masking", "long-context", "training", "c++"]
+tags: ["curriculum", "doc-masking", "long-context", "training", "C++"]
 ---
 
 If you train a code model long enough on packed sequences without document masking, it will eventually learn the wrong lesson: that the function in this file might secretly know about the class three documents back in the same packed row. At 4K context that is a noise problem; at 64K it is a correctness problem. This post explains why we mask documents end-to-end at MegaCpp, how the resulting four-phase curriculum is shaped, and what the ablations told us about the order in which different specialists should be fed.
@@ -99,4 +99,8 @@ doc_ids = torch.cumsum(is_bos.to(torch.int32), dim=-1)
 
 - [MegaCpp source repository](https://github.com/DatasunriseOU/cppmega)
 - [MegaCpp sample pack](https://github.com/DatasunriseOU/site_samples)
+- [Document-mask segment IDs sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/long_context/doc_mask_segment_ids_sample.py)
+- [FIM long-context metadata sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/long_context/fim_long_context_metadata_sample.py)
+- [Masking pipeline excerpt](https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/masking_pipeline_excerpt.py)
+- [Chunk-boundary remap sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/long_context/chunk_boundary_remap_sample.py)
 - The public masking, curriculum, and data-pipeline notes linked from the MegaCpp repositories.

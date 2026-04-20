@@ -120,5 +120,8 @@ that pattern instead of pretending every depth slot is equivalent.
 
 - [Hybrid layout note](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md)
 - [Hybrid pattern sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/hybrid/hybrid_pattern_sample.py)
+- [Block taxonomy sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/core_blocks/block_taxonomy_sample.py)
+- [NAM56R block taxonomy sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/nam56r_block_taxonomy_sample.py)
+- [NAM56R feature placement sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/nam56r_feature_placement_sample.py)
 - [Mamba-3 paper](https://arxiv.org/abs/2603.15569)
 - [Megatron Core parallelism guide](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html)

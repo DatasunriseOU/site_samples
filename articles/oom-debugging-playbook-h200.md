@@ -2,7 +2,7 @@
 title: "OOM Debugging Playbook for H200 Training Runs"
 description: "A practical playbook for triaging H200 out-of-memory failures: distinguish fragmentation from true exhaustion, isolate the largest activation surfaces, and apply the cheapest fix first."
 date: "2026-04-18"
-tags: ["oom", "h200", "memory", "debugging", "training"]
+tags: ["oom", "H200", "memory", "debugging", "training"]
 ---
 
 Out-of-memory failures on modern accelerators are often diagnosed too loosely. "Needs a smaller batch" is only one of several possibilities. In practice, most H200 OOMs fall into one of four buckets:

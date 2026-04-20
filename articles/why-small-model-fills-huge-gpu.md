@@ -2,7 +2,7 @@
 title: "Why a 4B-8B model fills an H200 and still OOMs"
 description: "A detailed accounting of where 141 GB of HBM goes when you train a 4B-8B hybrid Mamba 3, Transformer, and MoE specialist: parameters, gradients, optimizer state, activations, KV cache, MoE routing buffers, and allocator fragmentation."
 date: "2026-04-18"
-tags: ["memory", "h200", "moe", "mamba", "activations", "fsdp2", "training"]
+tags: ["memory", "H200", "moe", "mamba", "activations", "fsdp2", "training"]
 ---
 
 The first time an engineer used to LLaMA-class training looks at a hybrid training stack, they say the same thing: "It is a 4B model, you have 141 GB per GPU, why are we OOMing." The short answer is that the parameter count is almost the smallest term in the memory budget once every contributor is written down. The long answer is this post. The same arithmetic that makes a dense 7B look comfortable on an 80 GB card makes a hybrid Mamba 3 + Transformer + MoE specialist at 4K-16K context push the H200's 141 GB ceiling, and turns the 80 GB H100 into "literally does not fit at our target microbatch".

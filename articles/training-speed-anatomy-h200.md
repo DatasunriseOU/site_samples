@@ -2,7 +2,7 @@
 title: "Training speed anatomy on H200"
 description: "What actually sets training speed on H200 in public MegaCpp reporting: compile warmup policy, block mix, memory shape, and why local wins often fail to move whole-step throughput."
 date: "2026-04-18"
-tags: ["h200", "training", "performance", "nam52", "nam56r", "moe", "mamba"]
+tags: ["H200", "training", "performance", "nam52", "nam56r", "moe", "mamba"]
 ---
 
 H200 training speed in the current stack is shaped less by any single kernel headline and more by step anatomy: compile policy, block mix, communication overlap, memory shape, and whether a supposed fast path is even active. The strongest current CUDA lane is dense H200, but the repo's own reports show that regional compile plus MoE can still stall in explicit warmup, attention can be a small minority of total step time, and some of the biggest gains come from removing unnecessary allocations rather than from rewriting the hottest-looking kernel.

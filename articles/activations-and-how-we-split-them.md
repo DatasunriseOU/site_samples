@@ -2,7 +2,7 @@
 title: "Activations and how we split them"
 description: "What activations actually are in a hybrid Mamba 3, Transformer, and MoE stack, why they dominate memory at long context, and the levers we have: selective recompute per layer or op, sequence parallel, context parallel, and the trade-offs we live with."
 date: "2026-04-18"
-tags: ["activations", "gradient-checkpointing", "sequence-parallel", "context-parallel", "mamba", "moe", "h200"]
+tags: ["activations", "gradient-checkpointing", "sequence-parallel", "context-parallel", "mamba", "moe", "H200"]
 ---
 
 Activations are the memory term that grows with your ambition. Parameters are fixed once the architecture is chosen; optimizer state scales with parameters and the optimizer's per-weight footprint; gradients scale with parameters after sharding. Activations scale with batch, sequence, depth, and the specific set of intermediate tensors the backward pass needs. Doubling context doubles them. Turning on a new head doubles a slice of them. They are the single term that responds to how we execute the forward pass, which means they are the term we have the most levers on — and the one most likely to turn a "small" 4B-8B hybrid model into an OOM on 141 GB of HBM.

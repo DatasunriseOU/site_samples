@@ -2,7 +2,7 @@
 title: "DSA CUDA graph safety deep dive"
 description: "A deeper reproducer-driven look at why DSA index-mask updates break CUDA graph capture, and how a branchless fix preserves the same eager semantics."
 date: "2026-04-19"
-tags: ["dsa", "cuda-graphs", "runtime", "deep-dive"]
+tags: ["dsa", "CUDA-graphs", "runtime", "deep-dive"]
 ---
 
 The compact DSA CUDA-graph article explains the rule. The near-copy sample is

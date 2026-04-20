@@ -2,7 +2,7 @@
 title: "Multi-Head Cross fused on Blackwell: from reference einsum to Triton"
 description: "How the MegaCpp Multi-Head Cross branch mixer went from a readable PyTorch reference to a fused Triton path on Hopper and Blackwell, and how it lands in deployment through a narrow feature contract."
 date: "2026-04-18"
-tags: ["mhc", "hyperconnections", "triton", "blackwell", "h200", "fused-kernels"]
+tags: ["mhc", "hyperconnections", "triton", "Blackwell", "H200", "fused-kernels"]
 ---
 
 Multi-Head Cross, which we call mHC, is the part of the MegaCpp hybrid recipe that mixes multiple residual streams between blocks. The algebra is four `einsum`s and a Sinkhorn normalisation; the pain is that those `einsum`s run per block for every layer, on every token, across Hopper and Blackwell alike, and the reference PyTorch path is too launch-heavy to ignore at our depth. This post is the engineering story of collapsing the mHC reference into a fused Triton path, keeping a safe fallback, and shipping the result as a narrow feature contract in the MegaCpp deployment stack.

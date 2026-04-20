@@ -2,7 +2,7 @@
 title: "Gradient Accumulation and Microbatching Under FSDP2: How We Stopped Guessing the Knobs"
 description: "Microbatch sizing under FSDP2, accumulation boundaries that respect TP/EP/SP, loss scaling under FP16/BF16, and the tuning loop that finally converged on H200."
 date: "2026-04-18"
-tags: ["fsdp2", "gradient-accumulation", "microbatching", "training", "h200"]
+tags: ["fsdp2", "gradient-accumulation", "microbatching", "training", "H200"]
 ---
 
 # Gradient Accumulation and Microbatching Under FSDP2

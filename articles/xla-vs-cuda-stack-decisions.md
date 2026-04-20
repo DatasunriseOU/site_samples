@@ -2,7 +2,7 @@
 title: "XLA vs CUDA: The Decision Matrix For Our Two Training Stacks"
 description: "Where we keep one model definition, where the kernels diverge, what determinism we can give on each, how comms differ between NCCL and XLA collectives, and the operator surface that has to stay portable."
 date: "2026-04-18"
-tags: ["xla", "cuda", "tpu", "nvidia", "spmd", "nccl", "portability"]
+tags: ["xla", "CUDA", "tpu", "nvidia", "spmd", "nccl", "portability"]
 ---
 
 We run the same model on two radically different stacks: TPUs through `torch_xla` / XLA SPMD, and NVIDIA GPUs through CUDA / NCCL / Transformer Engine / tensor-parallel training libraries. Keeping both alive is expensive and people reasonably ask why we do not pick one. The answer is that the paths give us different things, and the portability discipline is what makes the duplication sustainable. This post is the decision matrix we use day to day in a dual-stack training workflow: what we keep unified, what we let diverge, what determinism we can guarantee, and where the operator surface has to stay clean.

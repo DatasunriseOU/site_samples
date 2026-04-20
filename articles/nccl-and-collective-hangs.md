@@ -2,7 +2,7 @@
 title: "NCCL and collective hangs: the H200 multi-host timeout playbook"
 description: "Allreduce stragglers, NCCL deadlocks, P2P env vars, ibverbs quirks, and the liveness/timeout playbook we run on MegaCpp's H200 multi-host CUDA lanes."
 date: "2026-04-18"
-tags: ["nccl", "h200", "distributed", "megacpp"]
+tags: ["nccl", "H200", "distributed", "MegaCpp"]
 ---
 
 Most of the genuinely expensive debugging on our H200 fleet was not about the model. It was about NCCL: allreduce stragglers, bootstrap failures, plugin regressions, watchdog timeouts firing in the wrong place, and recovery paths that replaced one failure mode with another. This post is the playbook we landed on: the env vars we set, the ones we unset, the retry logic in the training entrypoint, and the liveness rules we enforce before declaring a run healthy.

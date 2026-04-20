@@ -2,7 +2,7 @@
 title: "Porting To Megatron-Core Is Harder Than It Looks"
 description: "Why lifting a hybrid attention/Mamba/MoE stack into Megatron-Core is a multi-adapter exercise: base config mapping, layer specs, mixer protocol, and the bridge layer that makes them line up."
 date: "2026-04-18"
-tags: ["megatron-core", "transformer-engine", "hybrid", "moe", "mamba", "cuda"]
+tags: ["megatron-core", "transformer-engine", "hybrid", "moe", "mamba", "CUDA"]
 ---
 
 Porting our hybrid stack into NVIDIA Megatron-Core is the single largest framework integration we have done, and it is genuinely hard in ways that are not obvious until the second week. The reason is not that Megatron is badly written - it is not - but that Megatron is a shape, and our models are a slightly different shape. This post is a concrete walk through the adapters we had to build, what they actually paper over, and which pieces are real gaps we could not close.

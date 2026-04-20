@@ -135,3 +135,8 @@ The recipe name alone is not enough. The effective model is the pattern plus the
 
 - [MegaCpp MegaCpp sample pack articles directory](https://megacpp.com/blog)
 - [MegaCpp MegaCpp sample pack docs directory](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md)
+- [NAM56R block taxonomy sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/nam56r_block_taxonomy_sample.py)
+- [NAM56R pattern composition sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/nam56r_pattern_composition_sample.py)
+- [NAM56R feature placement sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/nam56r_feature_placement_sample.py)
+- [Block taxonomy sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/core_blocks/block_taxonomy_sample.py)
+- [Residual paths sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/core_blocks/residual_paths_sample.py)

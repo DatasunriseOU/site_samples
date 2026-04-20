@@ -2,7 +2,7 @@
 title: "KV Cache and Paged Attention for the MegaCpp Specialist Ensemble"
 description: "Per-specialist KV cache layout, MLA cache after weight absorption, paged attention adoption status, and what changes between H200 and GB10 - including the MegaCpp serving plan."
 date: "2026-04-18"
-tags: ["kv-cache", "mla", "paged-attention", "fa3", "h200", "gb10", "serving"]
+tags: ["kv-cache", "mla", "paged-attention", "fa3", "H200", "GB10", "serving"]
 ---
 
 MegaCpp serves eight specialist SLMs behind a router, each holding its own KV cache. The dominant memory line at decode is cache, not weights: per specialist, per request, per token, per layer. This post covers the cache layout we ship, what MLA's compressed latent buys versus standard FA3, where the paged-KV path stands, and what the MegaCpp serving plan does differently on H200 vs GB10.

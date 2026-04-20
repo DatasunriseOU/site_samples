@@ -114,6 +114,11 @@ That is why this work should survive beyond one sample snapshot. Not because eve
 
 ## Further reading
 
+- [FIRE sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/fire/fire_sample.py)
+- [DASH sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/fire/dash_sample.py)
+- [ReDo sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/fire/redo_sample.py)
+- [Plasticity phase schedule sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/fire/plasticity_phase_schedule_sample.py)
+- [FIRE context extension filter sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/fire/fire_context_extension_filter_sample.py)
 - [FIRE paper](https://arxiv.org/abs/2602.08040)
 - [DASH paper](https://arxiv.org/abs/2410.23495)
 - [ReDo paper](https://arxiv.org/abs/2302.12902)

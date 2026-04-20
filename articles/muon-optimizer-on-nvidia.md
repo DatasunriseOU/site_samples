@@ -2,7 +2,7 @@
 title: "Muon on Hopper and Blackwell: The NVIDIA Lane of the MegaCpp Optimizer Stack"
 description: "How Muon, MuonClip, and the QK-clip family get from a single-file research implementation into a production AdamW-coexistent optimizer path for the MegaCpp ensemble on H200 and GB10."
 date: "2026-04-18"
-tags: ["muon", "optimizer", "newton-schulz", "h200", "blackwell", "qk-clip"]
+tags: ["muon", "optimizer", "newton-schulz", "H200", "Blackwell", "qk-clip"]
 ---
 
 Muon is the optimizer we keep circling back to whenever we want a cheaper training run at the same loss. On the NVIDIA lane of the MegaCpp ensemble, "cheaper" means Hopper H200 for the heavy dense baselines and Blackwell GB10 for the small-cluster development loop. The single-file Muon reference works on paper, but once the model has mixed fused-QKV projections, deep hyper-connection stacks, and rectangular MoE experts, there is a fairly long list of knobs you have to get right before it stops diverging. This post walks through the optimizer path as it currently stands in the public MegaCpp Muon surface and what ships to the deployment stack.

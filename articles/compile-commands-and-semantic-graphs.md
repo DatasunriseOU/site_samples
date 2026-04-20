@@ -2,7 +2,7 @@
 title: "Compile Commands and Semantic Graphs: Why C++ Training Needs Real Build Context"
 description: "How compile_commands-driven semantic extraction improves C++ corpus quality, where clang indexers fail, and why build-aware graphs matter more than raw text proximity."
 date: "2026-04-18"
-tags: ["clang", "semantic-indexing", "c++", "data", "training-quality"]
+tags: ["clang", "semantic-indexing", "C++", "data", "training-quality"]
 ---
 
 C++ is not just text. It is a collection of translation units compiled under
@@ -131,5 +131,9 @@ indexing problem.
 
 - [Semantic indexing note](https://github.com/DatasunriseOU/site_samples/blob/main/docs/semantic-indexing-notes.md)
 - [Sample `compile_commands.json`](https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands_fixture.json)
+- [Compile commands context example](https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands_context_example.py)
+- [Structure graph enricher sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/structure_graph_enricher_sample.py)
+- [Structure graph relations sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/structure_graph_relations_sample.py)
+- [Loader enriched columns sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/loader_enriched_columns_sample.py)
 - [Clang JSON Compilation Database](https://clang.llvm.org/docs/JSONCompilationDatabase.html)
 - [clang-doc](https://clang.llvm.org/extra/clang-doc.html)

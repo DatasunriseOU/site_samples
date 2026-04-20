@@ -121,9 +121,12 @@ That is the reason this parity work deserves its own write-up. It was not just a
 - vLLM project: https://github.com/vllm-project/vllm
 - FlashInfer project: https://github.com/flashinfer-ai/flashinfer
 - Mamba project: https://github.com/state-spaces/mamba
+- [NAM56R launcher profile sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/nam56r_launcher_profile_sample.py)
+- [NAM56R CUDA graph launcher sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/nam56r_cuda_graph_launcher_sample.sh)
+- [NAM56R runtime patch surface sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/nam56r_runtime_patch_surface_sample.py)
 - Local evidence: `bench/modal_vllm_gb10stack.py`
 - Local evidence: `bench/Dockerfile.vllm_gb10stack`
 - Local evidence: `bench/vllm_repo/meta/dependencies.md`
-- Local evidence: `MegaCpp source repository/MegaCpp source repository/megatron/preflight_smem_check.py`
-- Local evidence: `MegaCpp source repository/tests/test_preflight_smem_check.py`
-- Local evidence: `MegaCpp source repository/README.md`
+- Local evidence: `cppmega/megatron/preflight_smem_check.py`
+- Local evidence: `cppmega/tests/test_preflight_smem_check.py`
+- Local evidence: `cppmega/README.md`

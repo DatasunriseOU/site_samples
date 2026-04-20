@@ -2,7 +2,7 @@
 title: "How We Evaluate the MegaCpp SLM Ensemble on Real C++ Work"
 description: "The evaluation design, verifier stack, and release gates we use to measure C++ model quality without collapsing everything into a single leaderboard number."
 date: "2026-04-18"
-tags: ["evaluation", "benchmarks", "slm", "c++", "cost-per-quality"]
+tags: ["evaluation", "benchmarks", "slm", "C++", "cost-per-quality"]
 ---
 
 The MegaCpp evaluation story only matters if the measurement is strict enough to reject plausible-looking but wrong code. This post is about that measurement design. It explains what we score, how the harness runs, why compile-and-test signals outrank generic text metrics, and how we compare release candidates across quality, cost, and operational complexity.

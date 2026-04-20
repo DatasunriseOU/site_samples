@@ -2,7 +2,7 @@
 title: "Fused MoE and DeepEP on NVIDIA: the dispatch layer we ship"
 description: "How MegaCpp dispatches MoE tokens on H200 and GB10: DeepEP NVSHMEM all-to-all on NVLink and IB, fused expert GEMM, expert sharding, drop policies, and how the kernel layer interacts with our eight-specialist routing."
 date: "2026-04-18"
-tags: ["moe", "deep-ep", "nvshmem", "all-to-all", "h200", "nvidia", "fused-moe"]
+tags: ["moe", "deep-ep", "nvshmem", "all-to-all", "H200", "nvidia", "fused-moe"]
 ---
 
 If you ship MoE on NVIDIA at any non-trivial expert count, the dispatch layer is the entire performance story. The router is a few percent of the FLOPs and almost none of the wall clock; the all-to-all and the expert GEMM are everything. This post is the NVIDIA-only counterpart to the [routing decisions writeup](/blog/moe-routing-we-actually-shipped) — the same 64-expert / top-6 / 8-specialist setup, but with the focus on how DeepEP, the Megatron-Core flex dispatcher, and the fused expert path actually move tokens on H200 multi-node systems and GB10. Routing policy is taken as given; we are talking about the wires under the floor.

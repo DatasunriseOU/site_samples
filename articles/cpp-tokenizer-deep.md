@@ -2,7 +2,7 @@
 title: "Inside the MegaCpp C++ tokenizer: fixed vocab, BPE, and per-specialist sub-vocabs"
 description: "A deep look at the tokenizer we ship: half hand-curated vocabulary, half learned BPE, what changed between v2 and v3, where the collisions live, and how per-specialist sub-vocabs fall out of the shared 64K layout."
 date: "2026-04-18"
-tags: ["tokenizer", "bpe", "c++", "vocab"]
+tags: ["tokenizer", "bpe", "C++", "vocab"]
 ---
 
 The tokenizer story is usually told at the summary level: we grew from 32K to 48K and then to a 64K-class v3 layout, seeded some morphemes, and locked the fixed-token bands. That summary is still almost useless for engineering. What actually mattered was the frequency analysis on the real corpus, the collisions between fixed and learned slots, and the per-specialist sub-vocab story — which is not a separate artifact but a discipline of BPE seeding and runtime ID masking.

@@ -2,7 +2,7 @@
 title: "H200 Bringup and Naming: What Had to Be Made Explicit"
 date: 2026-04-18
 author: MegaCpp Engineering
-tags: [h200, bringup, distributed-training, naming, infrastructure]
+tags: [H200, bringup, distributed-training, naming, infrastructure]
 summary: >
   The grounded H200 story from the MegaCpp is not just faster hardware.
   It is a naming and contract story: model patterns, launcher modes, storage

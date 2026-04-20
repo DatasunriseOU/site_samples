@@ -2,7 +2,7 @@
 title: "SOTA Ablation and Comparison: How MegaCpp Decides What to Keep"
 description: "The ablation plan, the comparison methodology, and the honest numbers behind the MegaCpp SLM stack — what stacked, what didn't, and what we threw out even though the paper said it would help."
 date: "2026-04-18"
-tags: ["ablation", "sota", "moe", "dsa", "ifim", "evaluation", "c++"]
+tags: ["ablation", "sota", "moe", "dsa", "ifim", "evaluation", "C++"]
 ---
 
 The default state of any new module — sparse-attention variant, dynamic-depth scheme, training-objective auxiliary, fancy positional encoding — is off. It earns its way into the production NAM-class run by clearing a bounded ablation, on the same data, at the same depth, against a baseline we trust. If it does not, we drop it, even when the paper looks great. This post is the methodology behind that decision: how we structure the plan, how we keep comparisons honest across phases, the bugs we caught in our own runs that invalidated entire experiment groups, and the scorecard of what actually stacks for C++.

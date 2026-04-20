@@ -2,7 +2,7 @@
 title: "Torch 2.13 on GB10: the serving and training stack we actually chose"
 description: "A public, evidence-based write-up of the stack choices around Torch 2.13, CUDA 13.2, GCC 15, GB10, and vLLM compatibility in the MegaCpp workflow."
 date: "2026-04-19"
-tags: ["pytorch", "gb10", "vllm", "cuda", "training", "serving"]
+tags: ["PyTorch", "GB10", "vllm", "CUDA", "training", "serving"]
 ---
 
 When people ask whether Torch 2.13 is “ready” on GB10, the useful answer is not a yes-or-no. The useful answer is: ready for which lane, with which compiler, with which CUDA toolchain, and with which serving engine constraints.

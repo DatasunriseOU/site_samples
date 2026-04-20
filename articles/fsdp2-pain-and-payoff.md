@@ -2,7 +2,7 @@
 title: "FSDP2 pain and payoff: what actually reduced memory"
 date: 2026-04-18
 author: MegaCpp Engineering
-tags: [fsdp2, pytorch, distributed-training, memory, mixed-precision]
+tags: [fsdp2, PyTorch, distributed-training, memory, mixed-precision]
 summary: >
   A narrower view of FSDP2: where selective sharding helps, where it backfires,
   and why the stable policy is about ownership boundaries rather than a blanket switch.

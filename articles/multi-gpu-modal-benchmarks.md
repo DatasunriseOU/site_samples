@@ -2,7 +2,7 @@
 title: "Benchmarking the MegaCpp stack on Modal: multi-GPU lessons from rented boxes"
 description: "What we learned running the training stack on rented H100, H200, and B200 boxes through Modal: three benchmark lanes, an 8-GPU FSDP2 hang, and the bookkeeping that lets the numbers survive a week."
 date: "2026-04-18"
-tags: ["modal", "benchmarks", "multi-gpu", "fsdp", "h200", "b200", "reproducibility"]
+tags: ["modal", "benchmarks", "multi-gpu", "fsdp", "H200", "B200", "reproducibility"]
 ---
 
 Modal is, for us, a benchmarking surface and an overflow capacity pool — not the production training cluster. We use it to answer questions of the form "is the current MegaCpp stack still the best variant on H200?" and "how much faster is B200 than H100 on a real training step, not a synthetic kernel?". The numbers we get back have a much shorter half-life than people assume; the bookkeeping around them is what keeps them honest after a week.

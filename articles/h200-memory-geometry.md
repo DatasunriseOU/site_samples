@@ -2,12 +2,12 @@
 title: "H200 Memory Geometry for the Hybrid Stack"
 description: "How weights, gradients, optimizer state, activations, routing scratch, runtime reserve, and fragmentation stack up on one H200 device in a hybrid training stack."
 date: "2026-04-18"
-tags: ["h200", "memory", "muon", "moe", "mamba3", "activations", "training"]
+tags: ["H200", "memory", "muon", "moe", "mamba3", "activations", "training"]
 ---
 
 On H200, memory fit in a hybrid stack is decided by geometry, not by a single parameter-count number. A useful capacity model splits the budget into replicated weights, tensor-parallel shards, expert-parallel shards, gradients, optimizer state, activations, routing scratch, runtime reserve, and allocator overhead, and that split is the only reliable way to predict whether a launch actually clears the HBM limit.
 
-## Why MegaCPP cares
+## Why MegaCpp cares
 
 The specialist stack is a hybrid of attention blocks, Mamba blocks, and MoE blocks, so one device budget is shaped by several different ownership rules at once. Some tensors replicate everywhere, some split across TP, some split only across EP, and some exist only during backward or serving. That means “the model is about this big” is not enough for launch planning. The usable question is how the full memory geometry lands on one GPU after TP, EP, DP, optimizer assignment, and recompute policy have all taken effect.
 

@@ -2,7 +2,7 @@
 title: "Training the MegaCpp SLM Ensemble on GB10: a Grace Blackwell war story"
 description: "Field notes from bringing the MegaCpp SLM Ensemble up on NVIDIA GB10 and DGX Spark: silicon surprises, NaN bisects that ate days, regressions caused by our own patches, and the software-stack choices that held."
 date: "2026-04-18"
-tags: ["gb10", "blackwell", "sm121a", "nvfp4", "tilelang", "transformer-engine", "training"]
+tags: ["GB10", "Blackwell", "sm121a", "nvfp4", "tilelang", "transformer-engine", "training"]
 ---
 
 The GB10 / DGX Spark looks, from the marketing slide, like a small Blackwell. It is not. It is a different ISA wearing the Blackwell logo, with a desktop-class die, a roughly 273 GB/s LPDDR5X memory bus, and a software stack that assumes you are running on a B200 until you prove otherwise. This post is the unvarnished account of bringing our hybrid SSM/attention/MoE stack up on this box: the silicon traps, the NaN hunts that turned out to be our own patches, and the software-stack recipe that finally held.

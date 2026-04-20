@@ -2,7 +2,7 @@
 title: "The C++ Eval Suites, Verifiers, and the Compile-Then-Test Wall"
 description: "The C++-specific eval surface we actually run: problem sets, the compile-then-test verifier sandbox, header and include coverage, and how per-specialist scorecards fall out of the same harness."
 date: "2026-04-18"
-tags: ["evaluation", "c++", "verifier", "benchmarks", "testing"]
+tags: ["evaluation", "C++", "verifier", "benchmarks", "testing"]
 ---
 
 Nobody ships a code model on perplexity. We ship on whether the generated code compiles, whether it runs, and whether it passes tests written in advance by somebody who was not the model. The C++ eval surface is what turns those three questions into numbers, and the verifier is the wall between "the model emitted plausible-looking C++" and "we counted it as correct." This post is the C++-specific half of the eval story: the suites we run, how the verifier sandbox is wired, how header and include coverage gets measured, and how the scorecard for each specialist comes out of the same harness.

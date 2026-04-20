@@ -3,7 +3,7 @@ title: "Dynamo and torch.compile Breakage on a Mamba-3 Hybrid"
 description: "Graph breaks, recompile storms, guard explosions, and cache-hygiene rules we landed while keeping torch.compile useful on MegaCpp's hybrid Mamba-3 + Transformer stack."
 date: "2026-04-18"
 author: "David Gornshtein"
-tags: ["torch.compile", "dynamo", "mamba", "megacpp"]
+tags: ["torch.compile", "dynamo", "mamba", "MegaCpp"]
 ---
 
 MegaCpp's training core is a hybrid: attention blocks (`ABlock`), Mamba-3 SSM blocks (`MBlock`), expert blocks (`EBlock`, MoE), and Engram blocks in a repeating pattern across 52 layers. The TPU/XLA compile story lives in its own post; this one is specifically about Dynamo and Inductor on CUDA. Which graph breaks we silenced, which we accepted, which dynamic-shape guards we set by hand, and the compile-cache hygiene we now treat as non-negotiable.
@@ -143,3 +143,8 @@ The policy does not treat `fullgraph=True` as a near-term goal; the Mamba chunk-
 - [PyTorch Inductor](https://docs.pytorch.org/docs/stable/inductor.html)
 - [Mamba-3 Trapezoid Porting Notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/mamba3-trapezoid-porting.md)
 - [Mamba-3 TP partition size excerpt](https://github.com/DatasunriseOU/site_samples/blob/main/excerpts/code/cppmega/megatron/tensor-parallel-and-sharding__mamba3_tp_partition_sizes__v1.py)
+- [Regional compile ordering sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/compile/regional_compile_ordering_sample.py)
+- [Compile warmup policy sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/compile/compile_warmup_policy_sample.py)
+- [Dynamic batch compile policy sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/compile/dynamic_batch_compile_policy_sample.py)
+- [Compile runtime receipt sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/compile/compile_runtime_receipt_sample.py)
+- [Opaque kernel compile wrapper sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/compile/opaque_kernel_compile_wrapper_sample.py)

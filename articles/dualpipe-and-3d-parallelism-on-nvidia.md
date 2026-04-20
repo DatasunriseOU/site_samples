@@ -2,7 +2,7 @@
 title: "DualPipe and 3D Parallelism on H200 and GB10"
 description: "How MegaCpp lays out the TP × PP × DP × EP cube on H200 multi-node systems and GB10, integrates DualPipe / DualPipeV with our hybrid layer pattern, accounts for pipeline bubbles, and launches the deployment training job."
 date: "2026-04-18"
-tags: ["pipeline-parallelism", "tensor-parallelism", "dualpipe", "h200", "gb10", "nvidia", "3d-parallelism"]
+tags: ["pipeline-parallelism", "tensor-parallelism", "dualpipe", "H200", "GB10", "nvidia", "3d-parallelism"]
 ---
 
 Pipeline parallelism is the axis everyone wants to skip and nobody can. With a depth-52 hybrid model and an 8-way specialist ensemble we cannot fit the largest preset under FSDP-only sharding on H200:8. The 3D cube — TP × PP × DP × EP — is the answer, and DualPipe / DualPipeV is the schedule that buys back the bubble pure 1F1B leaves on the floor. This post is the layout we run, the DualPipe integration that survived our hybrid layer pattern, and the launch story.

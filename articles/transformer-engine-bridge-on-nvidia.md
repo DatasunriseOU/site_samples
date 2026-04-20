@@ -2,7 +2,7 @@
 title: "Transformer Engine on H200 and Blackwell-class GPUs: the bridge we use"
 description: "How MegaCpp wires NVIDIA Transformer Engine into the training stack on Hopper and Blackwell, where TE replaces native PyTorch layers, the FP8 interaction, and the fallback path that keeps non-NVIDIA lanes alive."
 date: "2026-04-18"
-tags: ["transformer-engine", "fp8", "h200", "blackwell", "nvidia", "training"]
+tags: ["transformer-engine", "fp8", "H200", "Blackwell", "nvidia", "training"]
 ---
 
 Transformer Engine (TE) is one of the biggest performance levers NVIDIA provides on Hopper and Blackwell-class GPUs, and also one of the easier ways to destabilize a multi-host training run. The integration here keeps every TE call optional, late-bound, and behind a per-feature flag, then lifts only the modules that materially improve MFU into a stable deployment layer. This post explains that bridge: what TE buys, where it replaces native PyTorch layers, how FP8 composes on H200 versus smaller Blackwell-class targets, and how MegaCpp keeps a clean path back to a TE-free build for lanes that need it.

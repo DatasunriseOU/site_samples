@@ -2,7 +2,7 @@
 title: "Structure Embeddings and Relation Bias: Teaching the Model That Code Has Shape"
 description: "How per-token structure IDs, chunk boundaries, and call/type edges become input embeddings and attention bias in the MegaCpp stack, what the ablations kept, and what ships in deployment."
 date: "2026-04-18"
-tags: ["structure-aware", "c++", "embeddings", "attention-bias", "training"]
+tags: ["structure-aware", "C++", "embeddings", "attention-bias", "training"]
 ---
 
 C++ source is not a flat token stream. It has a preamble, functions, classes, call edges, type edges, and a dependency order imposed by headers. For two training years we watched the model rediscover that structure poorly from whitespace and identifiers alone. This post is about the two features we built to put the structure in the input instead of hoping the model infers it: learned **structure embeddings** added at the input, and a **relation bias** added to attention logits. It also tells the honest story of what survived ablations and what we dropped on the way into deployment.

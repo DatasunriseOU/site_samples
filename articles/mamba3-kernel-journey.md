@@ -2,7 +2,7 @@
 title: "The Mamba 3 Kernel Journey: CUDA, Pallas, TileLang, and an Honest Look at CuTe DSL"
 description: "How the Mamba 3 kernel stack shipped in MegaCpp: TileLang on H200, Pallas on TPU v6e, a CuTe DSL port that never made it, and the verdicts that came out of each attempt."
 date: "2026-04-18"
-tags: ["mamba3", "cuda", "tilelang", "pallas", "cute-dsl", "kernels", "h200", "tpu"]
+tags: ["mamba3", "CUDA", "tilelang", "pallas", "cute-dsl", "kernels", "H200", "tpu"]
 ---
 
 Shipping a hybrid Mamba 3 plus Transformer backbone for a C++ codegen model forces the same conversation three times, once per backend: CUDA on H200, Pallas on TPU v6e, and the DSL layer on top of each. This post is that conversation written down. Short version: TileLang is how the MIMO kernels ship on H200 today, Pallas is how the SSD scan runs on TPU v6e, a CuTe DSL port of the MIMO kernel exists on disk and has not proven out, and our one serious TileLang versus CuTe comparison killed the CuTe path on ROI.

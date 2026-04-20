@@ -3,7 +3,7 @@ title: "Torch/XLA 2.11 expectations vs TPU reality"
 description: "What MegaCpp expected from the Torch/XLA 2.11 line on TPU, what the shipped stack actually looked like in practice, and how that changed our bringup strategy."
 date: "2026-04-19"
 author: "David Gornshtein"
-tags: ["tpu", "xla", "pytorch", "torch-xla", "bringup", "megacpp"]
+tags: ["tpu", "xla", "PyTorch", "torch-xla", "bringup", "MegaCpp"]
 ---
 
 When teams talk about a new Torch/XLA line, they often compress two very different questions into one. The first question is what the version number suggests: newer runtime, newer PJRT plumbing, maybe better cache behavior, maybe fewer bringup patches. The second question is the one operators actually have to answer: what exact wheel lineage, `libtpu` build, cache path, and compile policy can survive a real TPU training lane?

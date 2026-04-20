@@ -2,7 +2,7 @@
 title: "Building the C++ Training Data Pipeline: What Worked, What Broke"
 description: "An honest walkthrough of how the MegaCpp training data pipeline was built — source selection, filtering, dedup, tokenization, document masking, and the quality gates that catch our own mistakes."
 date: "2026-04-18"
-tags: ["data", "pipeline", "c++", "tokenizer", "quality"]
+tags: ["data", "pipeline", "C++", "tokenizer", "quality"]
 ---
 
 The most important data decision in MegaCpp is not a model hyperparameter. It
@@ -148,6 +148,10 @@ explaining the contract that ties them together.
 
 - [MegaCpp source repository](https://github.com/DatasunriseOU/cppmega)
 - [MegaCpp article samples](https://megacpp.com/blog)
+- [Compile commands fixture](https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/compile_commands_fixture.json)
+- [Masking pipeline excerpt](https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/masking_pipeline_excerpt.py)
+- [Packed row fixture](https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/packed_row_fixture.json)
+- [Enriched record fixture](https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/enriched_record_fixture.json)
 
 - [The Stack paper](https://arxiv.org/abs/2211.15533)
 - [The Stack v2 paper](https://arxiv.org/abs/2402.19173)
