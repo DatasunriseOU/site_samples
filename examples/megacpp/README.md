@@ -7,6 +7,9 @@ Reading order:
 - start with the recipe and launch surfaces to understand the public NAM56R contract
 - then use the compact runtime receipts to see each issue in a smaller teaching-sized sample
 - then use the near-copy receipts when you need a shape/layout contract that stays much closer to the MegaCpp POC source
+- for a full GB10 step-by-step reproduction bundle with CUDA/C++ source,
+  cubin patchers, and a separated deeper driver lane, use
+  `gb10_repro_bundle/README.md`
 
 What is here:
 - `nam56r_nemo_recipe_sample.py`: authoritative NAM56R recipe values and CLI emission
@@ -18,6 +21,11 @@ What is here:
 - `nam56r_launcher_profile_sample.py`: grouped launcher env/profile controls
 - `nam56r_runtime_patch_surface_sample.py`: runtime patch surfaces layered on top of the recipe
 - `dsa_cuda_graph_safety_sample.py`: branchless DSA index-mask update pattern for CUDA Graph safety
+- `gb10_arch_patch_probe_sample.py`: narrow baseline probe showing what an sm_100a -> sm_121a arch-field rewrite does and does not prove
+- `gb10_driver_signal_vs_runtime_proof_sample.py`: compact rule-of-thumb sample separating driver-visible hints from execution proof
+- `gb10_repro_bundle/`: GitHub-ready reproduction pack with `loader.cpp`,
+  `query_attrs.cpp`, CUDA kernels, `patch_elf.py`, `patch_symbols.py`,
+  `patch_nvinfo.py`, and a clearly separated `driver_patch_lane/patch_libcuda.py`
 - `mamba3_mimo_3d_to_2d_smem_sample.py`: shared-memory layout legality example for Mamba3-style kernels
 - `tilelang_tma_bulk_copy_smem_sample.py`: minimal TileLang TMA/shared-memory lowering example
 - `mamba_linear_ce_parity_sample.py`: output-layer and CE-loss parity surface for Mamba-style stacks
@@ -36,13 +44,19 @@ What is here:
 
 Compact runtime receipts:
 - `dsa_cuda_graph_safety_sample.py`: compact CUDA-graph-safe DSA mask-update sample
+- `gb10_arch_patch_probe_sample.py`: compact receipt for the positive baseline GB10 arch-patch experiment
+- `gb10_repro_bundle/`: stronger step-by-step bundle for the same topic when
+  you need the actual CUDA/C++ artifacts and patch scripts instead of the
+  compact Python retelling
 - `mamba3_mimo_3d_to_2d_smem_sample.py`: compact shared-memory legality sample for the Mamba3 layout rewrite
 - `tilelang_tma_bulk_copy_smem_sample.py`: compact TileLang TMA/shared-memory lowering sample
 - `mamba_linear_ce_parity_sample.py`: compact linear-CE parity sample for Mamba-style output layers
 - `dsa_indexer_memory_sample.py`: compact memory-shape sample for the DSA score-materialization issue
+- `gb10_driver_signal_vs_runtime_proof_sample.py`: compact decision sample for GB10 capability claims that look stronger than the runtime proof
 
 Near-copy runtime receipts:
 - `dsa_cuda_graph_safety_nearcopy.py`: heavier near-copy reproducer for CUDA-graph-safe DSA mask updates
+- `gb10_tcgen05_gate_matrix_nearcopy.py`: heavier near-copy gate matrix for the staged GB10 tcgen05 probe path
 - `mamba3_mimo_3d_to_2d_smem_nearcopy.py`: heavier near-copy layout refactor for the Mamba3 shared-memory/TMA issue
 - `tilelang_tma_bulk_copy_smem_nearcopy.py`: heavier near-copy lowering contract for TileLang TMA bulk-copy layouts
 - `mamba_linear_ce_parity_nearcopy.py`: heavier near-copy class-contract reproducer for Mamba linear-CE parity
@@ -67,6 +81,8 @@ What problem these files solve:
 - they preserve small runnable reproducer surfaces for CUDA-graph safety,
   memory fixes, parity checks, and TileLang/Hopper layout issues without
   dragging in the full training tree
+- they also keep the GB10 story split correctly between the public-safe baseline
+  and gate-walk lane versus the deeper `libcuda` research lane
 - they also keep a second lane of heavier near-copy receipts for the places
   where compact abstractions hide the real contract too aggressively
 - they keep Megatron/Nemotron translation, MLA integration, recurrent mixer

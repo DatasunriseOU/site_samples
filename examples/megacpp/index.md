@@ -21,6 +21,8 @@ Pattern and feature-planning surfaces:
 - `nam56r_pattern_composition_sample.py`
 - `nam56r_feature_placement_sample.py`
 - `fail_closed_pattern_translation_sample.py`
+- `gb10_repro_bundle/`
+- `gb10_driver_signal_vs_runtime_proof_sample.py`
 - `mla_integration_pattern_sample.py`
 - `mla_shared_adapter_sample.py`
 - `m2rnn_mixer_spec_sample.py`
@@ -33,6 +35,7 @@ Data and migration bridges:
 Runnable runtime receipts:
 - `dsa_cuda_graph_safety_sample.py`
 - `dsa_indexer_memory_sample.py`
+- `gb10_arch_patch_probe_sample.py`
 - `mamba_linear_ce_parity_sample.py`
 - `mamba3_mimo_3d_to_2d_smem_sample.py`
 - `tilelang_tma_bulk_copy_smem_sample.py`
@@ -40,6 +43,7 @@ Runnable runtime receipts:
 Near-copy runtime receipts:
 - `dsa_cuda_graph_safety_nearcopy.py`
 - `dsa_indexer_memory_nearcopy.py`
+- `gb10_tcgen05_gate_matrix_nearcopy.py`
 - `mamba_linear_ce_parity_nearcopy.py`
 - `mamba3_mimo_3d_to_2d_smem_nearcopy.py`
 - `tilelang_tma_bulk_copy_smem_nearcopy.py`
@@ -56,3 +60,7 @@ Near-copy runtime receipts:
 In simple words: this directory is the bridge between the public NAM56R model
 story and the smaller contracts that make the recipe, runtime, and kernel
 surfaces legible.
+
+For the stronger GB10 reproduction pack with CUDA/C++ source, cubin patch
+scripts, the staged gate walk, and the separated deeper `libcuda` lane, start
+with `gb10_repro_bundle/README.md`.
