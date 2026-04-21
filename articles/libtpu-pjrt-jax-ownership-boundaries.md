@@ -92,11 +92,8 @@ That is the useful meaning of ownership here. The substrate is shared. The accou
 
 ## References
 
-- `CLAUDE.md`
-- `docs/TPU_SETUP.md`
-- `common.py`
-- `reports/current_live_bugs_2026-03-07_strict_pass3.md`
-- `reports/enrichment_framework_review_2026-02-23.md`
-- `reports/tpu_backend_provenance_v6e8_2026-03-16.json`
-- `scripts/base_train.py`
-- `scripts/train_args.py`
+- [TPU backend ownership notes](../docs/tpu-backend-ownership.md)
+- [TPU bring-up notes](../docs/tpu-bringup-notes.md)
+- [JAX bridge call surface](../examples/xla/xla_call_jax_bridge.py)
+- [XLA backend fallback sample](../examples/xla/xla_backend_fallback_sample.py)
+- [Pallas bridge receipt sample](../examples/xla/xla_pallas_bridge_receipt.py)

@@ -26,7 +26,7 @@ meant to isolate: MLA mode has had mismatches around local layer-spec assembly
 and around which attention implementation paths actually support MLA cleanly.
 The right response is not to smear MLA conditionals across the codebase. The
 right response is to keep one shared adapter surface that can absorb those
-moving pieces. citeturn0search0turn0search5
+moving pieces.
 
 ## Why one shared adapter is safer than many tiny special cases
 
@@ -45,14 +45,14 @@ the safest default is to contain it.
 ## Example -> article -> upstream docs
 
 - example: [`mla_shared_adapter_sample.py`](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/mla_shared_adapter_sample.py)
-- related article: [`public-safe-mla-integration-patterns-for-megatron.md`](https://megacpp.com/blog/public-safe-mla-integration-patterns-for-megatron/)
-- upstream docs: Megatron-LM config and MLA bug reports around layer-spec and attention-path support citeturn0search3turn0search0turn0search5
+- related article: [`public-safe-mla-integration-patterns-for-megatron`](https://megacpp.com/blog/public-safe-mla-integration-patterns-for-megatron/)
+- upstream docs: Megatron-LM config and MLA bug reports around layer-spec and attention-path support
 
 ## References
 
 - [Shared MLA adapter sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/mla_shared_adapter_sample.py)
 - [MLA integration pattern sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/mla_integration_pattern_sample.py)
 - [Public-safe MLA integration patterns for Megatron](https://megacpp.com/blog/public-safe-mla-integration-patterns-for-megatron/)
-- [Megatron-LM transformer config](https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/transformer/transformer_config.py) citeturn0search3
-- [Megatron-LM MLA layer-spec bug report](https://github.com/NVIDIA/Megatron-LM/issues/1589) citeturn0search0
-- [Megatron-LM FlashAttention / MLA support bug report](https://github.com/NVIDIA/Megatron-LM/issues/1698) citeturn0search5
+- [Megatron-LM transformer config](https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/transformer/transformer_config.py)
+- [Megatron-LM MLA layer-spec bug report](https://github.com/NVIDIA/Megatron-LM/issues/1589)
+- [Megatron-LM FlashAttention / MLA support bug report](https://github.com/NVIDIA/Megatron-LM/issues/1698)

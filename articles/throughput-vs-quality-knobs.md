@@ -9,10 +9,11 @@ The real throughput-versus-quality knobs are not cosmetic flags. The big levers 
 
 ## Public code and notes
 
-- [DSA indexer upstream example set](https://github.com/DatasunriseOU/cppmega/tree/main/upstream_prs/examples/12_dsa_indexer_memory/README.md)
-- [Mamba linear CE upstream example set](https://github.com/DatasunriseOU/cppmega/tree/main/upstream_prs/examples/11_mamba_linear_ce/README.md)
-- [MegaCpp DSA patch surface](https://github.com/DatasunriseOU/cppmega/blob/main/cppmega/megatron/dsa_indexer_fused_patch.py)
-- [MegaCpp Megatron recipe surface](https://github.com/DatasunriseOU/cppmega/blob/main/cppmega/recipes/nam56r_megatron.py)
+- [DSA indexer sample](../examples/megacpp/dsa_indexer_memory_sample.py)
+- [Mamba linear CE parity sample](../examples/megacpp/mamba_linear_ce_parity_sample.py)
+- [NAM56R Megatron plan sample](../examples/megacpp/nam56r_megatron_plan_sample.py)
+- [Distributed debugging notes](../docs/distributed-debugging-notes.md)
+- [Hybrid layout notes](../docs/hybrid-layout-notes.md)
 
 The easiest mistake in model tuning is to treat throughput and quality as separate checklists. Public MegaCpp materials point the other way. The published architecture description combines attention, Mamba, expert, and recurrent-style pieces, and the public implementation surfaces make it clear that runtime changes can also affect parity and training behavior. If you want a useful knob map, you have to start from the pattern notation and from the exact block mix that a run uses.
 
@@ -115,7 +116,8 @@ The short conclusion is straightforward. Real knobs are the ones that change exe
 
 ## References
 
-- [Mamba linear CE upstream example set](https://github.com/DatasunriseOU/cppmega/tree/main/upstream_prs/examples/11_mamba_linear_ce/README.md)
-- [DSA indexer upstream example set](https://github.com/DatasunriseOU/cppmega/tree/main/upstream_prs/examples/12_dsa_indexer_memory/README.md)
-- [Distributed debugging notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/distributed-debugging-notes.md)
-- [Hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md)
+- [Mamba linear CE parity sample](../examples/megacpp/mamba_linear_ce_parity_sample.py)
+- [DSA indexer sample](../examples/megacpp/dsa_indexer_memory_sample.py)
+- [NAM56R Megatron plan sample](../examples/megacpp/nam56r_megatron_plan_sample.py)
+- [Distributed debugging notes](../docs/distributed-debugging-notes.md)
+- [Hybrid layout notes](../docs/hybrid-layout-notes.md)

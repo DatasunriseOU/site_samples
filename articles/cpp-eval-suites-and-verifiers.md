@@ -132,7 +132,7 @@ The eval ablations worth keeping:
 
 ## References
 
-- [Verifier-first C++ evals](https://megacpp.com/blog/verifier-first-cpp-evals.md)
+- [Verifier-first C++ evals](https://megacpp.com/blog/verifier-first-cpp-evals/)
 - [LiveCodeBench](https://livecodebench.github.io/)
 - [Evaluating Large Language Models Trained on Code](https://arxiv.org/abs/2107.03374)
 - [HumanEval benchmark dataset](https://github.com/openai/human-eval)

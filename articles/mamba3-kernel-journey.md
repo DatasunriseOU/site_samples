@@ -109,12 +109,9 @@ Kept: TileLang on H200 with three upstream patches, the TMA 3D-to-2D backward la
 
 ## References
 
-- mamba3_mimo_p1_notes.md
-- mamba3_mimo_p2_psiv_cache_design.md
-- mamba3_mimo_p3_register_split_design.md
-- mamba_fork_canonical_2026_04_14.md
-- mamba_integration_log.md
-- mamba_review_followup_plan.md
-- v4_architecture.md
-- TENSOR_PARALLELISM.md
-- CURRENT_STATE.md
+- [Mamba3 trapezoid porting notes](../docs/mamba3-trapezoid-porting.md)
+- [Hybrid layout notes](../docs/hybrid-layout-notes.md)
+- [Mamba scan compile wrapper sample](../examples/distributed/mamba_scan_compile_wrapper.py)
+- [Mamba3 PSIV cache scaffold](../examples/megacpp/mamba3_psiv_cache_scaffold.py)
+- [Mamba3 3D-to-2D SMEM sample](../examples/megacpp/mamba3_mimo_3d_to_2d_smem_sample.py)
+- [Mamba3 3D-to-2D SMEM nearcopy](../examples/megacpp/mamba3_mimo_3d_to_2d_smem_nearcopy.py)

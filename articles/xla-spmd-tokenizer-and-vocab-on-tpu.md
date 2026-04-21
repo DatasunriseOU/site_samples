@@ -88,9 +88,9 @@ Recording these fields is cheap. Investigating a regression without them is expe
 
 ## References
 
-- https://megacpp.com/blog/cpp-tokenizer-deep.md
-- https://megacpp.com/blog/tokenizer-v2-v3.md
-- https://megacpp.com/blog/slm-data.md
+- https://megacpp.com/blog/cpp-tokenizer-deep/
+- https://megacpp.com/blog/tokenizer-v2-v3/
+- https://megacpp.com/blog/slm-data/
 - https://github.com/DatasunriseOU/site_samples/blob/main/examples/data/masking_pipeline_excerpt.py
 - https://docs.pytorch.org/xla/master/runtime.html
 - https://docs.pytorch.org/xla/master/learn/pjrt.html

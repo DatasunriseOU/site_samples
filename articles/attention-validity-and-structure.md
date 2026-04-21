@@ -304,9 +304,9 @@ if token_prefix is None and not slot_prefix_matches(query_tile_size):
 
 ## References
 
-Filenames only: `attention_coverage_matrix_2026-03-16.md`,
-`attention_validity_clustered_followup_2026-03-10.md`,
-`attention_validity_packed_rows_2026-03-10.md`,
-`12-attention-sink-mitigation-rfc.md`,
-`13-gated-attention-v1-spec.md`,
-`14-structure-aware-attention-and-feature-integration-plan.md`.
+- [Attention validity prefix sample](../examples/kernels/attention_validity_prefix_sample.py)
+- [Document window mask sample](../examples/kernels/doc_window_mask_sample.py)
+- [Document mask segment IDs sample](../examples/long_context/doc_mask_segment_ids_sample.py)
+- [Structure graph relations sample](../examples/data/structure_graph_relations_sample.py)
+- [Architecture notes](../docs/architecture-notes.md)
+- [Semantic indexing notes](../docs/semantic-indexing-notes.md)

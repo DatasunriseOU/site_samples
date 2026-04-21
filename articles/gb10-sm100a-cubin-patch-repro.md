@@ -280,8 +280,8 @@ That distinction is the whole point of publishing the bundle this way.
 
 The other two GB10 posts explain the meaning of the result and the difference between driver-visible hints and runtime proof:
 
-- [What Our GB10 Experiments Actually Prove About Blackwell Consumer vs Datacenter Tensor Paths](./gb10-blackwell-tensor-paths-what-we-actually-proved.md)
-- [Why Driver-Visible Paths Can Look Like Hardware Support on GB10, Even When Silicon Proof Is Missing](./gb10-driver-gates-and-false-capability-signals.md)
+- [What Our GB10 Experiments Actually Prove About Blackwell Consumer vs Datacenter Tensor Paths](https://megacpp.com/blog/gb10-blackwell-tensor-paths-what-we-actually-proved/)
+- [Why Driver-Visible Paths Can Look Like Hardware Support on GB10, Even When Silicon Proof Is Missing](https://megacpp.com/blog/gb10-driver-gates-and-false-capability-signals/)
 
 This article is the practical companion. It is here so another engineer can repeat the exact cubin patch, load path, and gate walk without guessing where the public evidence starts and where it stops.
 
@@ -295,5 +295,5 @@ This article is the practical companion. It is here so another engineer can repe
 - [patch_elf.py](../examples/megacpp/gb10_repro_bundle/patch_elf.py)
 - [patch_symbols.py](../examples/megacpp/gb10_repro_bundle/patch_symbols.py)
 - [patch_nvinfo.py](../examples/megacpp/gb10_repro_bundle/patch_nvinfo.py)
-- [What Our GB10 Experiments Actually Prove About Blackwell Consumer vs Datacenter Tensor Paths](./gb10-blackwell-tensor-paths-what-we-actually-proved.md)
-- [Why Driver-Visible Paths Can Look Like Hardware Support on GB10, Even When Silicon Proof Is Missing](./gb10-driver-gates-and-false-capability-signals.md)
+- [What Our GB10 Experiments Actually Prove About Blackwell Consumer vs Datacenter Tensor Paths](https://megacpp.com/blog/gb10-blackwell-tensor-paths-what-we-actually-proved/)
+- [Why Driver-Visible Paths Can Look Like Hardware Support on GB10, Even When Silicon Proof Is Missing](https://megacpp.com/blog/gb10-driver-gates-and-false-capability-signals/)

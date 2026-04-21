@@ -128,9 +128,9 @@ For every serious evaluation cycle, the goal is to publish enough metadata that 
 
 ## References
 
-- [Verifier-first C++ evals](https://megacpp.com/blog/verifier-first-cpp-evals.md)
-- [C++ eval suites and verifiers](https://megacpp.com/blog/cpp-eval-suites-and-verifiers.md)
-- [SLM data pipeline](https://megacpp.com/blog/slm-data.md)
+- [Verifier-first C++ evals](https://megacpp.com/blog/verifier-first-cpp-evals/)
+- [C++ eval suites and verifiers](https://megacpp.com/blog/cpp-eval-suites-and-verifiers/)
+- [SLM data pipeline](https://megacpp.com/blog/slm-data/)
 - [HumanEval: Evaluating Large Language Models Trained on Code](https://arxiv.org/abs/2107.03374)
 - [LiveCodeBench](https://livecodebench.github.io/)
 - [vLLM documentation](https://docs.vllm.ai/)

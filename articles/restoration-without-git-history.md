@@ -26,7 +26,7 @@ explainable. That means preserving:
 
 ## References
 
-- [Restoring a Megatron training tree without git history](https://github.com/DatasunriseOU/site_samples/blob/main/articles/restoring-a-megatron-training-tree-without-git-history.md)
+- [Restoring a Megatron training tree without git history](https://megacpp.com/blog/restoring-a-megatron-training-tree-without-git-history/)
 - [NAM56R launch contract sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/nam56r_launch_contract_sample.py)
 - [Megatron restoration recipe](https://github.com/DatasunriseOU/cppmega/blob/main/docs/megatron_restoration_recipe.md)
 - [Megatron upstream patches README](https://github.com/DatasunriseOU/cppmega/blob/main/cppmega/megatron/upstream_patches/README.md)

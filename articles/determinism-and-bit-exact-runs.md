@@ -38,8 +38,7 @@ backward.
 
 ## The Fast Path Versus the Bitwise Path
 
-The simplest statement of our stance is in `common.py`, in the
-shared runtime bootstrap:
+The simplest statement of our stance appears in the shared runtime bootstrap:
 
 ```python
 torch.manual_seed(42)

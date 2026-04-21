@@ -103,13 +103,8 @@ def attn(q, k, v, block_mask):
 
 ## References
 
-- Public benchmark notes and code receipts in `MegaCpp sample pack`
-- build.sh
-- Dockerfile
-- modal_train.py
-- sparse_attention.py
-- triton_kernels.py
-- fused_mla_rope.py
-- kernels.py
-- dsa_backend_options_2026-03-07.md
-- H200_STACK_SETUP.md
+- [Kernel examples index](../examples/kernels/index.md)
+- [Kernel examples README](../examples/kernels/README.md)
+- [Dense FA4 execute proof sample](../examples/kernels/dense_fa4_execute_proof_sample.py)
+- [Mamba 3D-to-2D SMEM sample](../examples/megacpp/mamba3_mimo_3d_to_2d_smem_sample.py)
+- [Mamba 3D-to-2D SMEM nearcopy](../examples/megacpp/mamba3_mimo_3d_to_2d_smem_nearcopy.py)

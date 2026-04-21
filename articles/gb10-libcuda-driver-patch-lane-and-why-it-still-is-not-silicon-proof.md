@@ -219,5 +219,5 @@ That last sentence is the reason this article exists.
 - [GB10 public claims guardrails](../examples/megacpp/gb10_repro_bundle/public_claims.md)
 - [Research-only driver patch README](../examples/megacpp/gb10_repro_bundle/driver_patch_lane/README.md)
 - [Research-only `patch_libcuda.py`](../examples/megacpp/gb10_repro_bundle/driver_patch_lane/patch_libcuda.py)
-- [Why Driver-Visible Paths Can Look Like Hardware Support on GB10, Even When Silicon Proof Is Missing](./gb10-driver-gates-and-false-capability-signals.md)
-- [What Our GB10 Experiments Actually Prove About Blackwell Consumer vs Datacenter Tensor Paths](./gb10-blackwell-tensor-paths-what-we-actually-proved.md)
+- [Why Driver-Visible Paths Can Look Like Hardware Support on GB10, Even When Silicon Proof Is Missing](https://megacpp.com/blog/gb10-driver-gates-and-false-capability-signals/)
+- [What Our GB10 Experiments Actually Prove About Blackwell Consumer vs Datacenter Tensor Paths](https://megacpp.com/blog/gb10-blackwell-tensor-paths-what-we-actually-proved/)

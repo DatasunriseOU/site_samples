@@ -85,9 +85,8 @@ out = flash_attn_varlen_func(
 
 ## References
 
-- `06-long-context.md`
-- `12-attention-sink-mitigation-rfc.md`
-- `TEMPORAL_CODE_DYNAMICS_ROADMAP.md`
-- `deepseek_mla_strategy.md`
-- `training_review.md`
-- `architecture_and_eval_en.md`
+- [Architecture notes](../docs/architecture-notes.md)
+- [Document mask segment IDs sample](../examples/long_context/doc_mask_segment_ids_sample.py)
+- [FIM long-context metadata sample](../examples/long_context/fim_long_context_metadata_sample.py)
+- [Document window mask sample](../examples/kernels/doc_window_mask_sample.py)
+- [Splash mask cache sample](../examples/xla/splash_mask_cache_sample.py)

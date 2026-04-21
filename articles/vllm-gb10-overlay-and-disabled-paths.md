@@ -26,7 +26,7 @@ That choice matters for two reasons.
 
 First, it makes the serving lane reproducible. There is no hidden startup hook whose success depends on import order or process topology. The image contains the exact model registry and loader logic that the workers will use.
 
-Second, it makes the diff reviewable. MegaCpp can point to a bounded patch bundle in `bench/vllm_repo/files` and say exactly which surfaces diverge from upstream. For a fast-moving upstream like vLLM, that is a much healthier operational posture than carrying an invisible runtime rewrite.
+Second, it makes the diff reviewable. MegaCpp can point to a bounded checked-in overlay bundle and say exactly which surfaces diverge from upstream. For a fast-moving upstream like vLLM, that is a much healthier operational posture than carrying an invisible runtime rewrite.
 
 ## The model-registration fix
 
@@ -40,7 +40,7 @@ This was not cosmetic registration cleanup. Without it, the engine could select 
 
 Registration alone was not enough because the checkpoint names still did not line up cleanly with what vLLM expected internally.
 
-The bench research notes show the mismatch in plain terms. The available text-only checkpoints used nested `model.language_model.*` prefixes and unfused projection naming, while vLLM expected `model.*` names together with fused internal parameter groups such as `gate_up_proj`, `qkv_proj`, and the linear-attention fused projections. MegaCpp did not try to manufacture a new checkpoint format for that. Instead, it relied on vLLM's existing internal fusion path and only fixed the naming seam that blocked it.
+The checked-in loader notes show the mismatch in plain terms. The available text-only checkpoints used nested `model.language_model.*` prefixes and unfused projection naming, while vLLM expected `model.*` names together with fused internal parameter groups such as `gate_up_proj`, `qkv_proj`, and the linear-attention fused projections. MegaCpp did not try to manufacture a new checkpoint format for that. Instead, it relied on vLLM's existing internal fusion path and only fixed the naming seam that blocked it.
 
 The text-only loader subclasses apply a `WeightsMapper` that rewrites `model.language_model.` to `model.` and skips `mtp.` and `visual.` prefixes. That is the important boundary. The overlay does not reimplement vLLM's parameter fusion rules; it just delivers names to the existing loader in the shape that lets those rules fire.
 
@@ -52,7 +52,7 @@ It is useful to separate "not fixed yet" from "intentionally off."
 
 One disabled path was the runtime-patch approach itself. After the H100 smoke test showed that spawn-based workers did not inherit the parent-side registry mutation, keeping that path alive would have meant pretending the system was safer than it was. MegaCpp deferred that route and documented the real requirement: a plugin loaded in every worker or a patched module installed on disk.
 
-Another path stayed off in the adjacent training lane: colocated vLLM during GSPO remained disabled and the stable run continued with `use_vllm=False`. That decision was operational, not ideological. The bench plan notes are explicit that the non-vLLM run was stable, already showing the desired reward trend, and not worth destabilizing while the serving-side loader story was still under active repair.
+Another path stayed off in the adjacent training lane: colocated vLLM during GSPO remained disabled and the stable run continued with `use_vllm=False`. That decision was operational, not ideological. The checked-in run notes are explicit that the non-vLLM run was stable, already showing the desired reward trend, and not worth destabilizing while the serving-side loader story was still under active repair.
 
 There is also a more mechanical keep-disabled choice in the GB10 smoke harness: it uses a constrained configuration with `gpu_memory_utilization=0.70`, `max_model_len=2048`, and a switch between compiled and eager execution through `enforce_eager`. That is not a production tuning guide. It is a bounded validation lane. MegaCpp kept the larger, more aggressive serving envelope out of this smoke path until the basic registration and load semantics were honest.
 
@@ -86,10 +86,9 @@ That is what a healthy patch lane looks like. Fix the real boundary. Do not hide
 
 ## References
 
-- `bench/PLAN.md` — strategy-B smoke notes, checkpoint naming analysis, and the decision to defer colocated vLLM while the stable lane kept `use_vllm=False`
-- `bench/Dockerfile.vllm_gb10stack` — pinned GB10-oriented toolchain plus on-disk vLLM overlay build flow
-- `bench/modal_vllm_gb10stack.py` — bounded smoke harness showing the validation envelope and text-only import check
-- `bench/vllm_image_patch.py` — in-place patch rationale and the text-only registration/loader approach
-- `bench/vllm_repo/files/vllm/model_executor/models/registry.py` — architecture-to-text-only registration override
-- `bench/vllm_repo/files/vllm/model_executor/models/qwen3_5.py` — text-only subclasses, MRoPE handling, and `WeightsMapper`-based load path
+- [MegaCpp example index](../examples/megacpp/index.md)
+- [GB10 repro bundle README](../examples/megacpp/gb10_repro_bundle/README.md)
+- [GB10 public claims](../examples/megacpp/gb10_repro_bundle/public_claims.md)
+- [GB10 arch patch probe sample](../examples/megacpp/gb10_arch_patch_probe_sample.py)
+- [GB10 driver signal vs runtime proof sample](../examples/megacpp/gb10_driver_signal_vs_runtime_proof_sample.py)
 - [vLLM project](https://github.com/vllm-project/vllm)

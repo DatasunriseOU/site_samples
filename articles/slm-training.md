@@ -29,7 +29,7 @@ That requirement matters especially for SLM work. Small models are where experim
 | `pg_collection` / stage flags | keeps distributed layout in the open |
 | `position_embedding_type`, rotary settings | exposes choices that materially change small-model behavior |
 
-This posture lines up with the rest of the stack. The public [Mamba3 hybrid article](https://megacpp.com/blog/mamba3-hybrid.md) and [hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md) both describe the same principle from different angles: architecture is assembled from explicit block choices, not assumed from a single recipe name.
+This posture lines up with the rest of the stack. The public [Mamba3 hybrid article](https://megacpp.com/blog/mamba3-hybrid/) and [hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md) both describe the same principle from different angles: architecture is assembled from explicit block choices, not assumed from a single recipe name.
 
 ## Hybrid blocks are not a side experiment
 
@@ -70,7 +70,7 @@ One of the cleanest parts of the training stack is how auxiliary objectives are 
 
 That is healthier than burying auxiliaries inside architecture labels.
 
-The STP implementation is a good example. The public [STP geodesic regularizer](https://megacpp.com/blog/stp-geodesic-regularizer.md) and [STP after ten thousand steps](https://megacpp.com/blog/stp-after-ten-thousand-steps.md) notes define the objective and the delayed rollout discipline. The training stack then decides when it is active and when it must be disabled under a more restrictive parallel layout. So the system already distinguishes between:
+The STP implementation is a good example. The public [STP geodesic regularizer](https://megacpp.com/blog/stp-geodesic-regularizer/) and [STP after ten thousand steps](https://megacpp.com/blog/stp-after-ten-thousand-steps/) notes define the objective and the delayed rollout discipline. The training stack then decides when it is active and when it must be disabled under a more restrictive parallel layout. So the system already distinguishes between:
 
 1. the math of an objective, and
 2. the conditions under which that objective participates in training.
@@ -86,7 +86,7 @@ That line is not from prose; it is encoded into the dashboard template surfaces.
 
 ## Compile and backend constraints shape the training recipe
 
-The project does not pretend the backend is irrelevant. On the TPU side, the public [TPU bring-up notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/tpu-bringup-notes.md) and [torch-xla PJRT reality](https://megacpp.com/blog/torch-xla-pjrt-reality.md) notes are explicit about stack pinning, `PJRT_DEVICE=TPU`, compile boundaries, and static-graph discipline. On the authored Mamba side, the public [Mamba3 hybrid article](https://megacpp.com/blog/mamba3-hybrid.md) and [hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md) explain the authored path requirements and the extra MIMO-related constraints.
+The project does not pretend the backend is irrelevant. On the TPU side, the public [TPU bring-up notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/tpu-bringup-notes.md) and [torch-xla PJRT reality](https://megacpp.com/blog/torch-xla-pjrt-reality/) notes are explicit about stack pinning, `PJRT_DEVICE=TPU`, compile boundaries, and static-graph discipline. On the authored Mamba side, the public [Mamba3 hybrid article](https://megacpp.com/blog/mamba3-hybrid/) and [hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md) explain the authored path requirements and the extra MIMO-related constraints.
 
 That matters because SLM training is often the lane where teams try new architecture ideas first. If the recipe hides backend assumptions, the results stop being comparable.
 
@@ -99,7 +99,7 @@ That matters because SLM training is often the lane where teams try new architec
 
 The project’s current approach is therefore more conservative than generic “small model experimentation” culture. That conservatism is good. It means when a result is reported on `NAM52` or `NAM56R`, there is at least a chance the underlying runtime was actually controlled.
 
-Another useful detail is that the project keeps a visible separation between local builder authority and upstream-optimized submodules. The public [Mamba3 hybrid article](https://megacpp.com/blog/mamba3-hybrid.md) and [hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md) describe that selective replacement strategy directly. That is a strong training design choice. It means architecture experiments can target the block family being evaluated without forcing a full fork of every surrounding layer. For SLM work this keeps the comparison surface smaller: a new mixer path does not automatically become a new everything-path.
+Another useful detail is that the project keeps a visible separation between local builder authority and upstream-optimized submodules. The public [Mamba3 hybrid article](https://megacpp.com/blog/mamba3-hybrid/) and [hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md) describe that selective replacement strategy directly. That is a strong training design choice. It means architecture experiments can target the block family being evaluated without forcing a full fork of every surrounding layer. For SLM work this keeps the comparison surface smaller: a new mixer path does not automatically become a new everything-path.
 
 The same discipline shows up in the local stack spec. `mamba_local_spec.py` wires `WrappedTorchNorm`, `ColumnParallelLinear`, `RowParallelLinear`, and a local MoE choice into the stack in a readable way. That is exactly the kind of explicitness a small-model lane needs. When the model is small enough that many runs are feasible, it becomes more important, not less important, to know which submodule family changed between runs.
 
@@ -136,9 +136,9 @@ That is the real advantage of this training stack. It is not that it found one m
 
 - [MegaCpp source repository](https://github.com/DatasunriseOU/cppmega)
 - [MegaCpp sample pack](https://github.com/DatasunriseOU/site_samples/tree/main)
-- [STP after ten thousand steps](https://megacpp.com/blog/stp-after-ten-thousand-steps.md)
-- [STP geodesic regularizer](https://megacpp.com/blog/stp-geodesic-regularizer.md)
+- [STP after ten thousand steps](https://megacpp.com/blog/stp-after-ten-thousand-steps/)
+- [STP geodesic regularizer](https://megacpp.com/blog/stp-geodesic-regularizer/)
 - [Mamba/Transformer hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md)
-- [Mamba3 hybrid article](https://megacpp.com/blog/mamba3-hybrid.md)
-- [Training on H200 eight-GPU machines](https://megacpp.com/blog/training-on-h200-eight-gpu.md)
-- [Precision recipe: FP16, BF16, FP8, NVFP4](https://megacpp.com/blog/precision-recipe-fp16-bf16-fp8-nvfp4.md)
+- [Mamba3 hybrid article](https://megacpp.com/blog/mamba3-hybrid/)
+- [Training on H200 eight-GPU machines](https://megacpp.com/blog/training-on-h200-eight-gpu/)
+- [Precision recipe: FP16, BF16, FP8, NVFP4](https://megacpp.com/blog/precision-recipe-fp16-bf16-fp8-nvfp4/)

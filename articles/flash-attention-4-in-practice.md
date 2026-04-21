@@ -254,13 +254,8 @@ def select_backend(req):
 
 ## References
 
-- `FA4_APPLICABILITY_AND_TEST_PROFILES.md`
-- `FA4_PRODUCTION_EXECUTION_PLAN.ru.md`
-- `dense_full_fa4_first_slice_2026-03-13.md`
-- `dense_full_fa4_execution_rollout_2026-03-17.md`
-- `dense_fa4_hybrid_prefill_decode_plan_2026-03-14.md`
-- `dense_full_fa4_rollout_manifest_2026-03-17.json`
-- `fa3_chunk_metadata_candidate_2026-03-11.md`
-- `fa3_chunk_metadata_dtype_candidate_2026-03-11.md`
-- public FA4 catalog module
-- public flash-attention dispatcher module
+- [Dense FA4 execute proof sample](../examples/kernels/dense_fa4_execute_proof_sample.py)
+- [Dense FA4 KV-cache decode sample](../examples/kernels/dense_fa4_kvcache_decode_sample.py)
+- [FA4 receipt summary sample](../examples/distributed/fa4_receipt_summary_sample.py)
+- [Kernel examples index](../examples/kernels/index.md)
+- [Kernel examples README](../examples/kernels/README.md)

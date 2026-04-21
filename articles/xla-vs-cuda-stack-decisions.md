@@ -93,12 +93,12 @@ The fact that we keep both paths is not free, but the cost is bounded by the rul
 
 ## References
 
-- https://megacpp.com/blog/torch-xla-pjrt-reality.md
-- https://megacpp.com/blog/xla-spmd-sharding-annotations.md
-- https://megacpp.com/blog/xla-adamw-and-flags-on-tpu.md
-- https://megacpp.com/blog/oom-on-v6e.md
-- https://megacpp.com/blog/comms-cost-and-overlap.md
-- https://megacpp.com/blog/tensor-parallel-and-sharding.md
-- https://megacpp.com/blog/fsdp2-on-xla-tpu.md
+- https://megacpp.com/blog/torch-xla-pjrt-reality/
+- https://megacpp.com/blog/xla-spmd-sharding-annotations/
+- https://megacpp.com/blog/xla-adamw-and-flags-on-tpu/
+- https://megacpp.com/blog/oom-on-v6e/
+- https://megacpp.com/blog/comms-cost-and-overlap/
+- https://megacpp.com/blog/tensor-parallel-and-sharding/
+- https://megacpp.com/blog/fsdp2-on-xla-tpu/
 - https://docs.pytorch.org/xla/master/runtime.html
 - https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html

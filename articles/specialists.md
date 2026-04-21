@@ -127,10 +127,10 @@ The codebase earns the sharper interpretation because it records the costs as we
 ## References
 
 - [MegaCpp source repository](https://github.com/DatasunriseOU/cppmega)
-- [Expert-parallel and MoE sharding](https://megacpp.com/blog/expert-parallel-and-moe-sharding.md)
-- [Sequence, context, and expert split taxonomy](https://megacpp.com/blog/sequence-context-expert-splits.md)
-- [What Megatron can and cannot split](https://megacpp.com/blog/what-megatron-can-and-cannot-split.md)
-- [H200 bring-up and naming](https://megacpp.com/blog/h200-bringup-and-naming.md)
-- [Training on H200 eight-GPU machines](https://megacpp.com/blog/training-on-h200-eight-gpu.md)
+- [Expert-parallel and MoE sharding](https://megacpp.com/blog/expert-parallel-and-moe-sharding/)
+- [Sequence, context, and expert split taxonomy](https://megacpp.com/blog/sequence-context-expert-splits/)
+- [What Megatron can and cannot split](https://megacpp.com/blog/what-megatron-can-and-cannot-split/)
+- [H200 bring-up and naming](https://megacpp.com/blog/h200-bringup-and-naming/)
+- [Training on H200 eight-GPU machines](https://megacpp.com/blog/training-on-h200-eight-gpu/)
 - [Megatron Core MoE API guide](https://docs.nvidia.com/megatron-core/developer-guide/latest/api-guide/moe.html)
 - [Megatron Bridge parallelisms guide](https://docs.nvidia.com/nemo/megatron-bridge/latest/parallelisms.html)

@@ -124,9 +124,10 @@ That is the reason this parity work deserves its own write-up. It was not just a
 - [NAM56R launcher profile sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/nam56r_launcher_profile_sample.py)
 - [NAM56R CUDA graph launcher sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/nam56r_cuda_graph_launcher_sample.sh)
 - [NAM56R runtime patch surface sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/nam56r_runtime_patch_surface_sample.py)
-- Local evidence: `bench/modal_vllm_gb10stack.py`
-- Local evidence: `bench/Dockerfile.vllm_gb10stack`
-- Local evidence: `bench/vllm_repo/meta/dependencies.md`
-- Local evidence: `cppmega/megatron/preflight_smem_check.py`
-- Local evidence: `cppmega/tests/test_preflight_smem_check.py`
-- Local evidence: `cppmega/README.md`
+- [GB10 repro bundle README](../examples/megacpp/gb10_repro_bundle/README.md)
+- [GB10 repro walkthrough](../examples/megacpp/gb10_repro_bundle/README_walkthrough.md)
+- [GB10 gate notes](../examples/megacpp/gb10_repro_bundle/README_gates.md)
+- [GB10 public claims](../examples/megacpp/gb10_repro_bundle/public_claims.md)
+- [GB10 arch patch probe sample](../examples/megacpp/gb10_arch_patch_probe_sample.py)
+- [GB10 driver signal vs runtime proof sample](../examples/megacpp/gb10_driver_signal_vs_runtime_proof_sample.py)
+- [GB10 tcgen05 gate matrix nearcopy](../examples/megacpp/gb10_tcgen05_gate_matrix_nearcopy.py)

@@ -65,11 +65,14 @@ That is not a marketing sentence. It is a reproducibility sentence. And for this
 
 ## References
 
-- [MegaCpp sample pack](https://github.com/DatasunriseOU/site_samples)
-- [GB10-parity vLLM Dockerfile](https://github.com/DatasunriseOU/bench/blob/main/Dockerfile.vllm_gb10stack)
-- [GB10-parity Modal serving app](https://github.com/DatasunriseOU/bench/blob/main/modal_vllm_gb10stack.py)
-- [vLLM build and push notes](https://github.com/DatasunriseOU/bench/blob/main/vllm_repo/BUILD_AND_PUSH.md)
-- [Modal registry-backed smoke app](https://github.com/DatasunriseOU/bench/blob/main/modal_vllm_from_ghcr.py)
-- [MegaCpp GB10 single-device training launcher](https://github.com/DatasunriseOU/cppmega/blob/main/scripts/remote_train_gb10_nam56r_single.sh)
+- [MegaCpp example index](../examples/megacpp/index.md)
+- [GB10 repro bundle README](../examples/megacpp/gb10_repro_bundle/README.md)
+- [GB10 repro walkthrough](../examples/megacpp/gb10_repro_bundle/README_walkthrough.md)
+- [GB10 public claims](../examples/megacpp/gb10_repro_bundle/public_claims.md)
+- [GB10 arch patch probe sample](../examples/megacpp/gb10_arch_patch_probe_sample.py)
+- [GB10 driver signal vs runtime proof sample](../examples/megacpp/gb10_driver_signal_vs_runtime_proof_sample.py)
+- [NAM56R launcher profile sample](../examples/megacpp/nam56r_launcher_profile_sample.py)
+- [NAM56R CUDA graph launcher sample](../examples/megacpp/nam56r_cuda_graph_launcher_sample.sh)
+- [NAM56R runtime patch surface sample](../examples/megacpp/nam56r_runtime_patch_surface_sample.py)
 - [PyTorch nightly CUDA 13.2 index](https://download.pytorch.org/whl/nightly/cu132)
 - [vLLM project repository](https://github.com/vllm-project/vllm)

@@ -197,4 +197,4 @@ Reproducibility at this level is a maintenance cost. It is also what lets a sing
 - the JSONL-to-Parquet ingestion stage
 - the public data pipeline notes
 - https://github.com/DatasunriseOU/site_samples/blob/main/docs/data-prep-notes.md
-- https://megacpp.com/blog/cpp-data-versioning-and-schema.md
+- https://megacpp.com/blog/cpp-data-versioning-and-schema/

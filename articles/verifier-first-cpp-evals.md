@@ -133,7 +133,7 @@ In other words, verifier-first is not a preference about style. It is the minimu
 
 ## References
 
-- [Compile commands and semantic graphs](https://megacpp.com/blog/compile-commands-and-semantic-graphs.md)
+- [Compile commands and semantic graphs](https://megacpp.com/blog/compile-commands-and-semantic-graphs/)
 - [HumanEval: Evaluating Large Language Models Trained on Code](https://arxiv.org/abs/2107.03374)
 - [LiveCodeBench](https://livecodebench.github.io/)
 - [tree-sitter](https://tree-sitter.github.io/tree-sitter/)

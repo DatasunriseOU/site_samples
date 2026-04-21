@@ -5,7 +5,7 @@ date: "2026-04-18"
 tags: ["data", "pipeline", "C++", "operations", "tokenizer"]
 ---
 
-This is the implementation-focused view of how raw C/C++ source becomes packed training rows for MegaCpp. It is the sibling post to [Building the C++ Training Data Pipeline: What Worked, What Broke](https://megacpp.com/blog/data-pipeline-story.md): that one frames the design decisions, this one walks through the stages and the checks that keep them stable.
+This is the implementation-focused view of how raw C/C++ source becomes packed training rows for MegaCpp. It is the sibling post to [Building the C++ Training Data Pipeline: What Worked, What Broke](https://megacpp.com/blog/data-pipeline-story/): that one frames the design decisions, this one walks through the stages and the checks that keep them stable.
 
 ## Why MegaCpp cares about this
 
@@ -101,7 +101,7 @@ Single-stage rerun example:
 - [MegaCpp source repository](https://github.com/DatasunriseOU/cppmega)
 - [MegaCpp article samples](https://megacpp.com/blog)
 
-- [Data pipeline story](https://megacpp.com/blog/data-pipeline-story.md)
+- [Data pipeline story](https://megacpp.com/blog/data-pipeline-story/)
 - [The Stack v2 dataset](https://huggingface.co/datasets/bigcode/the-stack-v2)
 - [The Stack documentation](https://www.bigcode-project.org/docs/about/the-stack/)
 - [The Stack v2 paper](https://arxiv.org/abs/2402.19173)

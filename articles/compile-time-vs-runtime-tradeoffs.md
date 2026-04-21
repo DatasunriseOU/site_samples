@@ -80,4 +80,4 @@ The other ablation worth keeping is the regional vs full-graph comparison. We re
 - [Compiled AdamW policy sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/compile/compiled_adamw_policy_sample.py)
 - [CUDA graph environment defaults sample](https://github.com/DatasunriseOU/site_samples/blob/main/examples/compile/cuda_graph_env_defaults_sample.py)
 - [XLA compile runtime controls](https://github.com/DatasunriseOU/site_samples/blob/main/examples/xla/xla_compile_runtime_controls.py)
-- [FIRE plasticity toolkit article](https://megacpp.com/blog/fire-plasticity-toolkit.md)
+- [FIRE plasticity toolkit article](https://megacpp.com/blog/fire-plasticity-toolkit/)

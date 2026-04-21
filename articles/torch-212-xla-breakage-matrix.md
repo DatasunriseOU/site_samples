@@ -98,11 +98,8 @@ That is the difference between an install note and an operational compatibility 
 
 ## References
 
-- `torch/patches/README.md` in the MegaCpp TPU training stack
-- `torch/patches/persistent_cache_fix.diff` in the MegaCpp TPU training stack
-- `torch/patches/xla_runtime_memory_info.diff` in the MegaCpp TPU training stack
-- `torch/build/VERSION` in the MegaCpp TPU training stack
-- `scripts/base_train.py` in the MegaCpp TPU training stack
-- `tests/test_refactored_base_train.py` in the MegaCpp TPU training stack
-- `CHANGELOG.md` in the MegaCpp TPU training stack
-- `docs/changelog/archive/changelog-log-2026-03-08.md` in the MegaCpp TPU training stack
+- [TPU bring-up notes](../docs/tpu-bringup-notes.md)
+- [TPU backend ownership notes](../docs/tpu-backend-ownership.md)
+- [XLA flag profile sample](../examples/xla/xla_flag_profile.py)
+- [XLA safe AdamW sample](../examples/xla/xla_safe_adamw.py)
+- [Libtpu and JAX ownership notes excerpt](../excerpts/docs/cppmega/xla/libtpu-and-jax-interaction__ownership_notes__v1.md)

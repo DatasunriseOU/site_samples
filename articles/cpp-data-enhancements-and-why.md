@@ -88,10 +88,10 @@ enhancements:
 
 ## References
 
-- https://megacpp.com/blog/cpp-data-preparation-pipeline-deep.md
+- https://megacpp.com/blog/cpp-data-preparation-pipeline-deep/
 - https://github.com/DatasunriseOU/site_samples/blob/main/docs/data-prep-notes.md
-- https://megacpp.com/blog/structure-embeddings-and-relation-bias.md
-- https://megacpp.com/blog/ablation-after-10k-steps.md
+- https://megacpp.com/blog/structure-embeddings-and-relation-bias/
+- https://megacpp.com/blog/ablation-after-10k-steps/
 - https://tree-sitter.github.io/tree-sitter/
 - https://clang.llvm.org/docs/LibClang.html
 - https://dl.acm.org/doi/10.1145/360825.360855

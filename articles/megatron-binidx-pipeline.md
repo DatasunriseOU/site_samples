@@ -50,7 +50,7 @@ bridge is preserving a concrete training interface, not just reshaping storage.
 
 - example: [`parquet_to_megatron_indexed_dataset_sample.py`](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/parquet_to_megatron_indexed_dataset_sample.py)
 - companion example: [`prepare_format_megacpp_sample.py`](https://github.com/DatasunriseOU/site_samples/blob/main/examples/megacpp/prepare_format_megacpp_sample.py)
-- article: [`megatron-binidx-pipeline.md`](https://megacpp.com/blog/megatron-binidx-pipeline/)
+- article: [`megatron-binidx-pipeline`](https://megacpp.com/blog/megatron-binidx-pipeline/)
 - upstream docs: Megatron indexed-dataset readers and the broader Megatron/Nemotron recipe ecosystem
 
 ## Why the wrapper deserves its own surface

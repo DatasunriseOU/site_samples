@@ -178,5 +178,5 @@ structured C++ workloads.
 - [Nemotron-H: A Family of Accurate and Efficient Hybrid Mamba-Transformer Models](https://arxiv.org/abs/2504.03624)
 - [Exploring the Limitations of Mamba in COPY and CoT Reasoning](https://arxiv.org/abs/2410.03810)
 - [Hybrid layout notes](https://github.com/DatasunriseOU/site_samples/blob/main/docs/hybrid-layout-notes.md)
-- [Mamba3 kernel journey](https://megacpp.com/blog/mamba3-kernel-journey.md)
-- [Hybrid layer interleaving](https://megacpp.com/blog/hybrid-layer-interleaving.md)
+- [Mamba3 kernel journey](https://megacpp.com/blog/mamba3-kernel-journey/)
+- [Hybrid layer interleaving](https://megacpp.com/blog/hybrid-layer-interleaving/)

@@ -79,6 +79,6 @@ MegaCpp's repos answer that question with a boring but durable pattern: many fil
 - https://protobuf.dev/programming-guides/proto-limits/
 - https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/io/coded_stream.h
 - https://docs.pytorch.org/docs/main/distributed.checkpoint.html
-- https://github.com/DatasunriseOU/site_samples/blob/main/articles/checkpoint-format-and-resume.md
-- https://github.com/DatasunriseOU/site_samples/blob/main/articles/data-pipeline-story.md
-- https://github.com/DatasunriseOU/site_samples/blob/main/articles/cpp-data-versioning-and-schema.md
+- https://megacpp.com/blog/checkpoint-format-and-resume/
+- https://megacpp.com/blog/data-pipeline-story/
+- https://megacpp.com/blog/cpp-data-versioning-and-schema/
