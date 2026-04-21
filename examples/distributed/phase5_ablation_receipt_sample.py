@@ -19,7 +19,7 @@ def measured_phase5_receipt() -> dict[str, str | float | int]:
         "sequence_length": 128000,
         "per_device_memory_limit_gb": 31.25,
         "measured_throughput_tok_sec": 565000.0,
-        "source_note": "docs/PHASE5_ABLATION_PLAN.md",
+        "source_note": "phase-5 ablation receipt summary",
         "status": "WORKS",
     }
 

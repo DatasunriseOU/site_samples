@@ -21,9 +21,9 @@ def apply_cuda_graph_env_defaults() -> dict[str, tuple[str, str]]:
     """Apply MegaCpp POC-faithful CUDA graph env defaults unless the user opted out.
 
     Grounding:
-    - `scripts/base_train.py` in the MegaCpp POC repo documents these two env vars as
-      the PyTorch-native CUDA-graph path for compiled blocks.
-    - The same MegaCpp POC comments record a measured H200:8 bench gain for this path
+    - The MegaCpp compiled-training path documents these two env vars as the
+      PyTorch-native CUDA-graph lane for compiled blocks.
+    - The same public sample family records a measured H200:8 gain for this path
       on a regional-compile lane.
     """
     if os.environ.get("PUBLIC_SAMPLE_NO_ENV_DEFAULTS") == "1":

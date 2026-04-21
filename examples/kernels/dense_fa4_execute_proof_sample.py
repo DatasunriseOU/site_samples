@@ -29,7 +29,7 @@ def build_dense_fa4_smoke_python(*, shape: dict[str, Any], report_json: str, env
     """Minimal MegaCpp POC-based version of `_build_dense_fa4_smoke_python`.
 
     Grounding:
-    - MegaCpp POC: `scripts/dense_fa4_rollout_helper.py`
+    - MegaCpp dense FA4 execute-proof helper surface
     - backend import: `flash_attn.cute.interface.flash_attn_func`
 
     The key operational change is that the emitted script checks a real CUDA
